@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { Clock, LogOut, Settings } from "lucide-react"
+import { LogOut, Settings } from "lucide-react"
 import { Timer } from "./timer"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
@@ -15,6 +15,7 @@ interface Task {
   status: string
   priority: string
   due_date: string
+  elapsed_minutes?: number
 }
 
 interface TimeLog {
@@ -22,6 +23,7 @@ interface TimeLog {
   clock_in: string
   clock_out: string | null
   duration_minutes: number
+  task_id?: string
 }
 
 interface Profile {
@@ -48,6 +50,7 @@ export function TeamMemberDashboard({
   const [todayHours, setTodayHours] = useState(0)
   const [currentClockInTime, setCurrentClockInTime] = useState<string | null>(null)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
 
   useEffect(() => {
     loadData()
@@ -90,6 +93,10 @@ export function TeamMemberDashboard({
       setIsClockedIn(!!activeLog)
       setCurrentClockInTime(activeLog?.clock_in || null)
 
+      if (activeLog?.task_id) {
+        setActiveTaskId(activeLog.task_id)
+      }
+
       setLoading(false)
     } catch (error) {
       console.error("Error loading data:", error)
@@ -97,11 +104,27 @@ export function TeamMemberDashboard({
     }
   }
 
-  const handleClockInOut = async () => {
+  const handleTaskStartStop = async (taskId: string) => {
     try {
-      if (isClockedIn) {
-        // Clock out
-        const activeLog = timeLogs.find((log) => !log.clock_out)
+      const activeLog = timeLogs.find((log) => !log.clock_out)
+
+      if (activeLog?.task_id === taskId) {
+        // Stop tracking this task
+        const clockOut = new Date().toISOString()
+        const clockIn = new Date(activeLog.clock_in)
+        const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
+
+        await supabase
+          .from("time_logs")
+          .update({
+            clock_out: clockOut,
+            duration_minutes: durationMinutes,
+          })
+          .eq("id", activeLog.id)
+
+        setActiveTaskId(null)
+      } else {
+        // If another task is active, stop it first
         if (activeLog) {
           const clockOut = new Date().toISOString()
           const clockIn = new Date(activeLog.clock_in)
@@ -115,19 +138,20 @@ export function TeamMemberDashboard({
             })
             .eq("id", activeLog.id)
         }
-      } else {
-        // Clock in
+
+        // Start new task
         await supabase.from("time_logs").insert({
           user_id: userId,
+          task_id: taskId,
           clock_in: new Date().toISOString(),
         })
+
+        setActiveTaskId(taskId)
       }
 
-      setIsClockedIn(!isClockedIn)
-      setCurrentClockInTime(!isClockedIn ? new Date().toISOString() : null)
       loadData()
     } catch (error) {
-      console.error("Error clocking in/out:", error)
+      console.error("Error toggling task timer:", error)
     }
   }
 
@@ -159,7 +183,7 @@ export function TeamMemberDashboard({
       <header className="bg-white border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Ostento</h1>
+            <h1 className="text-2xl font-bold text-foreground">Ostento Productivity Tracker</h1>
             <p className="text-sm text-muted-foreground">Welcome, {userName}</p>
           </div>
           <div className="flex gap-2">
@@ -213,23 +237,7 @@ export function TeamMemberDashboard({
               <h2 className="text-xl font-semibold mb-2">Time Tracking</h2>
               <p className="text-muted-foreground">Today&apos;s hours: {todayHours} hours</p>
             </div>
-            <button
-              onClick={handleClockInOut}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all ${
-                isClockedIn ? "bg-red-500 hover:bg-red-600" : "bg-accent hover:bg-accent/90"
-              }`}
-            >
-              <Clock className="w-5 h-5" />
-              {isClockedIn ? "Clock Out" : "Clock In"}
-            </button>
           </div>
-
-          {isClockedIn && currentClockInTime && (
-            <div className="mt-6 pt-6 border-t border-border">
-              <p className="text-sm text-muted-foreground mb-3">Session Duration</p>
-              <Timer isActive={isClockedIn} startTime={currentClockInTime} />
-            </div>
-          )}
         </div>
 
         {/* Tasks Section */}
@@ -241,45 +249,80 @@ export function TeamMemberDashboard({
                 <p className="text-muted-foreground">No tasks assigned yet</p>
               </div>
             ) : (
-              tasks.map((task) => (
-                <div key={task.id} className="glass-card rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-2">{task.title}</h3>
-                      {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
+              tasks.map((task) => {
+                const isTaskActive = activeTaskId === task.id
+                return (
+                  <div key={task.id} className="glass-card rounded-lg p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold mb-2">{task.title}</h3>
+                        {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            task.priority === "high"
+                              ? "bg-red-100 text-red-700"
+                              : task.priority === "medium"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {task.priority}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          task.priority === "high"
-                            ? "bg-red-100 text-red-700"
-                            : task.priority === "medium"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {task.priority}
-                      </span>
+
+                    <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-2">Time on this task:</p>
+                          {isTaskActive && (
+                            <Timer isActive={true} startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""} />
+                          )}
+                          {!isTaskActive && (
+                            <p className="text-lg font-semibold">
+                              {(
+                                timeLogs
+                                  .filter((log) => {
+                                    // This would need to be enhanced to track task-specific logs
+                                    return log.task_id === task.id
+                                  })
+                                  .reduce((acc, log) => acc + (log.duration_minutes || 0), 0) / 60
+                              ).toFixed(1)}{" "}
+                              hrs
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleTaskStartStop(task.id)}
+                          className={`px-4 py-2 rounded-lg font-medium text-white transition-all ${
+                            isTaskActive ? "bg-red-500 hover:bg-red-600" : "bg-accent hover:bg-accent/90"
+                          }`}
+                        >
+                          {isTaskActive ? "Stop" : "Start"}
+                        </button>
+                      </div>
                     </div>
+
+                    <select
+                      value={task.status}
+                      onChange={(e) => handleTaskStatusChange(task.id, e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+
+                    {task.due_date && (
+                      <p className="text-sm text-muted-foreground mt-3">
+                        Due: {new Date(task.due_date).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
-
-                  <select
-                    value={task.status}
-                    onChange={(e) => handleTaskStatusChange(task.id, e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
-
-                  {task.due_date && (
-                    <p className="text-sm text-muted-foreground mt-3">
-                      Due: {new Date(task.due_date).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>

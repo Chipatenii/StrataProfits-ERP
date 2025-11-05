@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Download } from "lucide-react"
+import jsPDF from "jspdf"
 
 interface TeamMemberReport {
   user_id: string
@@ -34,72 +35,16 @@ export function MonthlyReports({ userId }: { userId: string }) {
       const startDate = `${year}-${month}-01`
       const endDate = new Date(Number.parseInt(year), Number.parseInt(month), 0).toISOString().split("T")[0]
 
-      // Get all team members
-      const { data: members } = await supabase.from("profiles").select("id, full_name, email").eq("role", "team_member")
-
-      if (!members) {
-        setLoading(false)
-        return
-      }
-
-      // Get time logs for the month
-      const { data: timeLogs } = await supabase
-        .from("time_logs")
-        .select("user_id, duration_minutes, clock_in")
-        .gte("clock_in", startDate + "T00:00:00")
-        .lte("clock_in", endDate + "T23:59:59")
-
-      // Calculate reports for each team member
-      const reportMap = new Map<string, Partial<TeamMemberReport>>()
-
-      members.forEach((member) => {
-        reportMap.set(member.id, {
-          user_id: member.id,
-          full_name: member.full_name,
-          email: member.email,
-          total_hours: 0,
-          total_minutes: 0,
-          days_worked: 0,
-          average_hours_per_day: 0,
-        })
+      const response = await fetch("/api/admin/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate, endDate }),
       })
 
-      // Aggregate time logs
-      const daysWorked = new Set<string>()
-      let totalMinutes = 0
+      const { reports: fetchedReports, totalCompanyHours: totalHours } = await response.json()
 
-      timeLogs?.forEach((log) => {
-        const report = reportMap.get(log.user_id)
-        if (report) {
-          report.total_minutes = (report.total_minutes || 0) + (log.duration_minutes || 0)
-          const date = new Date(log.clock_in).toISOString().split("T")[0]
-          daysWorked.add(`${log.user_id}-${date}`)
-          totalMinutes += log.duration_minutes || 0
-        }
-      })
-
-      // Calculate final metrics
-      const finalReports: TeamMemberReport[] = []
-      reportMap.forEach((report) => {
-        const userDaysWorked = Array.from(daysWorked).filter((day) => day.startsWith(`${report.user_id}-`)).length
-
-        const totalHours = Math.round(((report.total_minutes || 0) / 60) * 100) / 100
-        const averagePerDay = userDaysWorked > 0 ? Math.round((totalHours / userDaysWorked) * 100) / 100 : 0
-
-        finalReports.push({
-          user_id: report.user_id!,
-          full_name: report.full_name!,
-          email: report.email!,
-          total_hours: totalHours,
-          total_minutes: report.total_minutes || 0,
-          days_worked: userDaysWorked,
-          average_hours_per_day: averagePerDay,
-        })
-      })
-
-      finalReports.sort((a, b) => b.total_hours - a.total_hours)
-      setReports(finalReports)
-      setTotalCompanyHours(Math.round((totalMinutes / 60) * 100) / 100)
+      setReports(fetchedReports || [])
+      setTotalCompanyHours(totalHours || 0)
     } catch (error) {
       console.error("Error loading reports:", error)
     } finally {
@@ -107,28 +52,36 @@ export function MonthlyReports({ userId }: { userId: string }) {
     }
   }
 
-  const handleExportCSV = () => {
-    const csvContent = [
-      ["Team Member", "Email", "Total Hours", "Days Worked", "Average Hours/Day"],
-      ...reports.map((r) => [
-        r.full_name,
-        r.email,
-        r.total_hours.toString(),
-        r.days_worked.toString(),
-        r.average_hours_per_day.toString(),
-      ]),
-      [],
-      ["Total Company Hours", totalCompanyHours.toString()],
-    ]
-      .map((row) => row.join(","))
-      .join("\n")
+  const handleExportPDF = () => {
+    const doc = new jsPDF()
+    doc.text(`OSTENTO MEDIA AGENCY - MONTHLY REPORT`, 10, 10)
+    doc.text(`Month: ${selectedMonth}`, 10, 20)
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 10, 30)
 
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `ostento-report-${selectedMonth}.csv`
-    a.click()
+    doc.text(`SUMMARY`, 10, 40)
+    doc.text(`================`, 10, 50)
+    doc.text(`Total Company Hours: ${totalCompanyHours} hours`, 10, 60)
+    doc.text(`Active Team Members: ${reports.filter((r) => r.days_worked > 0).length}`, 10, 70)
+    doc.text(
+      `Average Hours per Person: ${reports.length > 0 ? (Math.round((reports.reduce((acc, r) => acc + r.total_hours, 0) / reports.length) * 100) / 100).toFixed(2) : "0"} hours`,
+      10,
+      80,
+    )
+
+    doc.text(`TEAM MEMBER DETAILS`, 10, 90)
+    doc.text(`================`, 10, 100)
+
+    let y = 110
+    reports.forEach((r) => {
+      doc.text(`Name: ${r.full_name}`, 10, y)
+      doc.text(`Email: ${r.email}`, 10, y + 10)
+      doc.text(`Total Hours: ${r.total_hours.toFixed(2)}`, 10, y + 20)
+      doc.text(`Days Worked: ${r.days_worked}`, 10, y + 30)
+      doc.text(`Average Hours/Day: ${r.average_hours_per_day.toFixed(2)}`, 10, y + 40)
+      y += 50
+    })
+
+    doc.save(`ostento-report-${selectedMonth}.pdf`)
   }
 
   if (loading) {
@@ -172,9 +125,9 @@ export function MonthlyReports({ userId }: { userId: string }) {
               className="px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
-          <button onClick={handleExportCSV} className="flex items-center gap-2 btn-secondary">
+          <button onClick={handleExportPDF} className="flex items-center gap-2 btn-secondary">
             <Download className="w-4 h-4" />
-            Export CSV
+            Export Report
           </button>
         </div>
 

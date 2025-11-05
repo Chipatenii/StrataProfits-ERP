@@ -166,7 +166,7 @@ export function AdminDashboard({
       <header className="bg-white border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Ostento</h1>
+            <h1 className="text-2xl font-bold text-foreground">Ostento Productivity Tracker</h1>
             <p className="text-sm text-muted-foreground">Admin: {userName}</p>
           </div>
           <div className="flex gap-2">
