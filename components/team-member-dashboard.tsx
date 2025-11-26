@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, Clock, CheckCircle } from "lucide-react"
+import { LogOut, Settings, Clock, CheckCircle, Menu, X } from "lucide-react"
 import { Timer } from "./timer"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
@@ -57,6 +57,7 @@ export function TeamMemberDashboard({
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [completingTask, setCompletingTask] = useState<Task | null>(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -221,34 +222,66 @@ export function TeamMemberDashboard({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       {/* Header */}
-      <header className="bg-white border-b border-border shadow-sm">
+      <header className="bg-white border-b border-border shadow-sm relative">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Ostento Productivity Tracker</h1>
-            <p className="text-sm text-muted-foreground">Welcome, {userName}</p>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">Ostento Tracker</h1>
+            <p className="text-xs md:text-sm text-muted-foreground">Welcome, {userName}</p>
           </div>
-          <div className="flex gap-2">
-            {/* Notification Bell */}
+          <div className="flex items-center gap-2">
+            {/* Notification Bell - Always visible */}
             <NotificationBell userId={userId} isAdmin={false} />
 
-            {/* Profile Settings Button */}
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                onClick={() => setShowProfileSettings(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
             <button
-              onClick={() => setShowProfileSettings(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <Settings className="w-4 h-4" />
-              Settings
-            </button>
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg z-50 p-4 space-y-3 animate-in slide-in-from-top-2">
+            <button
+              onClick={() => {
+                setShowProfileSettings(true)
+                setIsMobileMenuOpen(false)
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+              Settings
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Profile Settings Modal */}
@@ -317,10 +350,10 @@ export function TeamMemberDashboard({
                       <div className="flex gap-2 ml-4">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                              ? "bg-red-100 text-red-700"
-                              : task.priority === "medium"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-green-100 text-green-700"
+                            ? "bg-red-100 text-red-700"
+                            : task.priority === "medium"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-green-100 text-green-700"
                             }`}
                         >
                           {task.priority}

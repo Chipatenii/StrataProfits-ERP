@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Plus, Trash2, UserCog, Settings, Clock, AlertTriangle } from "lucide-react"
+import { LogOut, Plus, Trash2, UserCog, Settings, Clock, AlertTriangle, Menu, X } from "lucide-react"
 import { ProfileSettingsModal } from "@/components/profile-settings-modal"
 import { NotificationBell } from "@/components/notification-bell"
 import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
@@ -61,6 +61,7 @@ export function AdminDashboard({
   const [editingMemberRole, setEditingMemberRole] = useState("")
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [timeLogs, setTimeLogs] = useState<any[]>([])
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -179,36 +180,77 @@ export function AdminDashboard({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       {/* Header */}
-      <header className="bg-white border-b border-border shadow-sm">
+      <header className="bg-white border-b border-border shadow-sm relative">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Ostento Productivity Tracker</h1>
-            <p className="text-sm text-muted-foreground">Admin: {userName}</p>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">Ostento Tracker</h1>
+            <p className="text-xs md:text-sm text-muted-foreground">Admin: {userName}</p>
           </div>
-          <div className="flex gap-2">
-            {/* Notification Bell */}
+          <div className="flex items-center gap-2">
+            {/* Notification Bell - Always visible */}
             <NotificationBell userId={userId} isAdmin={true} />
 
-            {/* Profile Settings Button */}
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                onClick={() => setShowProfileSettings(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+              <a href="/reports" className="btn-secondary">
+                View Reports
+              </a>
+            </div>
+
+            {/* Mobile Menu Button */}
             <button
-              onClick={() => setShowProfileSettings(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <Settings className="w-4 h-4" />
-              Settings
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
-            <a href="/reports" className="btn-secondary">
-              View Reports
-            </a>
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg z-50 p-4 space-y-3 animate-in slide-in-from-top-2">
+            <button
+              onClick={() => {
+                setShowProfileSettings(true)
+                setIsMobileMenuOpen(false)
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+              Settings
+            </button>
+            <a
+              href="/reports"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Clock className="w-5 h-5" />
+              View Reports
+            </a>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Profile Settings Modal */}
@@ -483,10 +525,10 @@ export function AdminDashboard({
                           <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-500 ${getTimeStatus(calculateTimeSpent(timeLogs, task.id), task.estimated_hours) === 'exceeded'
-                                  ? 'bg-red-500'
-                                  : getTimeStatus(calculateTimeSpent(timeLogs, task.id), task.estimated_hours) === 'warning'
-                                    ? 'bg-amber-500'
-                                    : 'bg-green-500'
+                                ? 'bg-red-500'
+                                : getTimeStatus(calculateTimeSpent(timeLogs, task.id), task.estimated_hours) === 'warning'
+                                  ? 'bg-amber-500'
+                                  : 'bg-green-500'
                                 }`}
                               style={{
                                 width: `${Math.min(100, (calculateTimeSpent(timeLogs, task.id) / (task.estimated_hours * 60)) * 100)}%`
