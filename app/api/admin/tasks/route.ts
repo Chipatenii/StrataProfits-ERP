@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
         priority: body.priority,
         assigned_to: body.assigned_to || null,
         created_by: body.created_by,
+        estimated_hours: body.estimated_hours || null,
       })
       .select()
 

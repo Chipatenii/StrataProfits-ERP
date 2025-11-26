@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Settings } from "lucide-react"
+import { LogOut, Settings, Clock, CheckCircle } from "lucide-react"
 import { Timer } from "./timer"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
+import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
+import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
+import { NotificationBell } from "@/components/notification-bell"
+import { calculateTimeSpent } from "@/lib/time-utils"
 
 interface Task {
   id: string
@@ -15,6 +19,7 @@ interface Task {
   status: string
   priority: string
   due_date: string
+  estimated_hours: number | null
   elapsed_minutes?: number
 }
 
@@ -51,6 +56,7 @@ export function TeamMemberDashboard({
   const [currentClockInTime, setCurrentClockInTime] = useState<string | null>(null)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+  const [completingTask, setCompletingTask] = useState<Task | null>(null)
 
   useEffect(() => {
     loadData()
@@ -161,11 +167,46 @@ export function TeamMemberDashboard({
   }
 
   const handleTaskStatusChange = async (taskId: string, newStatus: string) => {
+    if (newStatus === "completed") {
+      const task = tasks.find((t) => t.id === taskId)
+      if (task) {
+        setCompletingTask(task)
+      }
+      return
+    }
+
     try {
       await supabase.from("tasks").update({ status: newStatus }).eq("id", taskId)
       loadData()
     } catch (error) {
       console.error("Error updating task:", error)
+    }
+  }
+
+  const handleTaskComplete = async (notes: string) => {
+    if (!completingTask) return
+
+    try {
+      // Stop timer if running for this task
+      if (activeTaskId === completingTask.id) {
+        await handleTaskStartStop(completingTask.id)
+      }
+
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          status: "completed",
+          completion_notes: notes,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", completingTask.id)
+
+      if (error) throw error
+
+      setCompletingTask(null)
+      loadData()
+    } catch (error) {
+      console.error("Error completing task:", error)
     }
   }
 
@@ -187,6 +228,9 @@ export function TeamMemberDashboard({
             <p className="text-sm text-muted-foreground">Welcome, {userName}</p>
           </div>
           <div className="flex gap-2">
+            {/* Notification Bell */}
+            <NotificationBell userId={userId} isAdmin={false} />
+
             {/* Profile Settings Button */}
             <button
               onClick={() => setShowProfileSettings(true)}
@@ -217,6 +261,18 @@ export function TeamMemberDashboard({
             setShowProfileSettings(false)
             loadData()
           }}
+        />
+      )}
+
+      {/* Task Completion Modal */}
+      {completingTask && (
+        <TaskCompletionModal
+          isOpen={!!completingTask}
+          onClose={() => setCompletingTask(null)}
+          onComplete={handleTaskComplete}
+          taskTitle={completingTask.title}
+          spentMinutes={calculateTimeSpent(timeLogs, completingTask.id)}
+          estimatedHours={completingTask.estimated_hours || undefined}
         />
       )}
 
@@ -260,13 +316,12 @@ export function TeamMemberDashboard({
                       </div>
                       <div className="flex gap-2 ml-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            task.priority === "high"
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
                               ? "bg-red-100 text-red-700"
                               : task.priority === "medium"
                                 ? "bg-amber-100 text-amber-700"
                                 : "bg-green-100 text-green-700"
-                          }`}
+                            }`}
                         >
                           {task.priority}
                         </span>
@@ -275,30 +330,32 @@ export function TeamMemberDashboard({
 
                     <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">Time on this task:</p>
-                          {isTaskActive && (
-                            <Timer isActive={true} startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""} />
-                          )}
-                          {!isTaskActive && (
-                            <p className="text-lg font-semibold">
-                              {(
-                                timeLogs
-                                  .filter((log) => {
-                                    // This would need to be enhanced to track task-specific logs
-                                    return log.task_id === task.id
-                                  })
-                                  .reduce((acc, log) => acc + (log.duration_minutes || 0), 0) / 60
-                              ).toFixed(1)}{" "}
-                              hrs
-                            </p>
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-2">Time on this task:</p>
+                            {isTaskActive && (
+                              <Timer isActive={true} startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""} />
+                            )}
+                            {!isTaskActive && (
+                              <p className="text-lg font-semibold">
+                                {(calculateTimeSpent(timeLogs, task.id) / 60).toFixed(1)} hrs
+                              </p>
+                            )}
+                          </div>
+                          {task.estimated_hours && (
+                            <div className="hidden sm:block">
+                              <TimeAllocationIndicator
+                                spentMinutes={calculateTimeSpent(timeLogs, task.id)}
+                                estimatedHours={task.estimated_hours}
+                                size="sm"
+                              />
+                            </div>
                           )}
                         </div>
                         <button
                           onClick={() => handleTaskStartStop(task.id)}
-                          className={`px-4 py-2 rounded-lg font-medium text-white transition-all ${
-                            isTaskActive ? "bg-red-500 hover:bg-red-600" : "bg-accent hover:bg-accent/90"
-                          }`}
+                          className={`px-4 py-2 rounded-lg font-medium text-white transition-all ${isTaskActive ? "bg-red-500 hover:bg-red-600" : "bg-accent hover:bg-accent/90"
+                            }`}
                         >
                           {isTaskActive ? "Stop" : "Start"}
                         </button>

@@ -17,11 +17,22 @@ export async function POST(request: NextRequest) {
     // Get time logs for the date range
     const { data: timeLogs, error: logsError } = await supabase
       .from("time_logs")
-      .select("user_id, duration_minutes, clock_in")
+      .select("user_id, duration_minutes, clock_in, task_id")
       .gte("clock_in", `${startDate}T00:00:00.000Z`)
       .lte("clock_in", `${endDate}T23:59:59.999Z`)
 
     if (logsError) throw logsError
+
+    // Get all tasks referenced in time logs
+    const taskIds = Array.from(new Set(timeLogs?.map((log) => log.task_id).filter(Boolean) || []))
+    const { data: tasks, error: tasksError } = await supabase
+      .from("tasks")
+      .select("id, title, estimated_hours, status")
+      .in("id", taskIds)
+
+    if (tasksError) throw tasksError
+
+    const taskMap = new Map(tasks?.map((t) => [t.id, t]))
 
     // Calculate reports for each team member
     const reportMap = new Map<string, any>()
@@ -35,6 +46,12 @@ export async function POST(request: NextRequest) {
         total_minutes: 0,
         days_worked: 0,
         average_hours_per_day: 0,
+        tasks: new Map<string, {
+          title: string;
+          minutes: number;
+          estimated: number | null;
+          status: string;
+        }>(),
       })
     })
 
@@ -49,6 +66,21 @@ export async function POST(request: NextRequest) {
         const date = new Date(log.clock_in).toISOString().split("T")[0]
         daysWorked.add(`${log.user_id}-${date}`)
         totalMinutes += log.duration_minutes || 0
+
+        // Aggregate task time
+        if (log.task_id) {
+          const task = taskMap.get(log.task_id)
+          if (task) {
+            const taskStats = report.tasks.get(log.task_id) || {
+              title: task.title,
+              minutes: 0,
+              estimated: task.estimated_hours,
+              status: task.status
+            }
+            taskStats.minutes += log.duration_minutes || 0
+            report.tasks.set(log.task_id, taskStats)
+          }
+        }
       }
     })
 
@@ -60,6 +92,12 @@ export async function POST(request: NextRequest) {
       const totalHours = Math.round(((report.total_minutes || 0) / 60) * 100) / 100
       const averagePerDay = userDaysWorked > 0 ? Math.round((totalHours / userDaysWorked) * 100) / 100 : 0
 
+      // Convert tasks map to array
+      const tasksArray = Array.from(report.tasks.values()).map((t: any) => ({
+        ...t,
+        hours: Math.round((t.minutes / 60) * 100) / 100
+      })).sort((a: any, b: any) => b.minutes - a.minutes)
+
       finalReports.push({
         user_id: report.user_id,
         full_name: report.full_name,
@@ -68,6 +106,7 @@ export async function POST(request: NextRequest) {
         total_minutes: report.total_minutes || 0,
         days_worked: userDaysWorked,
         average_hours_per_day: averagePerDay,
+        tasks: tasksArray,
       })
     })
 

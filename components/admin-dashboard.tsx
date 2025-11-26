@@ -4,8 +4,11 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Plus, Trash2, UserCog, Settings } from "lucide-react"
+import { LogOut, Plus, Trash2, UserCog, Settings, Clock, AlertTriangle } from "lucide-react"
 import { ProfileSettingsModal } from "@/components/profile-settings-modal"
+import { NotificationBell } from "@/components/notification-bell"
+import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
+import { calculateTimeSpent, formatDuration, getTimeStatus, getTimeStatusColor } from "@/lib/time-utils"
 
 interface Task {
   id: string
@@ -15,6 +18,9 @@ interface Task {
   priority: string
   assigned_to: string | null
   due_date: string
+  estimated_hours: number | null
+  completed_at: string | null
+  completion_notes: string | null
 }
 
 interface TeamMember {
@@ -50,9 +56,11 @@ export function AdminDashboard({
   const [newTaskDescription, setNewTaskDescription] = useState("")
   const [newTaskPriority, setNewTaskPriority] = useState("medium")
   const [newTaskAssignee, setNewTaskAssignee] = useState("")
+  const [newTaskEstimatedHours, setNewTaskEstimatedHours] = useState("")
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
   const [editingMemberRole, setEditingMemberRole] = useState("")
   const [showProfileSettings, setShowProfileSettings] = useState(false)
+  const [timeLogs, setTimeLogs] = useState<any[]>([])
 
   useEffect(() => {
     loadData()
@@ -69,6 +77,10 @@ export function AdminDashboard({
       const tasksData = await tasksResponse.json()
       setTasks(tasksData || [])
 
+      // Load time logs for all tasks
+      const { data: logsData } = await supabase.from("time_logs").select("*")
+      setTimeLogs(logsData || [])
+
       setLoading(false)
     } catch (error) {
       console.error("Error loading data:", error)
@@ -79,6 +91,8 @@ export function AdminDashboard({
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const estimatedHours = newTaskEstimatedHours ? parseFloat(newTaskEstimatedHours) : null
+
       const response = await fetch("/api/admin/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,6 +102,7 @@ export function AdminDashboard({
           priority: newTaskPriority,
           assigned_to: newTaskAssignee || null,
           created_by: userId,
+          estimated_hours: estimatedHours,
         }),
       })
 
@@ -96,6 +111,7 @@ export function AdminDashboard({
         setNewTaskDescription("")
         setNewTaskPriority("medium")
         setNewTaskAssignee("")
+        setNewTaskEstimatedHours("")
         setShowCreateTask(false)
         loadData()
       }
@@ -170,6 +186,9 @@ export function AdminDashboard({
             <p className="text-sm text-muted-foreground">Admin: {userName}</p>
           </div>
           <div className="flex gap-2">
+            {/* Notification Bell */}
+            <NotificationBell userId={userId} isAdmin={true} />
+
             {/* Profile Settings Button */}
             <button
               onClick={() => setShowProfileSettings(true)}
@@ -208,23 +227,55 @@ export function AdminDashboard({
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Create Task Card */}
         <div className="glass-card rounded-2xl p-6">
-          <button onClick={() => setShowCreateTask(!showCreateTask)} className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Create Task
-          </button>
+          <div className="flex justify-between items-center">
+            <button onClick={() => setShowCreateTask(!showCreateTask)} className="btn-primary flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Create Task
+            </button>
+
+            {/* Analytics Summary */}
+            <div className="hidden md:flex gap-4">
+              <div className="bg-white/50 px-4 py-2 rounded-lg border border-white/20">
+                <p className="text-xs text-muted-foreground uppercase font-bold">Completed This Week</p>
+                <p className="text-lg font-bold text-green-600">
+                  {tasks.filter(t => t.status === 'completed' && t.completed_at && new Date(t.completed_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
+                </p>
+              </div>
+              <div className="bg-white/50 px-4 py-2 rounded-lg border border-white/20">
+                <p className="text-xs text-muted-foreground uppercase font-bold">Active Tasks</p>
+                <p className="text-lg font-bold text-blue-600">
+                  {tasks.filter(t => t.status === 'in-progress').length}
+                </p>
+              </div>
+            </div>
+          </div>
 
           {showCreateTask && (
             <form onSubmit={handleCreateTask} className="mt-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Task Title</label>
-                <input
-                  type="text"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
-                  placeholder="Enter task title"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Task Title</label>
+                  <input
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                    placeholder="Enter task title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Estimated Hours</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={newTaskEstimatedHours}
+                    onChange={(e) => setNewTaskEstimatedHours(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                    placeholder="e.g. 2.5"
+                  />
+                </div>
               </div>
 
               <div>
@@ -329,9 +380,8 @@ export function AdminDashboard({
                           </div>
                         ) : (
                           <span
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              member.role === "admin" ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"
-                            }`}
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${member.role === "admin" ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"
+                              }`}
                           >
                             {getRoleLabel(member.role)}
                           </span>
@@ -387,24 +437,22 @@ export function AdminDashboard({
                       {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
                       <div className="flex flex-wrap gap-3 items-center">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            task.status === "completed"
-                              ? "bg-green-100 text-green-700"
-                              : task.status === "in-progress"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.status === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : task.status === "in-progress"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-100 text-gray-700"
+                            }`}
                         >
                           {task.status}
                         </span>
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            task.priority === "high"
-                              ? "bg-red-100 text-red-700"
-                              : task.priority === "medium"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-green-100 text-green-700"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
+                            ? "bg-red-100 text-red-700"
+                            : task.priority === "medium"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-green-100 text-green-700"
+                            }`}
                         >
                           {task.priority}
                         </span>
@@ -413,7 +461,40 @@ export function AdminDashboard({
                             Assigned to: {teamMembers.find((m) => m.id === task.assigned_to)?.full_name || "Unknown"}
                           </span>
                         )}
+                        {task.estimated_hours && (
+                          <div className="flex items-center gap-2 ml-2">
+                            <Clock className="w-3 h-3 text-muted-foreground" />
+                            <span className={`text-xs px-2 py-0.5 rounded border ${getTimeStatusColor(
+                              getTimeStatus(
+                                calculateTimeSpent(timeLogs, task.id),
+                                task.estimated_hours
+                              )
+                            )
+                              }`}>
+                              {formatDuration(calculateTimeSpent(timeLogs, task.id))} / {task.estimated_hours}h
+                            </span>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Time Allocation Progress Bar */}
+                      {task.estimated_hours && task.status !== 'completed' && (
+                        <div className="mt-3 w-full max-w-md">
+                          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${getTimeStatus(calculateTimeSpent(timeLogs, task.id), task.estimated_hours) === 'exceeded'
+                                  ? 'bg-red-500'
+                                  : getTimeStatus(calculateTimeSpent(timeLogs, task.id), task.estimated_hours) === 'warning'
+                                    ? 'bg-amber-500'
+                                    : 'bg-green-500'
+                                }`}
+                              style={{
+                                width: `${Math.min(100, (calculateTimeSpent(timeLogs, task.id) / (task.estimated_hours * 60)) * 100)}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
