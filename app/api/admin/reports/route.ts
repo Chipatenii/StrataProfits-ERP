@@ -6,10 +6,10 @@ export async function POST(request: NextRequest) {
     const { startDate, endDate } = await request.json()
     const supabase = await createAdminClient()
 
-    // Get all team members
+    // Get all team members with hourly rates
     const { data: members, error: membersError } = await supabase
       .from("profiles")
-      .select("id, full_name, email")
+      .select("id, full_name, email, hourly_rate")
       .neq("role", "admin")
 
     if (membersError) throw membersError
@@ -98,24 +98,33 @@ export async function POST(request: NextRequest) {
         hours: Math.round((t.minutes / 60) * 100) / 100
       })).sort((a: any, b: any) => b.minutes - a.minutes)
 
+      // Find the member's hourly rate
+      const member = members?.find((m: any) => m.id === report.user_id)
+      const hourlyRate = member?.hourly_rate || 0
+      const estimatedPayroll = Math.round((totalHours * hourlyRate) * 100) / 100
+
       finalReports.push({
         user_id: report.user_id,
         full_name: report.full_name,
         email: report.email,
+        hourly_rate: hourlyRate,
         total_hours: totalHours,
         total_minutes: report.total_minutes || 0,
         days_worked: userDaysWorked,
         average_hours_per_day: averagePerDay,
+        estimated_payroll: estimatedPayroll,
         tasks: tasksArray,
       })
     })
 
     finalReports.sort((a, b) => b.total_hours - a.total_hours)
     const totalCompanyHours = Math.round((totalMinutes / 60) * 100) / 100
+    const totalEstimatedPayroll = Math.round(finalReports.reduce((sum, r) => sum + r.estimated_payroll, 0) * 100) / 100
 
     return NextResponse.json({
       reports: finalReports,
       totalCompanyHours,
+      totalEstimatedPayroll,
     })
   } catch (error) {
     console.error("Error generating reports:", error)

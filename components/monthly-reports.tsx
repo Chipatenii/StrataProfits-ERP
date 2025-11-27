@@ -10,10 +10,12 @@ interface TeamMemberReport {
   user_id: string
   full_name: string
   email: string
+  hourly_rate: number
   total_hours: number
   total_minutes: number
   days_worked: number
   average_hours_per_day: number
+  estimated_payroll: number
   tasks: Array<{
     title: string
     hours: number
@@ -29,6 +31,7 @@ export function MonthlyReports({ userId }: { userId: string }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
   const [loading, setLoading] = useState(true)
   const [totalCompanyHours, setTotalCompanyHours] = useState(0)
+  const [totalEstimatedPayroll, setTotalEstimatedPayroll] = useState(0)
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
 
   useEffect(() => {
@@ -48,10 +51,11 @@ export function MonthlyReports({ userId }: { userId: string }) {
         body: JSON.stringify({ startDate, endDate }),
       })
 
-      const { reports: fetchedReports, totalCompanyHours: totalHours } = await response.json()
+      const { reports: fetchedReports, totalCompanyHours: totalHours, totalEstimatedPayroll: totalPayroll } = await response.json()
 
       setReports(fetchedReports || [])
       setTotalCompanyHours(totalHours || 0)
+      setTotalEstimatedPayroll(totalPayroll || 0)
     } catch (error) {
       console.error("Error loading reports:", error)
     } finally {
@@ -177,7 +181,7 @@ export function MonthlyReports({ userId }: { userId: string }) {
         {/* Summary Card */}
         <div className="glass-card rounded-2xl p-6">
           <h2 className="text-xl font-semibold mb-4">Summary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 bg-background rounded-lg">
               <p className="text-sm text-muted-foreground">Total Company Hours</p>
               <p className="text-2xl font-bold text-accent">{totalCompanyHours} hrs</p>
@@ -196,6 +200,10 @@ export function MonthlyReports({ userId }: { userId: string }) {
                   : "0"}{" "}
                 hrs
               </p>
+            </div>
+            <div className="p-4 bg-background rounded-lg">
+              <p className="text-sm text-muted-foreground">Estimated Payroll</p>
+              <p className="text-2xl font-bold text-green-600">ZMW {totalEstimatedPayroll.toFixed(2)}</p>
             </div>
           </div>
         </div>

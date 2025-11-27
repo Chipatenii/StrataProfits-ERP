@@ -69,10 +69,10 @@ export function AdminDashboard({
   useEffect(() => {
     loadData()
 
-    // Auto-refresh every 30 seconds for real-time updates
+    // Auto-refresh every 5 minutes for real-time updates
     const interval = setInterval(() => {
       loadData()
-    }, 30000)
+    }, 300000)
 
     // Refresh when window regains focus
     const handleFocus = () => {
@@ -498,7 +498,7 @@ export function AdminDashboard({
                           <span>{getMemberTotalHours(member.id)} hrs</span>
                         </div>
                         <div className="flex items-center gap-1 text-muted-foreground">
-                          <DollarSign className="w-3 h-3" />
+                          <span className="font-medium">Rate:</span>
                           <span>ZMW {member.hourly_rate || 0}/hr</span>
                         </div>
                         <div className="font-semibold text-green-600">
