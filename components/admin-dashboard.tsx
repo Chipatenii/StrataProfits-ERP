@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Plus, Trash2, UserCog, Settings, Clock, AlertTriangle, Menu, X } from "lucide-react"
+import { LogOut, Plus, Trash2, UserCog, Settings, Clock, AlertTriangle, Menu, X, DollarSign, TrendingUp, CheckCircle2 } from "lucide-react"
 import { ProfileSettingsModal } from "@/components/profile-settings-modal"
 import { NotificationBell } from "@/components/notification-bell"
 import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
@@ -28,6 +28,7 @@ interface TeamMember {
   full_name: string
   email: string
   role: string
+  hourly_rate: number
 }
 
 const ROLE_OPTIONS = [
@@ -37,6 +38,7 @@ const ROLE_OPTIONS = [
   { value: "virtual_assistant", label: "Virtual Assistant" },
   { value: "social_media_manager", label: "Social Media Manager" },
   { value: "developer", label: "Developer" },
+  { value: "bookkeeper", label: "Bookkeeper" },
 ]
 
 export function AdminDashboard({
@@ -59,6 +61,7 @@ export function AdminDashboard({
   const [newTaskEstimatedHours, setNewTaskEstimatedHours] = useState("")
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
   const [editingMemberRole, setEditingMemberRole] = useState("")
+  const [editingMemberRate, setEditingMemberRate] = useState("")
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [timeLogs, setTimeLogs] = useState<any[]>([])
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -121,19 +124,22 @@ export function AdminDashboard({
     }
   }
 
-  const handleUpdateMemberRole = async (memberId: string, newRole: string) => {
+  const handleUpdateMember = async (memberId: string) => {
     try {
       const response = await fetch(`/api/admin/members/${memberId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({
+          role: editingMemberRole,
+          hourly_rate: parseFloat(editingMemberRate) || 0
+        }),
       })
       if (response.ok) {
         setEditingMemberId(null)
         loadData()
       }
     } catch (error) {
-      console.error("Error updating member role:", error)
+      console.error("Error updating member:", error)
     }
   }
 
@@ -168,6 +174,37 @@ export function AdminDashboard({
   const getRoleLabel = (role: string) => {
     return ROLE_OPTIONS.find((r) => r.value === role)?.label || role
   }
+
+  const calculateMemberPayroll = (memberId: string) => {
+    const member = teamMembers.find(m => m.id === memberId)
+    if (!member) return 0
+
+    // Calculate total minutes worked by this member
+    const memberLogs = timeLogs.filter(log => log.user_id === memberId)
+    const totalMinutes = memberLogs.reduce((acc, log) => acc + (log.duration_minutes || 0), 0)
+    const totalHours = totalMinutes / 60
+
+    return (totalHours * (member.hourly_rate || 0)).toFixed(2)
+  }
+
+  const getMemberTotalHours = (memberId: string) => {
+    const memberLogs = timeLogs.filter(log => log.user_id === memberId)
+    const totalMinutes = memberLogs.reduce((acc, log) => acc + (log.duration_minutes || 0), 0)
+    return (totalMinutes / 60).toFixed(1)
+  }
+
+  const getTopPerformer = () => {
+    if (teamMembers.length === 0) return null
+
+    const performerStats = teamMembers.map(member => {
+      const completedTasks = tasks.filter(t => t.assigned_to === member.id && t.status === 'completed').length
+      return { member, completedTasks }
+    })
+
+    return performerStats.sort((a, b) => b.completedTasks - a.completedTasks)[0]
+  }
+
+  const topPerformer = getTopPerformer()
 
   if (loading) {
     return (
@@ -267,6 +304,48 @@ export function AdminDashboard({
       )}
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="glass-card rounded-2xl p-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground font-medium">Top Performer</p>
+              <h3 className="text-xl font-bold mt-1">
+                {topPerformer ? topPerformer.member.full_name : "N/A"}
+              </h3>
+              <p className="text-xs text-green-600 mt-1">
+                {topPerformer ? `${topPerformer.completedTasks} tasks completed` : "No data"}
+              </p>
+            </div>
+            <div className="p-3 bg-amber-100 rounded-full text-amber-600">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground font-medium">Active Tasks</p>
+              <h3 className="text-xl font-bold mt-1">
+                {tasks.filter(t => t.status === 'in-progress').length}
+              </h3>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full text-blue-600">
+              <Clock className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground font-medium">Completed This Week</p>
+              <h3 className="text-xl font-bold mt-1">
+                {tasks.filter(t => t.status === 'completed' && t.completed_at && new Date(t.completed_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
+              </h3>
+            </div>
+            <div className="p-3 bg-green-100 rounded-full text-green-600">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+
         {/* Create Task Card */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex justify-between items-center">
@@ -274,22 +353,6 @@ export function AdminDashboard({
               <Plus className="w-4 h-4" />
               Create Task
             </button>
-
-            {/* Analytics Summary */}
-            <div className="hidden md:flex gap-4">
-              <div className="bg-white/50 px-4 py-2 rounded-lg border border-white/20">
-                <p className="text-xs text-muted-foreground uppercase font-bold">Completed This Week</p>
-                <p className="text-lg font-bold text-green-600">
-                  {tasks.filter(t => t.status === 'completed' && t.completed_at && new Date(t.completed_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
-                </p>
-              </div>
-              <div className="bg-white/50 px-4 py-2 rounded-lg border border-white/20">
-                <p className="text-xs text-muted-foreground uppercase font-bold">Active Tasks</p>
-                <p className="text-lg font-bold text-blue-600">
-                  {tasks.filter(t => t.status === 'in-progress').length}
-                </p>
-              </div>
-            </div>
           </div>
 
           {showCreateTask && (
@@ -378,9 +441,9 @@ export function AdminDashboard({
           )}
         </div>
 
-        {/* Team Members Section */}
+        {/* Team Members & Payroll Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">Team Members</h2>
+          <h2 className="text-2xl font-bold mb-4">Team & Payroll</h2>
           <div className="grid gap-4">
             {teamMembers.length === 0 ? (
               <div className="glass-card rounded-lg p-8 text-center">
@@ -389,58 +452,90 @@ export function AdminDashboard({
             ) : (
               teamMembers.map((member) => (
                 <div key={member.id} className="glass-card rounded-lg p-6">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-1">{member.full_name}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{member.email}</p>
-                      <div className="flex items-center gap-2">
-                        {editingMemberId === member.id ? (
-                          <div className="flex gap-2 items-center">
-                            <select
-                              value={editingMemberRole}
-                              onChange={(e) => setEditingMemberRole(e.target.value)}
-                              className="px-3 py-1 rounded-lg bg-background border border-border text-sm"
-                            >
-                              {ROLE_OPTIONS.map((role) => (
-                                <option key={role.value} value={role.value}>
-                                  {role.label}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              onClick={() => handleUpdateMemberRole(member.id, editingMemberRole)}
-                              className="px-3 py-1 rounded-lg bg-green-500 text-white hover:bg-green-600 text-sm"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingMemberId(null)}
-                              className="px-3 py-1 rounded-lg bg-muted text-foreground hover:bg-muted/80 text-sm"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <span
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${member.role === "admin" ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"
-                              }`}
-                          >
-                            {getRoleLabel(member.role)}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-semibold">{member.full_name}</h3>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${member.role === "admin" ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"
+                            }`}
+                        >
+                          {getRoleLabel(member.role)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{member.email}</p>
+
+                      {/* Payroll Info */}
+                      <div className="flex items-center gap-4 mt-2 text-sm">
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          <span>{getMemberTotalHours(member.id)} hrs</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <DollarSign className="w-3 h-3" />
+                          <span>${member.hourly_rate || 0}/hr</span>
+                        </div>
+                        <div className="font-semibold text-green-600">
+                          Est. Payroll: ${calculateMemberPayroll(member.id)}
+                        </div>
                       </div>
                     </div>
+
                     {member.id !== userId && (
-                      <div className="flex gap-2 ml-4">
-                        {editingMemberId !== member.id && (
+                      <div className="flex items-center gap-2">
+                        {editingMemberId === member.id ? (
+                          <div className="flex flex-col gap-2 p-4 bg-muted/50 rounded-lg border border-border">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">Role</label>
+                                <select
+                                  value={editingMemberRole}
+                                  onChange={(e) => setEditingMemberRole(e.target.value)}
+                                  className="w-full px-2 py-1 rounded bg-background border border-border text-sm"
+                                >
+                                  {ROLE_OPTIONS.map((role) => (
+                                    <option key={role.value} value={role.value}>
+                                      {role.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">Hourly Rate ($)</label>
+                                <input
+                                  type="number"
+                                  value={editingMemberRate}
+                                  onChange={(e) => setEditingMemberRate(e.target.value)}
+                                  className="w-full px-2 py-1 rounded bg-background border border-border text-sm"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2 justify-end mt-2">
+                              <button
+                                onClick={() => handleUpdateMember(member.id)}
+                                className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600 text-sm"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingMemberId(null)}
+                                className="px-3 py-1 rounded bg-muted text-foreground hover:bg-muted/80 text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
                           <>
                             <button
                               onClick={() => {
                                 setEditingMemberId(member.id)
                                 setEditingMemberRole(member.role)
+                                setEditingMemberRate(member.hourly_rate?.toString() || "")
                               }}
                               className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                              title="Edit Role"
+                              title="Edit Member"
                             >
                               <UserCog className="w-4 h-4" />
                             </button>

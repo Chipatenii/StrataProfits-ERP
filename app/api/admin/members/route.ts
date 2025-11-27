@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     // Fetch all team members (excluding admins for clarity, or include all with their roles)
     const { data: members, error } = await admin
       .from("profiles")
-      .select("id, full_name, email, role")
+      .select("id, full_name, email, role, hourly_rate")
       .order("created_at", { ascending: false })
 
     if (error) throw error

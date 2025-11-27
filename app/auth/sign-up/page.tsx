@@ -11,6 +11,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [role, setRole] = useState("team_member")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -35,6 +36,7 @@ export default function SignUpPage() {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
+            role: role,
           },
         },
       })
@@ -106,6 +108,22 @@ export default function SignUpPage() {
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Role</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                <option value="team_member">Team Member</option>
+                <option value="developer">Developer</option>
+                <option value="graphic_designer">Graphic Designer</option>
+                <option value="social_media_manager">Social Media Manager</option>
+                <option value="virtual_assistant">Virtual Assistant</option>
+                <option value="bookkeeper">Bookkeeper</option>
+              </select>
+            </div>
 
             <button type="submit" disabled={isLoading} className="btn-primary w-full">
               {isLoading ? "Creating account..." : "Sign Up"}

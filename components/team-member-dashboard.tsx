@@ -21,6 +21,8 @@ interface Task {
   due_date: string
   estimated_hours: number | null
   elapsed_minutes?: number
+  completed_at?: string
+  completion_notes?: string
 }
 
 interface TimeLog {
@@ -57,7 +59,16 @@ export function TeamMemberDashboard({
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [completingTask, setCompletingTask] = useState<Task | null>(null)
+  const [animatingTaskId, setAnimatingTaskId] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<"active" | "completed">("active")
+
+  const filteredTasks = tasks.filter((task) => {
+    if (activeTab === "active") {
+      return task.status !== "completed"
+    }
+    return task.status === "completed"
+  })
 
   useEffect(() => {
     loadData()
@@ -204,8 +215,14 @@ export function TeamMemberDashboard({
 
       if (error) throw error
 
+      const completedTaskId = completingTask.id
       setCompletingTask(null)
-      loadData()
+      setAnimatingTaskId(completedTaskId)
+
+      setTimeout(() => {
+        setAnimatingTaskId(null)
+        loadData()
+      }, 500)
     } catch (error) {
       console.error("Error completing task:", error)
     }
@@ -331,20 +348,46 @@ export function TeamMemberDashboard({
 
         {/* Tasks Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">Assigned Tasks</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">My Tasks</h2>
+            <div className="flex bg-white rounded-lg p-1 border border-border">
+              <button
+                onClick={() => setActiveTab("active")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => setActiveTab("completed")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "completed" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                Completed
+              </button>
+            </div>
+          </div>
+
           <div className="grid gap-4">
-            {tasks.length === 0 ? (
+            {filteredTasks.length === 0 ? (
               <div className="glass-card rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No tasks assigned yet</p>
+                <p className="text-muted-foreground">No {activeTab} tasks found</p>
               </div>
             ) : (
-              tasks.map((task) => {
+              filteredTasks.map((task) => {
                 const isTaskActive = activeTaskId === task.id
                 return (
-                  <div key={task.id} className="glass-card rounded-lg p-6">
+                  <div
+                    key={task.id}
+                    className={`glass-card rounded-lg p-6 transition-all duration-500 ${animatingTaskId === task.id ? "opacity-0 translate-x-10" : "opacity-100"
+                      }`}
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold mb-2">{task.title}</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold">{task.title}</h3>
+                          {task.status === "completed" && <CheckCircle className="w-5 h-5 text-green-500" />}
+                        </div>
                         {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
                       </div>
                       <div className="flex gap-2 ml-4">
@@ -361,51 +404,65 @@ export function TeamMemberDashboard({
                       </div>
                     </div>
 
-                    <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-2">Time on this task:</p>
-                            {isTaskActive && (
-                              <Timer isActive={true} startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""} />
-                            )}
-                            {!isTaskActive && (
-                              <p className="text-lg font-semibold">
-                                {(calculateTimeSpent(timeLogs, task.id) / 60).toFixed(1)} hrs
-                              </p>
+                    {activeTab === "active" && (
+                      <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-2">Time on this task:</p>
+                              {isTaskActive && (
+                                <Timer
+                                  isActive={true}
+                                  startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""}
+                                />
+                              )}
+                              {!isTaskActive && (
+                                <p className="text-lg font-semibold">
+                                  {(calculateTimeSpent(timeLogs, task.id) / 60).toFixed(1)} hrs
+                                </p>
+                              )}
+                            </div>
+                            {task.estimated_hours && (
+                              <div className="hidden sm:block">
+                                <TimeAllocationIndicator
+                                  spentMinutes={calculateTimeSpent(timeLogs, task.id)}
+                                  estimatedHours={task.estimated_hours}
+                                  size="sm"
+                                />
+                              </div>
                             )}
                           </div>
-                          {task.estimated_hours && (
-                            <div className="hidden sm:block">
-                              <TimeAllocationIndicator
-                                spentMinutes={calculateTimeSpent(timeLogs, task.id)}
-                                estimatedHours={task.estimated_hours}
-                                size="sm"
-                              />
-                            </div>
-                          )}
+                          <button
+                            onClick={() => handleTaskStartStop(task.id)}
+                            className={`px-4 py-2 rounded-lg font-medium text-white transition-all ${isTaskActive ? "bg-red-500 hover:bg-red-600" : "bg-accent hover:bg-accent/90"
+                              }`}
+                          >
+                            {isTaskActive ? "Stop" : "Start"}
+                          </button>
                         </div>
+                      </div>
+                    )}
+
+                    {activeTab === "active" ? (
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleTaskStartStop(task.id)}
-                          className={`px-4 py-2 rounded-lg font-medium text-white transition-all ${isTaskActive ? "bg-red-500 hover:bg-red-600" : "bg-accent hover:bg-accent/90"
-                            }`}
+                          onClick={() => handleTaskStatusChange(task.id, "completed")}
+                          className="flex-1 btn-secondary flex items-center justify-center gap-2 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
                         >
-                          {isTaskActive ? "Stop" : "Start"}
+                          <CheckCircle className="w-4 h-4" />
+                          Mark as Completed
                         </button>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        Completed on {new Date(task.completed_at || "").toLocaleDateString()}
+                        {task.completion_notes && (
+                          <p className="mt-1 italic">"{task.completion_notes}"</p>
+                        )}
+                      </div>
+                    )}
 
-                    <select
-                      value={task.status}
-                      onChange={(e) => handleTaskStatusChange(task.id, e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
-
-                    {task.due_date && (
+                    {task.due_date && activeTab === "active" && (
                       <p className="text-sm text-muted-foreground mt-3">
                         Due: {new Date(task.due_date).toLocaleDateString()}
                       </p>

@@ -4,9 +4,13 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function PATCH(request: NextRequest, { params }: { params: { memberId: string } }) {
   try {
     const admin = await createAdminClient()
-    const { role } = await request.json()
+    const { role, hourly_rate } = await request.json()
 
-    const { data, error } = await admin.from("profiles").update({ role }).eq("id", params.memberId).select()
+    const updateData: any = {}
+    if (role) updateData.role = role
+    if (hourly_rate !== undefined) updateData.hourly_rate = hourly_rate
+
+    const { data, error } = await admin.from("profiles").update(updateData).eq("id", params.memberId).select()
 
     if (error) throw error
 
