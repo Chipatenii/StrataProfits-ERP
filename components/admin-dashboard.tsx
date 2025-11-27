@@ -68,6 +68,22 @@ export function AdminDashboard({
 
   useEffect(() => {
     loadData()
+
+    // Auto-refresh every 30 seconds for real-time updates
+    const interval = setInterval(() => {
+      loadData()
+    }, 30000)
+
+    // Refresh when window regains focus
+    const handleFocus = () => {
+      loadData()
+    }
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   const loadData = async () => {
@@ -137,23 +153,33 @@ export function AdminDashboard({
       if (response.ok) {
         setEditingMemberId(null)
         loadData()
+        alert("Member updated successfully")
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to update member: ${errorData.error || "Unknown error"}`)
       }
     } catch (error) {
       console.error("Error updating member:", error)
+      alert("An error occurred while updating the member")
     }
   }
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!confirm("Are you sure you want to remove this team member?")) return
+    if (!confirm("Are you sure you want to remove this team member? This will permanently delete them from the database.")) return
     try {
       const response = await fetch(`/api/admin/members/${memberId}`, {
         method: "DELETE",
       })
       if (response.ok) {
+        alert("Member deleted successfully")
         loadData()
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to delete member: ${errorData.error || "Unknown error"}`)
       }
     } catch (error) {
       console.error("Error deleting member:", error)
+      alert("An error occurred while deleting the member")
     }
   }
 
@@ -466,33 +492,32 @@ export function AdminDashboard({
                       <p className="text-sm text-muted-foreground">{member.email}</p>
 
                       {/* Payroll Info */}
-                      <div className="flex items-center gap-4 mt-2 text-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-sm">
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="w-3 h-3" />
                           <span>{getMemberTotalHours(member.id)} hrs</span>
                         </div>
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <DollarSign className="w-3 h-3" />
-                          <span>${member.hourly_rate || 0}/hr</span>
+                          <span>ZMW {member.hourly_rate || 0}/hr</span>
                         </div>
                         <div className="font-semibold text-green-600">
-                          Est. Payroll: ${calculateMemberPayroll(member.id)}
+                          Est. Payroll: ZMW {calculateMemberPayroll(member.id)}
                         </div>
                       </div>
                     </div>
 
                     {member.id !== userId && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
                         {editingMemberId === member.id ? (
-                          <div className="flex flex-col gap-2 p-4 bg-muted/50 rounded-lg border border-border">
-                            <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-2 p-4 bg-muted/50 rounded-lg border border-border w-full">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div>
                                 <label className="text-xs font-medium mb-1 block">Role</label>
                                 <select
                                   value={editingMemberRole}
                                   onChange={(e) => setEditingMemberRole(e.target.value)}
-                                  className="w-full px-2 py-1 rounded bg-background border border-border text-sm"
-                                >
+                                  className="w-full px-2 py-1 rounded bg-background border border-border text-sm">
                                   {ROLE_OPTIONS.map((role) => (
                                     <option key={role.value} value={role.value}>
                                       {role.label}
@@ -501,7 +526,7 @@ export function AdminDashboard({
                                 </select>
                               </div>
                               <div>
-                                <label className="text-xs font-medium mb-1 block">Hourly Rate ($)</label>
+                                <label className="text-xs font-medium mb-1 block">Hourly Rate (ZMW)</label>
                                 <input
                                   type="number"
                                   value={editingMemberRate}
@@ -557,16 +582,16 @@ export function AdminDashboard({
           </div>
         </div>
 
-        {/* Tasks List */}
+        {/* Active Tasks Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">All Tasks</h2>
+          <h2 className="text-2xl font-bold mb-4">Active Tasks</h2>
           <div className="grid gap-4">
-            {tasks.length === 0 ? (
+            {tasks.filter(t => t.status !== 'completed').length === 0 ? (
               <div className="glass-card rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No tasks created yet</p>
+                <p className="text-muted-foreground">No active tasks</p>
               </div>
             ) : (
-              tasks.map((task) => (
+              tasks.filter(t => t.status !== 'completed').map((task) => (
                 <div key={task.id} className="glass-card rounded-lg p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -574,11 +599,9 @@ export function AdminDashboard({
                       {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
                       <div className="flex flex-wrap gap-3 items-center">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.status === "completed"
-                            ? "bg-green-100 text-green-700"
-                            : task.status === "in-progress"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.status === "in-progress"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-700"
                             }`}
                         >
                           {task.status}
@@ -615,7 +638,7 @@ export function AdminDashboard({
                       </div>
 
                       {/* Time Allocation Progress Bar */}
-                      {task.estimated_hours && task.status !== 'completed' && (
+                      {task.estimated_hours && (
                         <div className="mt-3 w-full max-w-md">
                           <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                             <div
@@ -632,6 +655,60 @@ export function AdminDashboard({
                           </div>
                         </div>
                       )}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="ml-4 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Completed Tasks Section */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Completed Tasks</h2>
+          <div className="grid gap-4">
+            {tasks.filter(t => t.status === 'completed').length === 0 ? (
+              <div className="glass-card rounded-lg p-8 text-center">
+                <p className="text-muted-foreground">No completed tasks</p>
+              </div>
+            ) : (
+              tasks.filter(t => t.status === 'completed').map((task) => (
+                <div key={task.id} className="glass-card rounded-lg p-6 opacity-75">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold mb-2 line-through">{task.title}</h3>
+                      {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
+                      <div className="flex flex-wrap gap-3 items-center">
+                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                          Completed
+                        </span>
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
+                            ? "bg-red-100 text-red-700"
+                            : task.priority === "medium"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-green-100 text-green-700"
+                            }`}
+                        >
+                          {task.priority}
+                        </span>
+                        {task.assigned_to && (
+                          <span className="text-sm text-muted-foreground">
+                            Assigned to: {teamMembers.find((m) => m.id === task.assigned_to)?.full_name || "Unknown"}
+                          </span>
+                        )}
+                        {task.completed_at && (
+                          <span className="text-xs text-muted-foreground">
+                            Completed: {new Date(task.completed_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
