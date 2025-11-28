@@ -97,8 +97,9 @@ export function AdminDashboard({
       const tasksData = await tasksResponse.json()
       setTasks(tasksData || [])
 
-      // Load time logs for all tasks
-      const { data: logsData } = await supabase.from("time_logs").select("*")
+      // Load time logs securely via admin API
+      const logsResponse = await fetch("/api/admin/time-logs")
+      const logsData = await logsResponse.json()
       setTimeLogs(logsData || [])
 
       setLoading(false)
@@ -189,11 +190,21 @@ export function AdminDashboard({
   }
 
   const handleDeleteTask = async (taskId: string) => {
+    if (!confirm("Are you sure you want to delete this task?")) return
     try {
-      await supabase.from("tasks").delete().eq("id", taskId)
-      loadData()
+      const response = await fetch(`/api/admin/tasks?id=${taskId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        loadData()
+      } else {
+        console.error("Failed to delete task")
+        alert("Failed to delete task")
+      }
     } catch (error) {
       console.error("Error deleting task:", error)
+      alert("Error deleting task")
     }
   }
 
@@ -660,7 +671,7 @@ export function AdminDashboard({
                       onClick={() => handleDeleteTask(task.id)}
                       className="ml-4 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      Delete
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -714,7 +725,7 @@ export function AdminDashboard({
                       onClick={() => handleDeleteTask(task.id)}
                       className="ml-4 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      Delete
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

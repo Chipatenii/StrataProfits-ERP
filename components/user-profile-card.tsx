@@ -29,7 +29,7 @@ export function UserProfileCard({ fullName, email, role, avatarUrl }: UserProfil
           <p className="text-sm text-muted-foreground">{email}</p>
           <div className="mt-2">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent">
-              {role === "team_member" ? "Team Member" : "Admin"}
+              {role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </span>
           </div>
         </div>

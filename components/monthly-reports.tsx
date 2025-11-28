@@ -33,6 +33,8 @@ export function MonthlyReports({ userId }: { userId: string }) {
   const [totalCompanyHours, setTotalCompanyHours] = useState(0)
   const [totalEstimatedPayroll, setTotalEstimatedPayroll] = useState(0)
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
+  const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
+  const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
 
   useEffect(() => {
     loadReports()
@@ -56,6 +58,22 @@ export function MonthlyReports({ userId }: { userId: string }) {
       setReports(fetchedReports || [])
       setTotalCompanyHours(totalHours || 0)
       setTotalEstimatedPayroll(totalPayroll || 0)
+
+      // Find top performer and least productive
+      if (fetchedReports && fetchedReports.length > 0) {
+        const top = fetchedReports.reduce((prev: TeamMemberReport, current: TeamMemberReport) =>
+          (current.total_hours > prev.total_hours) ? current : prev
+        )
+        setTopPerformer(top)
+
+        const least = fetchedReports.reduce((prev: TeamMemberReport, current: TeamMemberReport) =>
+          (current.total_hours < prev.total_hours && current.total_hours > 0) ? current : prev
+        )
+        setLeastProductive(least)
+      } else {
+        setTopPerformer(null)
+        setLeastProductive(null)
+      }
     } catch (error) {
       console.error("Error loading reports:", error)
     } finally {
@@ -208,6 +226,41 @@ export function MonthlyReports({ userId }: { userId: string }) {
           </div>
         </div>
 
+        {/* Productivity Highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {topPerformer && (
+            <div className="glass-card rounded-2xl p-6 bg-green-50/50 border-green-100">
+              <h3 className="text-lg font-semibold text-green-800 mb-2">Top Performer 🏆</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-xl">{topPerformer.full_name}</p>
+                  <p className="text-sm text-muted-foreground">{topPerformer.email}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-green-600">{topPerformer.total_hours.toFixed(1)} hrs</p>
+                  <p className="text-xs text-muted-foreground">This Month</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {leastProductive && (
+            <div className="glass-card rounded-2xl p-6 bg-orange-50/50 border-orange-100">
+              <h3 className="text-lg font-semibold text-orange-800 mb-2">Needs Support 💪</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-xl">{leastProductive.full_name}</p>
+                  <p className="text-sm text-muted-foreground">{leastProductive.email}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-orange-600">{leastProductive.total_hours.toFixed(1)} hrs</p>
+                  <p className="text-xs text-muted-foreground">This Month</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Team Member Reports Table */}
         <div>
           <h2 className="text-2xl font-bold mb-4">Team Member Details</h2>
@@ -221,6 +274,7 @@ export function MonthlyReports({ userId }: { userId: string }) {
                     <th className="px-6 py-3 text-left text-sm font-semibold">Total Hours</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold">Days Worked</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold">Avg Hours/Day</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Est. Payroll</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -243,6 +297,7 @@ export function MonthlyReports({ userId }: { userId: string }) {
                           <td className="px-6 py-4 font-semibold text-accent">{report.total_hours.toFixed(2)}</td>
                           <td className="px-6 py-4">{report.days_worked}</td>
                           <td className="px-6 py-4">{report.average_hours_per_day.toFixed(2)}</td>
+                          <td className="px-6 py-4 font-medium text-green-600">ZMW {report.estimated_payroll.toFixed(2)}</td>
                         </tr>
                         {expandedUser === report.user_id && (
                           <tr className="bg-muted/30">
