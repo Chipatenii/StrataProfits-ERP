@@ -1,3 +1,15 @@
+"use client"
+
+import type React from "react"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { Plus, Trash2, Clock, CheckCircle2, TrendingUp, Settings, LogOut, Menu, X, Loader2 } from "lucide-react"
+import { ProfileSettingsModal } from "@/components/profile-settings-modal"
+import { NotificationBell } from "@/components/notification-bell"
+import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
+import { calculateTimeSpent, formatDuration, getTimeStatus, getTimeStatusColor } from "@/lib/time-utils"
+
 interface Task {
   id: string
   title: string
@@ -708,6 +720,12 @@ export function AdminDashboard({
                           </span>
                         )}
                       </div>
+                      {task.completion_notes && (
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs font-medium text-blue-900 mb-1">Completion Notes:</p>
+                          <p className="text-sm text-blue-800 italic">"{task.completion_notes}"</p>
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
