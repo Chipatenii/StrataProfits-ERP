@@ -1,15 +1,3 @@
-"use client"
-
-import type React from "react"
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { LogOut, Plus, Trash2, UserCog, Settings, Clock, AlertTriangle, Menu, X, DollarSign, TrendingUp, CheckCircle2 } from "lucide-react"
-import { ProfileSettingsModal } from "@/components/profile-settings-modal"
-import { NotificationBell } from "@/components/notification-bell"
-import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
-import { calculateTimeSpent, formatDuration, getTimeStatus, getTimeStatusColor } from "@/lib/time-utils"
-
 interface Task {
   id: string
   title: string
@@ -246,7 +234,7 @@ export function AdminDashboard({
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-xl text-muted-foreground">Loading...</div>
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
       </div>
     )
   }

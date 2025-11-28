@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, Clock, CheckCircle, Menu, X } from "lucide-react"
+import { LogOut, Settings, Clock, CheckCircle, Menu, X, Loader2 } from "lucide-react"
 import { Timer } from "./timer"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
@@ -231,7 +231,7 @@ export function TeamMemberDashboard({
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-xl text-muted-foreground">Loading...</div>
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
       </div>
     )
   }
@@ -423,7 +423,7 @@ export function TeamMemberDashboard({
                               )}
                             </div>
                             {task.estimated_hours && (
-                              <div className="hidden sm:block">
+                              <div className="block">
                                 <TimeAllocationIndicator
                                   spentMinutes={calculateTimeSpent(timeLogs, task.id)}
                                   estimatedHours={task.estimated_hours}

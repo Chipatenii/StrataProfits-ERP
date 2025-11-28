@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Download } from "lucide-react"
+import { ArrowLeft, Download, Loader2 } from "lucide-react"
 import jsPDF from "jspdf"
 
 interface TeamMemberReport {
@@ -152,7 +152,7 @@ export function MonthlyReports({ userId }: { userId: string }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-xl text-muted-foreground">Loading...</div>
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
       </div>
     )
   }
