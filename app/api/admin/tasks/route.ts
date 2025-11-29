@@ -17,21 +17,25 @@ export async function GET(request: NextRequest) {
   }
 }
 
+import { createTaskSchema } from "@/lib/schemas"
+
 export async function POST(request: NextRequest) {
   try {
     const admin = await createAdminClient()
     const body = await request.json()
 
+    // Validate request body
+    const validation = createTaskSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.format() },
+        { status: 400 }
+      )
+    }
+
     const { data: task, error } = await admin
       .from("tasks")
-      .insert({
-        title: body.title,
-        description: body.description,
-        priority: body.priority,
-        assigned_to: body.assigned_to || null,
-        created_by: body.created_by,
-        estimated_hours: body.estimated_hours || null,
-      })
+      .insert(validation.data)
       .select()
 
     if (error) throw error

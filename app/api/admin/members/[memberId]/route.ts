@@ -1,12 +1,24 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { type NextRequest, NextResponse } from "next/server"
 
+import { updateMemberSchema } from "@/lib/schemas"
+
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
   try {
     const { memberId } = await params
     const admin = await createAdminClient()
     const body = await request.json()
-    const { role, hourly_rate } = body
+
+    // Validate request body
+    const validation = updateMemberSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.format() },
+        { status: 400 }
+      )
+    }
+
+    const { role, hourly_rate } = validation.data
 
     console.log('Update member request:', { memberId, role, hourly_rate })
 

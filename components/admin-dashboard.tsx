@@ -9,6 +9,7 @@ import { ProfileSettingsModal } from "@/components/profile-settings-modal"
 import { NotificationBell } from "@/components/notification-bell"
 import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
 import { calculateTimeSpent, formatDuration, getTimeStatus, getTimeStatusColor } from "@/lib/time-utils"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 
 interface Task {
   id: string
@@ -66,26 +67,6 @@ export function AdminDashboard({
   const [timeLogs, setTimeLogs] = useState<any[]>([])
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  useEffect(() => {
-    loadData()
-
-    // Auto-refresh every 5 minutes for real-time updates
-    const interval = setInterval(() => {
-      loadData()
-    }, 300000)
-
-    // Refresh when window regains focus
-    const handleFocus = () => {
-      loadData()
-    }
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [])
-
   const loadData = async () => {
     try {
       setLoading(true)
@@ -108,6 +89,15 @@ export function AdminDashboard({
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  // Real-time subscriptions
+  useRealtimeSubscription("tasks", loadData)
+  useRealtimeSubscription("profiles", loadData)
+  useRealtimeSubscription("time_logs", loadData)
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()

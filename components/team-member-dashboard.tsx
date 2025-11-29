@@ -11,6 +11,7 @@ import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
 import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { NotificationBell } from "@/components/notification-bell"
 import { calculateTimeSpent } from "@/lib/time-utils"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 
 interface Task {
   id: string
@@ -74,12 +75,6 @@ export function TeamMemberDashboard({
     return task.status === "completed"
   })
 
-  useEffect(() => {
-    loadData()
-    const interval = setInterval(loadData, 30000) // Refresh every 30 seconds
-    return () => clearInterval(interval)
-  }, [])
-
   const loadData = async () => {
     try {
       const { data: profileData } = await supabase.from("profiles").select("*").eq("id", userId).single()
@@ -132,6 +127,14 @@ export function TeamMemberDashboard({
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  // Real-time subscriptions
+  useRealtimeSubscription("tasks", loadData)
+  useRealtimeSubscription("time_logs", loadData)
 
   const handleTaskStartStop = async (taskId: string) => {
     try {
