@@ -1,42 +1,59 @@
 "use client"
 
-import type React from "react"
-
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+
+const signUpSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+  role: z.enum(["team_member", "developer", "graphic_designer", "social_media_manager", "virtual_assistant", "bookkeeper"]),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+})
+
+type SignUpFormValues = z.infer<typeof signUpSchema>
 
 export default function SignUpPage() {
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [role, setRole] = useState("team_member")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignUpFormValues>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "team_member",
+    },
+  })
+
+  const onSubmit = async (data: SignUpFormValues) => {
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
     try {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: data.email,
+        password: data.password,
         options: {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
           data: {
-            full_name: fullName,
-            role: role,
+            full_name: data.fullName,
+            role: data.role,
           },
         },
       })
@@ -58,53 +75,49 @@ export default function SignUpPage() {
             <p className="text-sm text-muted-foreground mt-2">Create your account</p>
           </div>
 
-          <form onSubmit={handleSignUp} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">Full Name</label>
               <input
+                {...register("fullName")}
                 type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
                 className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder="John Doe"
               />
+              {errors.fullName && <p className="text-red-500 text-sm mt-1">{errors.fullName.message}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Email</label>
               <input
+                {...register("email")}
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
                 className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder="you@example.com"
               />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Password</label>
               <input
+                {...register("password")}
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
                 className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder="••••••••"
               />
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Confirm Password</label>
               <input
+                {...register("confirmPassword")}
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
                 className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder="••••••••"
               />
+              {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
@@ -112,8 +125,7 @@ export default function SignUpPage() {
             <div>
               <label className="block text-sm font-medium mb-2">Role</label>
               <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
+                {...register("role")}
                 className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 <option value="team_member">Team Member</option>
@@ -123,6 +135,7 @@ export default function SignUpPage() {
                 <option value="virtual_assistant">Virtual Assistant</option>
                 <option value="bookkeeper">Bookkeeper</option>
               </select>
+              {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>}
             </div>
 
             <button type="submit" disabled={isLoading} className="btn-primary w-full">

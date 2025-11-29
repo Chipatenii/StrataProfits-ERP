@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, Clock, CheckCircle2, TrendingUp, Settings, LogOut, Menu, X, Loader2, UserCog } from "lucide-react"
@@ -10,6 +10,8 @@ import { NotificationBell } from "@/components/notification-bell"
 import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
 import { calculateTimeSpent, formatDuration, getTimeStatus, getTimeStatusColor } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { useTasks, useMembers, useTimeLogs } from "@/hooks/use-queries"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface Task {
   id: string
@@ -51,9 +53,15 @@ export function AdminDashboard({
 }) {
   const supabase = createClient()
   const router = useRouter()
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+
+  // Use React Query hooks for data fetching
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: teamMembers = [], isLoading: membersLoading } = useMembers()
+  const { data: timeLogs = [], isLoading: logsLoading } = useTimeLogs()
+
+  const loading = tasksLoading || membersLoading || logsLoading
+
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState("")
   const [newTaskDescription, setNewTaskDescription] = useState("")
@@ -64,40 +72,20 @@ export function AdminDashboard({
   const [editingMemberRole, setEditingMemberRole] = useState("")
   const [editingMemberRate, setEditingMemberRate] = useState("")
   const [showProfileSettings, setShowProfileSettings] = useState(false)
-  const [timeLogs, setTimeLogs] = useState<any[]>([])
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const loadData = async () => {
-    try {
-      setLoading(true)
-      const membersResponse = await fetch("/api/admin/members")
-      const membersData = await membersResponse.json()
-      setTeamMembers(membersData || [])
-
-      const tasksResponse = await fetch("/api/admin/tasks")
-      const tasksData = await tasksResponse.json()
-      setTasks(tasksData || [])
-
-      // Load time logs securely via admin API
-      const logsResponse = await fetch("/api/admin/time-logs")
-      const logsData = await logsResponse.json()
-      setTimeLogs(logsData || [])
-
-      setLoading(false)
-    } catch (error) {
-      console.error("Error loading data:", error)
-      setLoading(false)
-    }
+  // Invalidate queries on real-time updates instead of refetching manually
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["tasks"] })
+    queryClient.invalidateQueries({ queryKey: ["members"] })
+    queryClient.invalidateQueries({ queryKey: ["time_logs"] })
+    router.refresh()
   }
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   // Real-time subscriptions
-  useRealtimeSubscription("tasks", loadData)
-  useRealtimeSubscription("profiles", loadData)
-  useRealtimeSubscription("time_logs", loadData)
+  useRealtimeSubscription("tasks", invalidateQueries)
+  useRealtimeSubscription("profiles", invalidateQueries)
+  useRealtimeSubscription("time_logs", invalidateQueries)
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,13 +106,14 @@ export function AdminDashboard({
       })
 
       if (response.ok) {
+        setShowCreateTask(false)
         setNewTaskTitle("")
         setNewTaskDescription("")
         setNewTaskPriority("medium")
         setNewTaskAssignee("")
         setNewTaskEstimatedHours("")
-        setShowCreateTask(false)
-        loadData()
+        // Invalidate queries to refetch data
+        queryClient.invalidateQueries({ queryKey: ["tasks"] })
       }
     } catch (error) {
       console.error("Error creating task:", error)
@@ -143,7 +132,7 @@ export function AdminDashboard({
       })
       if (response.ok) {
         setEditingMemberId(null)
-        loadData()
+        queryClient.invalidateQueries({ queryKey: ["members"] })
         alert("Member updated successfully")
       } else {
         const errorData = await response.json()
@@ -163,7 +152,7 @@ export function AdminDashboard({
       })
       if (response.ok) {
         alert("Member deleted successfully")
-        loadData()
+        queryClient.invalidateQueries({ queryKey: ["members"] })
       } else {
         const errorData = await response.json()
         alert(`Failed to delete member: ${errorData.error || "Unknown error"}`)
@@ -187,7 +176,7 @@ export function AdminDashboard({
       })
 
       if (response.ok) {
-        loadData()
+        queryClient.invalidateQueries({ queryKey: ["tasks"] })
       } else {
         console.error("Failed to delete task")
         alert("Failed to delete task")
@@ -206,7 +195,7 @@ export function AdminDashboard({
       })
 
       if (response.ok) {
-        loadData()
+        queryClient.invalidateQueries({ queryKey: ["tasks"] })
         alert("All completed tasks have been deleted.")
       } else {
         const errorData = await response.json()
