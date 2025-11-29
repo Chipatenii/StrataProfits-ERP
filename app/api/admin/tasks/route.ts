@@ -48,6 +48,13 @@ export async function DELETE(request: NextRequest) {
     const admin = await createAdminClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
+    const allCompleted = searchParams.get("all_completed")
+
+    if (allCompleted === "true") {
+      const { error } = await admin.from("tasks").delete().eq("status", "completed")
+      if (error) throw error
+      return NextResponse.json({ success: true, message: "All completed tasks deleted" })
+    }
 
     if (!id) {
       return NextResponse.json({ error: "Task ID is required" }, { status: 400 })

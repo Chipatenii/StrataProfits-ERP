@@ -1,0 +1,64 @@
+import { createClient } from "@/lib/supabase/client"
+import { type NextRequest, NextResponse } from "next/server"
+
+export async function GET(request: NextRequest) {
+    try {
+        const supabase = createClient()
+
+        // Fetch all profiles
+        const { data: members, error: membersError } = await supabase
+            .from("profiles")
+            .select("id, full_name, hourly_rate")
+
+        if (membersError) throw membersError
+
+        // Fetch all completed tasks
+        const { data: tasks, error: tasksError } = await supabase
+            .from("tasks")
+            .select("assigned_to, status")
+            .eq("status", "completed")
+
+        if (tasksError) throw tasksError
+
+        // Fetch all time logs for calculation
+        const { data: logs, error: logsError } = await supabase
+            .from("time_logs")
+            .select("user_id, duration_minutes")
+
+        if (logsError) throw logsError
+
+        // Calculate stats
+        const leaderboard = members.map(member => {
+            const completedTasks = tasks.filter(t => t.assigned_to === member.id).length
+
+            const memberLogs = logs.filter(l => l.user_id === member.id)
+            const totalMinutes = memberLogs.reduce((acc, log) => acc + (log.duration_minutes || 0), 0)
+            const totalHours = totalMinutes / 60
+            const totalEarnings = totalHours * (member.hourly_rate || 0)
+
+            return {
+                id: member.id,
+                name: member.full_name,
+                completedTasks,
+                totalHours: parseFloat(totalHours.toFixed(1)),
+                totalEarnings: parseFloat(totalEarnings.toFixed(2))
+            }
+        })
+
+        // Sort by earnings (descending)
+        leaderboard.sort((a, b) => b.totalEarnings - a.totalEarnings)
+
+        const bestPerformer = leaderboard.reduce((prev, current) =>
+            (prev.completedTasks > current.completedTasks) ? prev : current
+            , leaderboard[0])
+
+        return NextResponse.json({
+            leaderboard,
+            bestPerformer
+        })
+
+    } catch (error) {
+        console.error("Error fetching team stats:", error)
+        return NextResponse.json({ error: "Failed to fetch team stats" }, { status: 500 })
+    }
+}

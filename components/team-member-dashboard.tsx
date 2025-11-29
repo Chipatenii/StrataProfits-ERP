@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, Clock, CheckCircle, Menu, X, Loader2 } from "lucide-react"
+import { LogOut, Settings, Clock, CheckCircle, Menu, X, Loader2, Pause, Play } from "lucide-react"
 import { Timer } from "./timer"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
@@ -62,6 +62,10 @@ export function TeamMemberDashboard({
   const [animatingTaskId, setAnimatingTaskId] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active")
+  const [stats, setStats] = useState<{
+    leaderboard: any[];
+    bestPerformer: any;
+  } | null>(null)
 
   const filteredTasks = tasks.filter((task) => {
     if (activeTab === "active") {
@@ -116,6 +120,13 @@ export function TeamMemberDashboard({
       }
 
       setLoading(false)
+
+      // Load stats
+      const statsResponse = await fetch("/api/team/stats")
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setStats(statsData)
+      }
     } catch (error) {
       console.error("Error loading data:", error)
       setLoading(false)
@@ -346,6 +357,43 @@ export function TeamMemberDashboard({
           </div>
         </div>
 
+        {/* Analytics Section */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="glass-card rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Best Performer</h3>
+                <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                  <CheckCircle className="w-5 h-5" />
+                </div>
+              </div>
+              {stats.bestPerformer ? (
+                <div>
+                  <p className="text-2xl font-bold">{stats.bestPerformer.name}</p>
+                  <p className="text-sm text-muted-foreground">{stats.bestPerformer.completedTasks} tasks completed</p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No data available</p>
+              )}
+            </div>
+
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="text-lg font-semibold mb-4">Team Earnings Leaderboard</h3>
+              <div className="space-y-3">
+                {stats.leaderboard.map((member: any, index: number) => (
+                  <div key={member.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-muted-foreground w-4">{index + 1}</span>
+                      <span className="font-medium">{member.name}</span>
+                    </div>
+                    <span className="text-green-600 font-semibold">ZMW {member.totalEarnings.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tasks Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
@@ -434,10 +482,29 @@ export function TeamMemberDashboard({
                           </div>
                           <button
                             onClick={() => handleTaskStartStop(task.id)}
-                            className={`px-4 py-2 rounded-lg font-medium text-white transition-all ${isTaskActive ? "bg-red-500 hover:bg-red-600" : "bg-accent hover:bg-accent/90"
+                            className={`px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center gap-2 ${isTaskActive
+                              ? "bg-amber-500 hover:bg-amber-600"
+                              : calculateTimeSpent(timeLogs, task.id) > 0
+                                ? "bg-blue-600 hover:bg-blue-700"
+                                : "bg-green-600 hover:bg-green-700"
                               }`}
                           >
-                            {isTaskActive ? "Stop" : "Start"}
+                            {isTaskActive ? (
+                              <>
+                                <Pause className="w-4 h-4" />
+                                Pause
+                              </>
+                            ) : calculateTimeSpent(timeLogs, task.id) > 0 ? (
+                              <>
+                                <Play className="w-4 h-4" />
+                                Resume
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-4 h-4" />
+                                Start
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>

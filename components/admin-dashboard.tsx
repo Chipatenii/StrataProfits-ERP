@@ -208,6 +208,26 @@ export function AdminDashboard({
     }
   }
 
+  const handleDeleteAllCompleted = async () => {
+    if (!confirm("Are you sure you want to delete ALL completed tasks? This action cannot be undone.")) return
+    try {
+      const response = await fetch("/api/admin/tasks?all_completed=true", {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        loadData()
+        alert("All completed tasks have been deleted.")
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to delete tasks: ${errorData.error || "Unknown error"}`)
+      }
+    } catch (error) {
+      console.error("Error deleting all completed tasks:", error)
+      alert("Error deleting all completed tasks")
+    }
+  }
+
   const getRoleLabel = (role: string) => {
     return ROLE_OPTIONS.find((r) => r.value === role)?.label || role
   }
@@ -682,7 +702,18 @@ export function AdminDashboard({
 
         {/* Completed Tasks Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">Completed Tasks</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Completed Tasks</h2>
+            {tasks.some(t => t.status === 'completed') && (
+              <button
+                onClick={handleDeleteAllCompleted}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-sm font-medium"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete All Completed
+              </button>
+            )}
+          </div>
           <div className="grid gap-4">
             {tasks.filter(t => t.status === 'completed').length === 0 ? (
               <div className="glass-card rounded-lg p-8 text-center">
