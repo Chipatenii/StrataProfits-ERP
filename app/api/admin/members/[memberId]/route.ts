@@ -52,11 +52,20 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const admin = await createAdminClient()
 
     // Delete from profiles table (auth user will remain but inactive)
-    const { error } = await admin.from("profiles").delete().eq("id", memberId)
+    const { error: profileError } = await admin.from("profiles").delete().eq("id", memberId)
 
-    if (error) {
-      console.error('Supabase delete error:', error)
-      throw error
+    if (profileError) {
+      console.error('Supabase delete error:', profileError)
+      throw profileError
+    }
+
+    // Delete from auth.users to allow re-registration
+    const { error: authError } = await admin.auth.admin.deleteUser(memberId)
+
+    if (authError) {
+      console.error('Auth delete error:', authError)
+      // Note: We don't throw here because the profile is already deleted, 
+      // but we log it. In a transaction this would be better.
     }
 
     return NextResponse.json({ success: true })
