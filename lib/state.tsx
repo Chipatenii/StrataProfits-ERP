@@ -12,6 +12,8 @@ export interface Task {
   dueDate?: string
   createdAt: string
   timeSpent: number // in minutes
+  estimatedHours?: number
+  completed_at?: string | null
 }
 
 export interface TeamMember {
@@ -33,6 +35,7 @@ export interface Stats {
 
 interface AppContextType {
   tasks: Task[]
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>
   teamMembers: TeamMember[]
   stats: Stats
   createTask: (task: Omit<Task, "id" | "createdAt">) => void
@@ -131,6 +134,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider
       value={{
         tasks,
+        setTasks,
         teamMembers,
         stats,
         createTask,
