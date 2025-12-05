@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, Clock, CheckCircle, Menu, X, Loader2, Pause, Play } from "lucide-react"
+import { LogOut, Settings, CheckCircle, Menu, X, Loader2, Pause, Play } from "lucide-react"
 import { Timer } from "./timer"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
@@ -64,8 +64,8 @@ export function TeamMemberDashboard({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active")
   const [stats, setStats] = useState<{
-    leaderboard: any[];
-    bestPerformer: any;
+    leaderboard: any[]
+    bestPerformer: any
   } | null>(null)
 
   const filteredTasks = tasks.filter((task) => {
@@ -384,7 +384,10 @@ export function TeamMemberDashboard({
               <h3 className="text-lg font-semibold mb-4">Team Earnings Leaderboard</h3>
               <div className="space-y-3">
                 {stats.leaderboard.map((member: any, index: number) => (
-                  <div key={member.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-medium text-muted-foreground w-4">{index + 1}</span>
                       <span className="font-medium">{member.name}</span>
@@ -404,15 +407,17 @@ export function TeamMemberDashboard({
             <div className="flex bg-white rounded-lg p-1 border border-border">
               <button
                 onClick={() => setActiveTab("active")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                  }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 Active
               </button>
               <button
                 onClick={() => setActiveTab("completed")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "completed" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                  }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "completed" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 Completed
               </button>
@@ -430,8 +435,9 @@ export function TeamMemberDashboard({
                 return (
                   <div
                     key={task.id}
-                    className={`glass-card rounded-lg p-6 transition-all duration-500 ${animatingTaskId === task.id ? "opacity-0 translate-x-10" : "opacity-100"
-                      }`}
+                    className={`glass-card rounded-lg p-6 transition-all duration-500 ${
+                      animatingTaskId === task.id ? "opacity-0 translate-x-10" : "opacity-100"
+                    }`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -443,12 +449,13 @@ export function TeamMemberDashboard({
                       </div>
                       <div className="flex gap-2 ml-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                            ? "bg-red-100 text-red-700"
-                            : task.priority === "medium"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-green-100 text-green-700"
-                            }`}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            task.priority === "high"
+                              ? "bg-red-100 text-red-700"
+                              : task.priority === "medium"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-green-100 text-green-700"
+                          }`}
                         >
                           {task.priority}
                         </span>
@@ -485,12 +492,13 @@ export function TeamMemberDashboard({
                           </div>
                           <button
                             onClick={() => handleTaskStartStop(task.id)}
-                            className={`px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center gap-2 ${isTaskActive
-                              ? "bg-amber-500 hover:bg-amber-600"
-                              : calculateTimeSpent(timeLogs, task.id) > 0
-                                ? "bg-blue-600 hover:bg-blue-700"
-                                : "bg-green-600 hover:bg-green-700"
-                              }`}
+                            className={`px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center gap-2 ${
+                              isTaskActive
+                                ? "bg-amber-500 hover:bg-amber-600"
+                                : calculateTimeSpent(timeLogs, task.id) > 0
+                                  ? "bg-blue-600 hover:bg-blue-700"
+                                  : "bg-green-600 hover:bg-green-700"
+                            }`}
                           >
                             {isTaskActive ? (
                               <>
@@ -510,6 +518,19 @@ export function TeamMemberDashboard({
                             )}
                           </button>
                         </div>
+                        {task.due_date && (
+                          <div className="mt-3 pt-3 border-t border-blue-200">
+                            <p className="text-sm text-blue-700 font-medium">
+                              📅 Deadline:{" "}
+                              {new Date(task.due_date).toLocaleDateString(undefined, {
+                                weekday: "short",
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -526,9 +547,7 @@ export function TeamMemberDashboard({
                     ) : (
                       <div className="text-sm text-muted-foreground">
                         Completed on {new Date(task.completed_at || "").toLocaleDateString()}
-                        {task.completion_notes && (
-                          <p className="mt-1 italic">"{task.completion_notes}"</p>
-                        )}
+                        {task.completion_notes && <p className="mt-1 italic">"{task.completion_notes}"</p>}
                       </div>
                     )}
 
