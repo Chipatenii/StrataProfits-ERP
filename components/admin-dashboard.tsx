@@ -22,6 +22,7 @@ import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
 import { NotificationBell } from "./notification-bell"
 import { AdminEditTaskModal } from "./modals/admin-edit-task-modal"
+import { AdminCreateTaskModal } from "./modals/admin-create-task-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import Link from "next/link"
 
@@ -87,6 +88,7 @@ export function AdminDashboard({
   const [stats, setStats] = useState<Stats | null>(null)
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [showCreateTask, setShowCreateTask] = useState(false)
 
   const loadData = async () => {
     try {
@@ -420,6 +422,13 @@ export function AdminDashboard({
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">All Tasks</h2>
               <div className="flex gap-2">
+                <button
+                  onClick={() => setShowCreateTask(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Task
+                </button>
                 <div className="flex bg-white rounded-lg p-1 border border-border">
                   <button
                     onClick={() => setTaskFilter("all")}
@@ -518,6 +527,16 @@ export function AdminDashboard({
             task={editingTask}
             members={members}
             onOpenChange={(open) => !open && setEditingTask(null)}
+            onSuccess={loadData}
+          />
+        )}
+
+        {/* Create Task Modal */}
+        {showCreateTask && (
+          <AdminCreateTaskModal
+            open={showCreateTask}
+            members={members}
+            onOpenChange={setShowCreateTask}
             onSuccess={loadData}
           />
         )}
