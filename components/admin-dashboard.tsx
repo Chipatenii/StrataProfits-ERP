@@ -21,6 +21,7 @@ import {
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
 import { NotificationBell } from "./notification-bell"
+import { AdminEditTaskModal } from "./modals/admin-edit-task-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import Link from "next/link"
 
@@ -85,6 +86,7 @@ export function AdminDashboard({
   const [activeView, setActiveView] = useState<"overview" | "tasks" | "team">("overview")
   const [stats, setStats] = useState<Stats | null>(null)
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   const loadData = async () => {
     try {
@@ -478,14 +480,21 @@ export function AdminDashboard({
                       <div className="flex gap-2 ml-4">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                              ? "bg-red-100 text-red-700"
-                              : task.priority === "medium"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-green-100 text-green-700"
+                            ? "bg-red-100 text-red-700"
+                            : task.priority === "medium"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-green-100 text-green-700"
                             }`}
                         >
                           {task.priority}
                         </span>
+                        <button
+                          onClick={() => setEditingTask(task)}
+                          className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                          title="Edit task"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleDeleteTask(task.id)}
                           className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
@@ -500,6 +509,17 @@ export function AdminDashboard({
               )}
             </div>
           </div>
+        )}
+
+        {/* Edit Task Modal */}
+        {editingTask && (
+          <AdminEditTaskModal
+            open={!!editingTask}
+            task={editingTask}
+            members={members}
+            onOpenChange={(open) => !open && setEditingTask(null)}
+            onSuccess={loadData}
+          />
         )}
 
         {/* Team View */}

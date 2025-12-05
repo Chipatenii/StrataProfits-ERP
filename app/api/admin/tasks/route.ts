@@ -47,6 +47,33 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const admin = await createAdminClient()
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get("id")
+
+    if (!id) {
+      return NextResponse.json({ error: "Task ID is required" }, { status: 400 })
+    }
+
+    const body = await request.json()
+
+    const { data: task, error } = await admin
+      .from("tasks")
+      .update(body)
+      .eq("id", id)
+      .select()
+
+    if (error) throw error
+
+    return NextResponse.json(task)
+  } catch (error) {
+    console.error("Error updating task:", error)
+    return NextResponse.json({ error: "Failed to update task" }, { status: 500 })
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const admin = await createAdminClient()
