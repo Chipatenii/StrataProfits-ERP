@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { LogOut, Settings, Clock, CheckCircle, Menu, X, Loader2, Pause, Play } from "lucide-react"
@@ -12,8 +12,6 @@ import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { NotificationBell } from "@/components/notification-bell"
 import { calculateTimeSpent } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
-import { useTasks, useTimeLogs, useProfile } from "@/hooks/use-queries"
-import { useQueryClient } from "@tanstack/react-query"
 
 interface Task {
   id: string
@@ -52,22 +50,10 @@ export function TeamMemberDashboard({
 }) {
   const supabase = createClient()
   const router = useRouter()
-  const queryClient = useQueryClient()
-
-  // Use React Query hooks
-  const { data: allTasks = [], isLoading: tasksLoading } = useTasks()
-  const { data: allTimeLogs = [], isLoading: logsLoading } = useTimeLogs()
-  const { data: profile } = useProfile(userId)
-
-  // Filter tasks and time logs for this user
-  const tasks = allTasks.filter((task: any) => task.assigned_to === userId)
-  const timeLogs = allTimeLogs.filter((log: any) => {
-    const today = new Date().toISOString().split("T")[0]
-    return log.user_id === userId && log.clock_in >= today
-  })
-
-  const loading = tasksLoading || logsLoading
-
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
   const [isClockedIn, setIsClockedIn] = useState(false)
   const [todayHours, setTodayHours] = useState(0)
   const [currentClockInTime, setCurrentClockInTime] = useState<string | null>(null)
@@ -89,41 +75,58 @@ export function TeamMemberDashboard({
     return task.status === "completed"
   })
 
-  // Calculate hours and clock-in status from timeLogs
-  useState(() => {
-    const hours = timeLogs.reduce((acc: number, log: any) => {
-      return acc + (log.duration_minutes || 0)
-    }, 0)
-    setTodayHours(Math.round((hours / 60) * 100) / 100)
+  const loadData = async () => {
+    try {
+      const { data: profileData } = await supabase.from("profiles").select("*").eq("id", userId).single()
+      setProfile(profileData)
 
-    const activeLog = timeLogs.find((log: any) => !log.clock_out)
-    setIsClockedIn(!!activeLog)
-    setCurrentClockInTime(activeLog?.clock_in || null)
-    if (activeLog?.task_id) {
-      setActiveTaskId(activeLog.task_id)
+      // Get assigned tasks
+      const { data: tasksData } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("assigned_to", userId)
+        .order("created_at", { ascending: false })
+
+      setTasks(tasksData || [])
+
+      // Get today's time logs
+      const today = new Date().toISOString().split("T")[0]
+      const { data: logsData } = await supabase
+        .from("time_logs")
+        .select("*")
+        .eq("user_id", userId)
+        .gte("clock_in", today)
+
+      setTimeLogs(logsData || [])
+
+      // Calculate today's hours
+      const hours = (logsData || []).reduce((acc, log) => {
+        return acc + (log.duration_minutes || 0)
+      }, 0)
+      setTodayHours(Math.round((hours / 60) * 100) / 100)
+
+      // Check if currently clocked in
+      const activeLog = (logsData || []).find((log) => !log.clock_out)
+      setIsClockedIn(!!activeLog)
+      setCurrentClockInTime(activeLog?.clock_in || null)
+
+      if (activeLog?.task_id) {
+        setActiveTaskId(activeLog.task_id)
+      }
+
+      setLoading(false)
+
+      // Load stats
+      const statsResponse = await fetch("/api/team/stats")
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setStats(statsData)
+      }
+    } catch (error) {
+      console.error("Error loading data:", error)
+      setLoading(false)
     }
-  })
-
-  // Load stats
-  useState(async () => {
-    const statsResponse = await fetch("/api/team/stats")
-    if (statsResponse.ok) {
-      const statsData = await statsResponse.json()
-      setStats(statsData)
-    }
-  })
-
-  // Invalidate queries on real-time updates
-  const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ["tasks"] })
-    queryClient.invalidateQueries({ queryKey: ["time_logs"] })
-    queryClient.invalidateQueries({ queryKey: ["profile", userId] })
-    router.refresh()
   }
-
-  // Real-time subscriptions
-  useRealtimeSubscription("tasks", invalidateQueries)
-  useRealtimeSubscription("time_logs", invalidateQueries)
 
   useEffect(() => {
     loadData()
