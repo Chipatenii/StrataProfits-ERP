@@ -14,11 +14,12 @@ interface Member {
 interface AdminCreateTaskModalProps {
     open: boolean
     members: Member[]
+    userId: string
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
 }
 
-export function AdminCreateTaskModal({ open, members, onOpenChange, onSuccess }: AdminCreateTaskModalProps) {
+export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSuccess }: AdminCreateTaskModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -57,6 +58,7 @@ export function AdminCreateTaskModal({ open, members, onOpenChange, onSuccess }:
                 assigned_to: formData.assigned_to || null,
                 due_date: formData.due_date || null,
                 estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
+                created_by: userId,
             }
 
             const response = await fetch("/api/admin/tasks", {

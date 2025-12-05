@@ -285,30 +285,30 @@ export function AdminDashboard({
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-2 bg-white rounded-lg p-1 border border-border shadow-sm">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 bg-white rounded-lg p-2 border border-border shadow-sm">
           <button
             onClick={() => setActiveView("overview")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeView === "overview" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "overview" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
               }`}
           >
             <BarChart3 className="w-4 h-4" />
-            Overview
+            <span className="whitespace-nowrap">Overview</span>
           </button>
           <button
             onClick={() => setActiveView("tasks")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeView === "tasks" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "tasks" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
               }`}
           >
             <ClipboardList className="w-4 h-4" />
-            Tasks ({taskStats.total})
+            <span className="whitespace-nowrap">Tasks ({taskStats.total})</span>
           </button>
           <button
             onClick={() => setActiveView("team")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeView === "team" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "team" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
               }`}
           >
             <Users className="w-4 h-4" />
-            Team ({members.length})
+            <span className="whitespace-nowrap">Team ({members.length})</span>
           </button>
         </div>
 
@@ -419,12 +419,12 @@ export function AdminDashboard({
         {/* Tasks View */}
         {activeView === "tasks" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">All Tasks</h2>
-              <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <h2 className="text-xl sm:text-2xl font-bold">All Tasks</h2>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => setShowCreateTask(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors font-medium"
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors font-medium text-sm sm:text-base"
                 >
                   <Plus className="w-4 h-4" />
                   Create Task
@@ -457,146 +457,142 @@ export function AdminDashboard({
 
             <div className="grid gap-4">
               {filteredTasks.length === 0 ? (
-                <div className="glass-card rounded-lg p-8 text-center">
+                <div className="glass-card rounded-lg p-6 sm:p-8 text-center">
                   <p className="text-muted-foreground">No tasks found</p>
                 </div>
               ) : (
-                filteredTasks.map((task) => (
-                  <div key={task.id} className="glass-card rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold">{task.title}</h3>
-                          {task.status === "completed" && <CheckCircle className="w-5 h-5 text-green-500" />}
-                        </div>
-                        {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
-                        <div className="flex flex-wrap gap-2 text-sm">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                            Assigned to: {getMemberName(task.assigned_to)}
-                          </span>
-                          {task.due_date && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                              Due: {new Date(task.due_date).toLocaleDateString()}
                             </span>
-                          )}
-                          {task.estimated_hours && (
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                              Est: {task.estimated_hours}h
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                            ? "bg-red-100 text-red-700"
-                            : task.priority === "medium"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-green-100 text-green-700"
-                            }`}
-                        >
-                          {task.priority}
-                        </span>
-                        <button
-                          onClick={() => setEditingTask(task)}
-                          className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                          title="Edit task"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTask(task.id)}
-                          className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                          title="Delete task"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Edit Task Modal */}
-        {editingTask && (
-          <AdminEditTaskModal
-            open={!!editingTask}
-            task={editingTask}
-            members={members}
-            onOpenChange={(open) => !open && setEditingTask(null)}
-            onSuccess={loadData}
-          />
-        )}
-
-        {/* Create Task Modal */}
-        {showCreateTask && (
-          <AdminCreateTaskModal
-            open={showCreateTask}
-            members={members}
-            onOpenChange={setShowCreateTask}
-            onSuccess={loadData}
-          />
-        )}
-
-        {/* Team View */}
-        {activeView === "team" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Team Members</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {members.length === 0 ? (
-                <div className="glass-card rounded-lg p-8 text-center col-span-full">
-                  <p className="text-muted-foreground">No team members found</p>
-                </div>
-              ) : (
-                members.map((member) => {
-                  const memberTasks = tasks.filter((t) => t.assigned_to === member.id)
-                  return (
-                    <div key={member.id} className="glass-card rounded-lg p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold">{member.full_name}</h3>
-                          <p className="text-sm text-muted-foreground">{member.email}</p>
-                          <div className="mt-2 space-y-1">
-                            <p className="text-sm">
-                              <span className="font-medium">Role:</span>{" "}
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                                {member.role}
+                            {task.due_date && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                                Due: {new Date(task.due_date).toLocaleDateString()}
                               </span>
-                            </p>
-                            {member.hourly_rate && (
-                              <p className="text-sm">
-                                <span className="font-medium">Rate:</span> ZMW {member.hourly_rate}/hr
-                              </p>
                             )}
-                            <p className="text-sm">
-                              <span className="font-medium">Tasks:</span> {memberTasks.length} assigned
-                            </p>
+                            {task.estimated_hours && (
+                              <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                                Est: {task.estimated_hours}h
+                              </span>
+                            )}
                           </div>
                         </div>
-                        {member.role !== "admin" && (
+                        <div className="flex gap-2 ml-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
+                              ? "bg-red-100 text-red-700"
+                              : task.priority === "medium"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-green-100 text-green-700"
+                              }`}
+                          >
+                            {task.priority}
+                          </span>
                           <button
-                            onClick={() => handleDeleteMember(member.id)}
+                            onClick={() => setEditingTask(task)}
+                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                            title="Edit task"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTask(task.id)}
                             className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                            title="Delete member"
+                            title="Delete task"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </div>
+                        </div>
+                      </div >
+                    </div >
+                    ))
+              )
+}
+                  </div >
+          </div >
         )}
-      </main>
+
+{/* Edit Task Modal */ }
+{
+  editingTask && (
+    <AdminEditTaskModal
+      open={!!editingTask}
+      task={editingTask}
+      members={members}
+      onOpenChange={(open) => !open && setEditingTask(null)}
+      onSuccess={loadData}
+    />
+  )
+}
+
+{/* Create Task Modal */ }
+{
+  showCreateTask && (
+    <AdminCreateTaskModal
+      open={showCreateTask}
+      members={members}
+      userId={userId}
+      onOpenChange={setShowCreateTask}
+      onSuccess={loadData}
+    />
+  )
+}
+
+{/* Team View */ }
+{
+  activeView === "team" && (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Team Members</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {members.length === 0 ? (
+          <div className="glass-card rounded-lg p-8 text-center col-span-full">
+            <p className="text-muted-foreground">No team members found</p>
+          </div>
+        ) : (
+          members.map((member) => {
+            const memberTasks = tasks.filter((t) => t.assigned_to === member.id)
+            return (
+              <div key={member.id} className="glass-card rounded-lg p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">{member.full_name}</h3>
+                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm">
+                        <span className="font-medium">Role:</span>{" "}
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                          {member.role}
+                        </span>
+                      </p>
+                      {member.hourly_rate && (
+                        <p className="text-sm">
+                          <span className="font-medium">Rate:</span> ZMW {member.hourly_rate}/hr
+                        </p>
+                      )}
+                      <p className="text-sm">
+                        <span className="font-medium">Tasks:</span> {memberTasks.length} assigned
+                      </p>
+                    </div>
+                  </div>
+                  {member.role !== "admin" && (
+                    <button
+                      onClick={() => handleDeleteMember(member.id)}
+                      className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                      title="Delete member"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
     </div>
+  )
+}
+          </main >
+    </div >
   )
 }
