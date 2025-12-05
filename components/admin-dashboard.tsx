@@ -1,8 +1,8 @@
 // Import necessary variables and functions
-import { task, getTimeStatus, calculateTimeSpent, timeLogs } from "./path/to/imports"
+import { calculateTimeSpent, getTimeStatus } from "@/lib/time-utils"
 
 // Admin Dashboard Component
-const AdminDashboard = () => {
+export function AdminDashboard({ task, timeLogs, userId, userName }) {
   return (
     <div>
       {/* Time Allocation Progress Bar */}
@@ -27,5 +27,3 @@ const AdminDashboard = () => {
     </div>
   )
 }
-
-export default AdminDashboard
