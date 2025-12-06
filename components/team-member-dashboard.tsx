@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { LogOut, Settings, CheckCircle, Menu, X, Loader2, Pause, Play } from "lucide-react"
 import { Timer } from "./timer"
+import { TimerNotification } from "./timer-notification"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
 import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
@@ -67,6 +68,11 @@ export function TeamMemberDashboard({
     leaderboard: any[]
     bestPerformer: any
   } | null>(null)
+  const [timerNotification, setTimerNotification] = useState<{
+    type: "warning" | "elapsed"
+    taskTitle: string
+    remainingMinutes?: number
+  } | null>(null)
 
   const filteredTasks = tasks.filter((task) => {
     if (activeTab === "active") {
@@ -75,7 +81,7 @@ export function TeamMemberDashboard({
     return task.status === "completed"
   })
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const { data: profileData } = await supabase.from("profiles").select("*").eq("id", userId).single()
       setProfile(profileData)
@@ -126,7 +132,7 @@ export function TeamMemberDashboard({
       console.error("Error loading data:", error)
       setLoading(false)
     }
-  }
+  }, [supabase, userId])
 
   useEffect(() => {
     loadData()
@@ -135,6 +141,69 @@ export function TeamMemberDashboard({
   // Real-time subscriptions
   useRealtimeSubscription("tasks", loadData)
   useRealtimeSubscription("time_logs", loadData)
+
+  // Timer event handlers
+  const handleTimerWarning = useCallback((taskId: string, taskTitle: string, remainingMinutes: number) => {
+    setTimerNotification({
+      type: "warning",
+      taskTitle,
+      remainingMinutes,
+    })
+  }, [])
+
+  const handleTimeElapsed = useCallback(async (taskId: string, taskTitle: string) => {
+    // Show notification to user
+    setTimerNotification({
+      type: "elapsed",
+      taskTitle,
+    })
+
+    // Auto-pause the timer
+    const activeLog = timeLogs.find((log) => !log.clock_out && log.task_id === taskId)
+    if (activeLog) {
+      const clockOut = new Date().toISOString()
+      const clockIn = new Date(activeLog.clock_in)
+      const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
+
+      await supabase
+        .from("time_logs")
+        .update({
+          clock_out: clockOut,
+          duration_minutes: durationMinutes,
+        })
+        .eq("id", activeLog.id)
+
+      setActiveTaskId(null)
+    }
+
+    // Mark task as needing attention and notify admin
+    await supabase
+      .from("tasks")
+      .update({
+        status: "in_progress", // Keep as in-progress but will be flagged
+      })
+      .eq("id", taskId)
+
+    // Create notification for admin
+    const { data: adminProfiles } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin")
+
+    if (adminProfiles && adminProfiles.length > 0) {
+      for (const admin of adminProfiles) {
+        await supabase.from("notifications").insert({
+          user_id: admin.id,
+          type: "task_time_exceeded",
+          title: "Task Time Exceeded",
+          message: `Task "${taskTitle}" has exceeded its allocated time and needs review.`,
+          task_id: taskId,
+        })
+      }
+    }
+
+    loadData()
+  }, [timeLogs, supabase, loadData])
 
   const handleTaskStartStop = async (taskId: string) => {
     try {
@@ -407,17 +476,15 @@ export function TeamMemberDashboard({
             <div className="flex bg-white rounded-lg p-1 border border-border">
               <button
                 onClick={() => setActiveTab("active")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 Active
               </button>
               <button
                 onClick={() => setActiveTab("completed")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === "completed" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "completed" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 Completed
               </button>
@@ -435,9 +502,8 @@ export function TeamMemberDashboard({
                 return (
                   <div
                     key={task.id}
-                    className={`glass-card rounded-lg p-6 transition-all duration-500 ${
-                      animatingTaskId === task.id ? "opacity-0 translate-x-10" : "opacity-100"
-                    }`}
+                    className={`glass-card rounded-lg p-6 transition-all duration-500 ${animatingTaskId === task.id ? "opacity-0 translate-x-10" : "opacity-100"
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -449,13 +515,12 @@ export function TeamMemberDashboard({
                       </div>
                       <div className="flex gap-2 ml-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            task.priority === "high"
-                              ? "bg-red-100 text-red-700"
-                              : task.priority === "medium"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-green-100 text-green-700"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
+                            ? "bg-red-100 text-red-700"
+                            : task.priority === "medium"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-green-100 text-green-700"
+                            }`}
                         >
                           {task.priority}
                         </span>
@@ -472,6 +537,9 @@ export function TeamMemberDashboard({
                                 <Timer
                                   isActive={true}
                                   startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""}
+                                  estimatedHours={task.estimated_hours || undefined}
+                                  onWarning={(remainingMinutes) => handleTimerWarning(task.id, task.title, remainingMinutes)}
+                                  onTimeElapsed={() => handleTimeElapsed(task.id, task.title)}
                                 />
                               )}
                               {!isTaskActive && (
@@ -492,13 +560,12 @@ export function TeamMemberDashboard({
                           </div>
                           <button
                             onClick={() => handleTaskStartStop(task.id)}
-                            className={`px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center gap-2 ${
-                              isTaskActive
-                                ? "bg-amber-500 hover:bg-amber-600"
-                                : calculateTimeSpent(timeLogs, task.id) > 0
-                                  ? "bg-blue-600 hover:bg-blue-700"
-                                  : "bg-green-600 hover:bg-green-700"
-                            }`}
+                            className={`px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center gap-2 ${isTaskActive
+                              ? "bg-amber-500 hover:bg-amber-600"
+                              : calculateTimeSpent(timeLogs, task.id) > 0
+                                ? "bg-blue-600 hover:bg-blue-700"
+                                : "bg-green-600 hover:bg-green-700"
+                              }`}
                           >
                             {isTaskActive ? (
                               <>
@@ -563,6 +630,16 @@ export function TeamMemberDashboard({
           </div>
         </div>
       </main>
+
+      {/* Timer Notification */}
+      {timerNotification && (
+        <TimerNotification
+          type={timerNotification.type}
+          taskTitle={timerNotification.taskTitle}
+          remainingMinutes={timerNotification.remainingMinutes}
+          onClose={() => setTimerNotification(null)}
+        />
+      )}
     </div>
   )
 }

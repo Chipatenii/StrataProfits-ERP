@@ -174,3 +174,45 @@ export function parseHoursInput(input: string): number | null {
 
     return null
 }
+
+/**
+ * Calculate elapsed minutes from a start time
+ */
+export function getElapsedMinutes(startTime: string): number {
+    const start = new Date(startTime)
+    const now = new Date()
+    const diff = now.getTime() - start.getTime()
+    return Math.floor(diff / 60000) // Convert ms to minutes
+}
+
+/**
+ * Check if time has elapsed past the estimated limit
+ */
+export function hasTimeElapsed(startTime: string, estimatedHours: number): boolean {
+    if (!estimatedHours || estimatedHours <= 0) return false
+    const elapsedMinutes = getElapsedMinutes(startTime)
+    const estimatedMinutes = estimatedHours * 60
+    return elapsedMinutes >= estimatedMinutes
+}
+
+/**
+ * Check if warning should be shown (within 20 minutes of limit)
+ */
+export function shouldShowWarning(startTime: string, estimatedHours: number, warningMinutes: number = 20): boolean {
+    if (!estimatedHours || estimatedHours <= 0) return false
+    const elapsedMinutes = getElapsedMinutes(startTime)
+    const estimatedMinutes = estimatedHours * 60
+    const remainingMinutes = estimatedMinutes - elapsedMinutes
+    return remainingMinutes <= warningMinutes && remainingMinutes > 0
+}
+
+/**
+ * Get remaining minutes before time limit
+ */
+export function getRemainingMinutesFromStart(startTime: string, estimatedHours: number): number {
+    if (!estimatedHours || estimatedHours <= 0) return 0
+    const elapsedMinutes = getElapsedMinutes(startTime)
+    const estimatedMinutes = estimatedHours * 60
+    return Math.max(0, estimatedMinutes - elapsedMinutes)
+}
+

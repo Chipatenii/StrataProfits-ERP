@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import {
@@ -90,7 +90,7 @@ export function AdminDashboard({
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       // Load profile
       const { data: profileData } = await supabase.from("profiles").select("*").eq("id", userId).single()
@@ -122,7 +122,7 @@ export function AdminDashboard({
       console.error("Error loading data:", error)
       setLoading(false)
     }
-  }
+  }, [supabase, userId])
 
   useEffect(() => {
     loadData()
@@ -289,27 +289,24 @@ export function AdminDashboard({
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 bg-white rounded-lg p-2 border border-border shadow-sm">
           <button
             onClick={() => setActiveView("overview")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${
-              activeView === "overview" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "overview" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             <BarChart3 className="w-4 h-4" />
             <span className="whitespace-nowrap">Overview</span>
           </button>
           <button
             onClick={() => setActiveView("tasks")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${
-              activeView === "tasks" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "tasks" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             <ClipboardList className="w-4 h-4" />
             <span className="whitespace-nowrap">Tasks ({taskStats.total})</span>
           </button>
           <button
             onClick={() => setActiveView("team")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${
-              activeView === "team" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "team" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             <Users className="w-4 h-4" />
             <span className="whitespace-nowrap">Team ({members.length})</span>
@@ -438,27 +435,24 @@ export function AdminDashboard({
                 <div className="flex bg-white rounded-lg p-1 border border-border">
                   <button
                     onClick={() => setTaskFilter("all")}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      taskFilter === "all" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "all" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     All
                   </button>
                   <button
                     onClick={() => setTaskFilter("active")}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      taskFilter === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     Active
                   </button>
                   <button
                     onClick={() => setTaskFilter("completed")}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      taskFilter === "completed"
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "completed"
                         ? "bg-accent text-white"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     Completed
                   </button>
@@ -481,13 +475,12 @@ export function AdminDashboard({
                           <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${
-                                task.status === "completed"
+                              className={`px-2 py-1 rounded text-xs font-medium ${task.status === "completed"
                                   ? "bg-green-100 text-green-700"
                                   : task.status === "in_progress"
                                     ? "bg-blue-100 text-blue-700"
                                     : "bg-gray-100 text-gray-700"
-                              }`}
+                                }`}
                             >
                               {task.status}
                             </span>
@@ -508,13 +501,12 @@ export function AdminDashboard({
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                           <span
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              task.priority === "high"
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
                                 ? "bg-red-100 text-red-700"
                                 : task.priority === "medium"
                                   ? "bg-amber-100 text-amber-700"
                                   : "bg-green-100 text-green-700"
-                            }`}
+                              }`}
                           >
                             {task.priority}
                           </span>

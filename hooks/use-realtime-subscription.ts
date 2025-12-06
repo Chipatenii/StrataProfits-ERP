@@ -1,16 +1,22 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 export function useRealtimeSubscription(table: string, callback: () => void, filter?: string) {
   const supabase = createClient()
   const router = useRouter()
+  const callbackRef = useRef(callback)
+
+  // Keep callback ref updated
+  useEffect(() => {
+    callbackRef.current = callback
+  }, [callback])
 
   useEffect(() => {
     const channel = supabase
-      .channel(`realtime-${table}`)
+      .channel(`realtime-${table}-${filter || 'all'}`)
       .on(
         "postgres_changes",
         {
@@ -20,7 +26,7 @@ export function useRealtimeSubscription(table: string, callback: () => void, fil
           filter: filter,
         },
         () => {
-          callback()
+          callbackRef.current()
           router.refresh()
         },
       )
@@ -29,5 +35,5 @@ export function useRealtimeSubscription(table: string, callback: () => void, fil
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [table, filter, callback, router, supabase])
+  }, [table, filter, router, supabase])
 }

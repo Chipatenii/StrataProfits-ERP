@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Download, Loader2 } from "lucide-react"
 import jsPDF from "jspdf"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 
 interface TeamMemberReport {
   user_id: string
@@ -36,11 +37,7 @@ export function MonthlyReports({ userId }: { userId: string }) {
   const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
   const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
 
-  useEffect(() => {
-    loadReports()
-  }, [selectedMonth])
-
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     setLoading(true)
     try {
       const [year, month] = selectedMonth.split("-")
@@ -79,7 +76,15 @@ export function MonthlyReports({ userId }: { userId: string }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedMonth])
+
+  useEffect(() => {
+    loadReports()
+  }, [loadReports])
+
+  // Real-time subscriptions
+  useRealtimeSubscription("tasks", loadReports)
+  useRealtimeSubscription("time_logs", loadReports)
 
   const handleExportPDF = () => {
     const doc = new jsPDF()
