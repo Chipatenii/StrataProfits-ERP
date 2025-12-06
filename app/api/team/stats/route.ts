@@ -1,17 +1,19 @@
-import { createClient } from "@/lib/supabase/client"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { type NextRequest, NextResponse } from "next/server"
+
+export const dynamic = "force-dynamic" // Prevent caching
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const admin = await createAdminClient()
 
     // Fetch all profiles
-    const { data: members, error: membersError } = await supabase.from("profiles").select("id, full_name, hourly_rate")
+    const { data: members, error: membersError } = await admin.from("profiles").select("id, full_name, hourly_rate")
 
     if (membersError) throw membersError
 
     // Fetch all completed tasks
-    const { data: tasks, error: tasksError } = await supabase
+    const { data: tasks, error: tasksError } = await admin
       .from("tasks")
       .select("assigned_to, status")
       .eq("status", "completed")
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (tasksError) throw tasksError
 
     // Fetch all time logs for calculation
-    const { data: logs, error: logsError } = await supabase.from("time_logs").select("user_id, duration_minutes")
+    const { data: logs, error: logsError } = await admin.from("time_logs").select("user_id, duration_minutes")
 
     if (logsError) throw logsError
 
@@ -49,10 +51,17 @@ export async function GET(request: NextRequest) {
         ? leaderboard.filter((member) => member.totalEarnings > 0)[0]
         : leaderboard[0]
 
-    return NextResponse.json({
-      leaderboard,
-      bestPerformer,
-    })
+    return NextResponse.json(
+      {
+        leaderboard,
+        bestPerformer,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    )
   } catch (error) {
     console.error("Error fetching team stats:", error)
     return NextResponse.json({ error: "Failed to fetch team stats" }, { status: 500 })
