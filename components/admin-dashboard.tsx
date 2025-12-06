@@ -131,6 +131,7 @@ export function AdminDashboard({
   // Real-time subscriptions
   useRealtimeSubscription("tasks", loadData)
   useRealtimeSubscription("profiles", loadData)
+  useRealtimeSubscription("time_logs", loadData)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

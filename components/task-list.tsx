@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useAppState } from "@/lib/state"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2, Edit2, Clock, CheckCircle2, Circle, Calendar, FileText, Users } from "lucide-react"
+import { Plus, Trash2, Edit2, Clock, CheckCircle2, Circle, Calendar } from "lucide-react"
 import { CreateTaskModal } from "@/components/modals/create-task-modal"
 import { EditTaskModal } from "@/components/modals/edit-task-modal"
 import { TimeTrackerModal } from "@/components/modals/time-tracker-modal"
@@ -99,8 +99,8 @@ export function TaskList() {
         <button
           onClick={() => setActiveTab("active")}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === "active"
-            ? "bg-white text-primary shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+              ? "bg-white text-primary shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
             }`}
         >
           Active Tasks
@@ -108,8 +108,8 @@ export function TaskList() {
         <button
           onClick={() => setActiveTab("completed")}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === "completed"
-            ? "bg-white text-primary shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+              ? "bg-white text-primary shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
             }`}
         >
           Completed
@@ -150,8 +150,8 @@ export function TaskList() {
                     onClick={() => handleCompleteTask(task)}
                     disabled={task.status === "completed"}
                     className={`mt-1 flex-shrink-0 transition-colors ${task.status === "completed"
-                      ? "text-green-500 cursor-default"
-                      : "text-muted-foreground hover:text-green-500"
+                        ? "text-green-500 cursor-default"
+                        : "text-muted-foreground hover:text-green-500"
                       }`}
                   >
                     {task.status === "completed" ? (
@@ -204,8 +204,8 @@ export function TaskList() {
 
                     <div className="flex gap-3 mt-3 flex-wrap items-center">
                       <span className={`text-xs px-2 py-1 rounded font-medium ${task.priority === "high" ? "bg-red-100 text-red-700" :
-                        task.priority === "medium" ? "bg-amber-100 text-amber-700" :
-                          "bg-green-100 text-green-700"
+                          task.priority === "medium" ? "bg-amber-100 text-amber-700" :
+                            "bg-green-100 text-green-700"
                         }`}>
                         {task.priority} Priority
                       </span>

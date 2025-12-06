@@ -19,57 +19,16 @@ export function TimeTrackerModal({ open, task, onOpenChange }: TimeTrackerModalP
   const [seconds, setSeconds] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
   const [customMinutes, setCustomMinutes] = useState("")
-  const [showWarning, setShowWarning] = useState(false)
-  const [limitReached, setLimitReached] = useState(false)
-
-  // Reset states when modal opens or task changes
-  useEffect(() => {
-    if (open) {
-      setSeconds(0)
-      setIsRunning(false)
-      setShowWarning(false)
-      setLimitReached(false)
-    }
-  }, [open, task])
 
   useEffect(() => {
-    if (!isRunning || !open || !task) return
+    if (!isRunning || !open) return
 
     const interval = setInterval(() => {
-      setSeconds((s) => {
-        const newSeconds = s + 1
-
-        // Check time limits if estimatedHours exists
-        if (task.estimatedHours) {
-          const currentSessionMinutes = newSeconds / 60
-          const totalMinutes = task.timeSpent + currentSessionMinutes
-          const limitMinutes = task.estimatedHours * 60
-          const remainingMinutes = limitMinutes - totalMinutes
-
-          // Auto-stop if limit reached
-          if (remainingMinutes <= 0 && !limitReached) {
-            setIsRunning(false)
-            setLimitReached(true)
-            // Save the time automatically up to the limit? 
-            // For now, let's just stop and let user save what they have, or maybe force save.
-            // User request: "stop when time has elapsed".
-            return newSeconds
-          }
-
-          // Warning if less than 5 minutes remaining
-          if (remainingMinutes <= 5 && remainingMinutes > 0) {
-            setShowWarning(true)
-          } else {
-            setShowWarning(false)
-          }
-        }
-
-        return newSeconds
-      })
+      setSeconds((s) => s + 1)
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isRunning, open, task, limitReached])
+  }, [isRunning, open])
 
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
@@ -85,24 +44,12 @@ export function TimeTrackerModal({ open, task, onOpenChange }: TimeTrackerModalP
       addTimeToTask(task.id, Math.ceil(seconds / 60))
       setSeconds(0)
       setIsRunning(false)
-      setLimitReached(false)
-      setShowWarning(false)
     }
   }
 
   const handleAddCustomTime = () => {
     if (!task || !customMinutes) return
     const mins = Number.parseInt(customMinutes)
-
-    // Check limit for custom time addition
-    if (task.estimatedHours) {
-      const totalMinutes = task.timeSpent + mins
-      if (totalMinutes > task.estimatedHours * 60) {
-        alert(`Cannot add ${mins} minutes. It would exceed the estimated time limit.`)
-        return
-      }
-    }
-
     if (mins > 0) {
       addTimeToTask(task.id, mins)
       setCustomMinutes("")
@@ -126,24 +73,6 @@ export function TimeTrackerModal({ open, task, onOpenChange }: TimeTrackerModalP
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
               <p className="text-sm text-muted-foreground">Current Task</p>
               <p className="font-semibold text-foreground">{task.title}</p>
-              {task.estimatedHours && (
-                <div className="flex justify-between text-xs mt-2 text-muted-foreground">
-                  <span>Est: {task.estimatedHours}h</span>
-                  <span>Remaining: {Math.max(0, (task.estimatedHours * 60) - task.timeSpent - Math.floor(seconds / 60)).toFixed(0)}m</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Warnings */}
-          {limitReached && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium text-center animate-pulse">
-              Time limit reached! Timer stopped.
-            </div>
-          )}
-          {showWarning && !limitReached && (
-            <div className="p-3 rounded-lg bg-orange-100 border border-orange-200 text-orange-700 text-sm font-medium text-center">
-              Warning: Less than 5 minutes remaining!
             </div>
           )}
 
@@ -158,7 +87,6 @@ export function TimeTrackerModal({ open, task, onOpenChange }: TimeTrackerModalP
             <Button
               variant={isRunning ? "outline" : "default"}
               size="sm"
-              disabled={limitReached}
               onClick={() => setIsRunning(!isRunning)}
               className={
                 isRunning
@@ -184,8 +112,6 @@ export function TimeTrackerModal({ open, task, onOpenChange }: TimeTrackerModalP
               onClick={() => {
                 setSeconds(0)
                 setIsRunning(false)
-                setLimitReached(false)
-                setShowWarning(false)
               }}
             >
               <RotateCcw className="w-4 h-4" />
