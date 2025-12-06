@@ -89,6 +89,7 @@ export function AdminDashboard({
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
+  const [editingMember, setEditingMember] = useState<Member | null>(null)
 
   const loadData = useCallback(async () => {
     try {
@@ -450,8 +451,8 @@ export function AdminDashboard({
                   <button
                     onClick={() => setTaskFilter("completed")}
                     className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "completed"
-                        ? "bg-accent text-white"
-                        : "text-muted-foreground hover:text-foreground"
+                      ? "bg-accent text-white"
+                      : "text-muted-foreground hover:text-foreground"
                       }`}
                   >
                     Completed
@@ -476,10 +477,10 @@ export function AdminDashboard({
                           <div className="mt-3 flex flex-wrap gap-2">
                             <span
                               className={`px-2 py-1 rounded text-xs font-medium ${task.status === "completed"
-                                  ? "bg-green-100 text-green-700"
-                                  : task.status === "in_progress"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-gray-100 text-gray-700"
+                                ? "bg-green-100 text-green-700"
+                                : task.status === "in_progress"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-gray-100 text-gray-700"
                                 }`}
                             >
                               {task.status}
@@ -502,10 +503,10 @@ export function AdminDashboard({
                         <div className="flex gap-2 flex-shrink-0">
                           <span
                             className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                                ? "bg-red-100 text-red-700"
-                                : task.priority === "medium"
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-green-100 text-green-700"
+                              ? "bg-red-100 text-red-700"
+                              : task.priority === "medium"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-green-100 text-green-700"
                               }`}
                           >
                             {task.priority}
@@ -590,18 +591,30 @@ export function AdminDashboard({
                               </p>
                             )}
                             <p className="text-sm">
-                              <span className="font-medium">Tasks:</span> {memberTasks.length} assigned
+                              <span className="font-medium">Tasks Assigned:</span> {memberTasks.length}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-medium">Tasks Completed:</span> {memberTasks.filter(t => t.status === "completed").length}
                             </p>
                           </div>
                         </div>
                         {member.role !== "admin" && (
-                          <button
-                            onClick={() => handleDeleteMember(member.id)}
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                            title="Delete member"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setEditingMember(member)}
+                              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                              title="Edit member"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMember(member.id)}
+                              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                              title="Delete member"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -610,6 +623,19 @@ export function AdminDashboard({
               )}
             </div>
           </div>
+        )}
+
+        {/* Edit Member Modal */}
+        {editingMember && (
+          <ProfileSettingsModal
+            userId={editingMember.id}
+            isAdmin={true}
+            onClose={() => setEditingMember(null)}
+            onSuccess={() => {
+              setEditingMember(null)
+              loadData()
+            }}
+          />
         )}
       </main>
     </div>
