@@ -215,4 +215,3 @@ export function getRemainingMinutesFromStart(startTime: string, estimatedHours: 
     const estimatedMinutes = estimatedHours * 60
     return Math.max(0, estimatedMinutes - elapsedMinutes)
 }
-
