@@ -1,30 +1,16 @@
-# Ostento Media Agency
-
-*Automatically synced with your [v0.app](https://v0.app) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/chipateniis-projects/v0-ostento-media-agency)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/df9McJKZpJ7)
-
 ## Overview
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+Ostento Media Task & Timer is a web-based project management and time-tracking dashboard built for agency workflows. It connects task assignment with real-time time logging so managers can see what’s being worked on, for how long, and by whom.
 
-## Deployment
+The app provides two role-based experiences:
 
-Your project is live at:
+- **Admin Dashboard** for creating and assigning tasks, monitoring team workload, and reviewing monthly reports.
+- **Team Dashboard** for viewing assigned tasks, tracking active work with a built-in timer, and managing completed tasks.
 
-**[https://vercel.com/chipateniis-projects/v0-ostento-media-agency](https://vercel.com/chipateniis-projects/v0-ostento-media-agency)**
+With automatic monthly hour summaries and support for hourly-rate calculations, Ostento Media Task & Timer helps agencies move from guesswork to data-driven productivity and payroll decisions.
 
-## Build your app
+## Tech Stack
 
-Continue building your app on:
-
-**[https://v0.app/chat/df9McJKZpJ7](https://v0.app/chat/df9McJKZpJ7)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+- **Frontend:** Next.js 16, TypeScript
+- **UI:** Tailwind CSS, Shadcn/UI
+- **Backend & Auth:** Supabase (database, authentication, and API)
