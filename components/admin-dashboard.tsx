@@ -17,6 +17,7 @@ import {
   ClipboardList,
   BarChart3,
   FileText,
+  Folder,
 } from "lucide-react"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
@@ -394,7 +395,7 @@ export function AdminDashboard({
             {/* Quick Actions */}
             <div className="glass-card rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Link
                   href="/reports"
                   className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200"
@@ -403,6 +404,16 @@ export function AdminDashboard({
                   <div>
                     <p className="font-medium text-blue-900">Monthly Reports</p>
                     <p className="text-sm text-blue-700">View detailed team reports</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/projects"
+                  className="flex items-center gap-3 p-4 rounded-lg bg-green-50 hover:bg-green-100 transition-colors border border-green-200"
+                >
+                  <Folder className="w-6 h-6 text-green-600" />
+                  <div>
+                    <p className="font-medium text-green-900">Projects</p>
+                    <p className="text-sm text-green-700">Manage agency projects</p>
                   </div>
                 </Link>
                 <button

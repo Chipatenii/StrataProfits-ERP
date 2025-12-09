@@ -25,6 +25,7 @@ interface Task {
   elapsed_minutes?: number
   completed_at?: string
   completion_notes?: string
+  project_id?: string | null
 }
 
 interface TimeLog {
@@ -53,6 +54,7 @@ export function TeamMemberDashboard({
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isClockedIn, setIsClockedIn] = useState(false)
@@ -64,6 +66,7 @@ export function TeamMemberDashboard({
   const [animatingTaskId, setAnimatingTaskId] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active")
+  const [projectFilter, setProjectFilter] = useState<string>("all")
   const [stats, setStats] = useState<{
     leaderboard: any[]
     bestPerformer: any
@@ -75,6 +78,12 @@ export function TeamMemberDashboard({
   } | null>(null)
 
   const filteredTasks = tasks.filter((task) => {
+    // Filter by project
+    if (projectFilter !== "all" && task.project_id !== projectFilter) {
+      return false
+    }
+
+    // Filter by status (tab)
     if (activeTab === "active") {
       return task.status !== "completed"
     }
@@ -93,7 +102,16 @@ export function TeamMemberDashboard({
         .eq("assigned_to", userId)
         .order("created_at", { ascending: false })
 
+
       setTasks(tasksData || [])
+
+      // Get projects user is part of (RLS handles filtering)
+      const { data: projectsData } = await supabase
+        .from("projects")
+        .select("id, name")
+        .order("name", { ascending: true })
+
+      setProjects(projectsData || [])
 
       // Get today's time logs
       const today = new Date().toISOString().split("T")[0]
@@ -473,21 +491,33 @@ export function TeamMemberDashboard({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">My Tasks</h2>
-            <div className="flex bg-white rounded-lg p-1 border border-border">
-              <button
-                onClick={() => setActiveTab("active")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                  }`}
+            <div className="flex gap-2">
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                Active
-              </button>
-              <button
-                onClick={() => setActiveTab("completed")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "completed" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                  }`}
-              >
-                Completed
-              </button>
+                <option value="all">All Projects</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <div className="flex bg-white rounded-lg p-1 border border-border">
+                <button
+                  onClick={() => setActiveTab("active")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => setActiveTab("completed")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "completed" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                  Completed
+                </button>
+              </div>
             </div>
           </div>
 
@@ -512,6 +542,13 @@ export function TeamMemberDashboard({
                           {task.status === "completed" && <CheckCircle className="w-5 h-5 text-green-500" />}
                         </div>
                         {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
+                        {task.project_id && (
+                          <div className="mb-2">
+                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-medium">
+                              {projects.find(p => p.id === task.project_id)?.name || "Unknown Project"}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2 ml-4">
                         <span

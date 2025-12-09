@@ -8,6 +8,7 @@ export const createTaskSchema = z.object({
     assigned_to: z.string().nullable().optional(),
     due_date: z.string().nullable().optional(),
     estimated_hours: z.number().min(0).nullable().optional(),
+    project_id: z.string().uuid("Invalid project ID").nullable().optional(),
     created_by: z.string().uuid("Invalid creator ID").optional(),
 })
 
@@ -17,6 +18,16 @@ export const updateMemberSchema = z.object({
 })
 
 export const updateProfileSchema = z.object({
-    userId: z.string().uuid("Invalid user ID"),
     fullName: z.string().min(1, "Full name is required"),
+})
+
+export const createProjectSchema = z.object({
+    name: z.string().min(1, "Project name is required"),
+    description: z.string().optional(),
+    status: z.enum(["active", "archived", "completed"]).default("active"),
+})
+
+export const addProjectMemberSchema = z.object({
+    userId: z.string().uuid("Invalid user ID"),
+    role: z.enum(["manager", "member", "viewer"]).default("member"),
 })
