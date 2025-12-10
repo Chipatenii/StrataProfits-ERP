@@ -24,6 +24,7 @@ import { ProfileSettingsModal } from "./profile-settings-modal"
 import { NotificationBell } from "./notification-bell"
 import { AdminEditTaskModal } from "./modals/admin-edit-task-modal"
 import { AdminCreateTaskModal } from "./modals/admin-create-task-modal"
+import { AdminReviewTaskModal } from "./modals/admin-review-task-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { approveTask, rejectTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
@@ -95,6 +96,10 @@ export function AdminDashboard({
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
+
+  // Review Modal State
+  const [reviewingTask, setReviewingTask] = useState<Task | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const loadData = useCallback(async () => {
     try {
@@ -173,6 +178,47 @@ export function AdminDashboard({
       }
     } catch (error) {
       console.error("Error deleting member:", error)
+    }
+  }
+
+  // Review Actions
+  const handleApproveTask = async (task: Task) => {
+    setIsProcessing(true)
+    try {
+      const result = await approveTask(task.id)
+      if (result.success) {
+        toast.success("Task approved successfully")
+        setReviewingTask(null)
+        loadData()
+      } else {
+        toast.error("Failed to approve task")
+      }
+    } catch (error) {
+      console.error("Error approving task:", error)
+      toast.error("An error occurred")
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleRejectTask = async (task: Task) => {
+    if (!confirm("Are you sure you want to reject this task? This action cannot be undone.")) return
+
+    setIsProcessing(true)
+    try {
+      const result = await rejectTask(task.id)
+      if (result.success) {
+        toast.success("Task rejected")
+        setReviewingTask(null)
+        loadData()
+      } else {
+        toast.error("Failed to reject task")
+      }
+    } catch (error) {
+      console.error("Error rejecting task:", error)
+      toast.error("An error occurred")
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -348,6 +394,26 @@ export function AdminDashboard({
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Pending Requests Card */}
+              <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-amber-800">Pending Requests</h3>
+                  <div className="p-2 bg-amber-200/50 rounded-full">
+                    <ClipboardList className="w-5 h-5 text-amber-700" />
+                  </div>
+                </div>
+                <div className="flex items-end justify-between">
+                  <p className="text-3xl font-bold text-amber-900">{taskStats.pending}</p>
+                  {taskStats.pending > 0 && (
+                    <button
+                      onClick={() => setActiveView("tasks")}
+                      className="text-xs font-semibold px-2 py-1 bg-amber-200/80 text-amber-800 rounded hover:bg-amber-300 transition-colors"
+                    >
+                      Review &rarr;
+                    </button>
+                  )}
+                </div>
+              </div>
               <div className="glass-card rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Total Tasks</h3>
@@ -501,7 +567,48 @@ export function AdminDashboard({
             </div>
 
             <div className="grid gap-4">
-              {filteredTasks.length === 0 ? (
+
+              {/* Task Requests Section - Only shown when filtering 'All' or 'Active' */}
+              {(taskFilter === 'all' || taskFilter === 'active') && pendingTasks.length > 0 && (
+                <div className="space-y-3 mb-6">
+                  <h3 className="text-lg font-semibold text-amber-900 flex items-center gap-2">
+                    <span className="w-2 h-8 bg-amber-500 rounded-full"></span>
+                    Pending Reviews ({pendingTasks.length})
+                  </h3>
+                  <div className="grid gap-3">
+                    {pendingTasks.map((task) => (
+                      <div key={task.id} className="glass-card rounded-lg p-4 border-l-4 border-l-amber-500 bg-amber-50/40">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-foreground">{task.title}</h3>
+                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
+                                Needs Approval
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>Requested by: <span className="font-medium text-foreground">{getMemberName(task.assigned_to)}</span></span>
+                              <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <button
+                              onClick={() => setReviewingTask(task)}
+                              className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto"
+                            >
+                              Review Request
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="h-px bg-border/50 my-4" />
+                </div>
+              )}
+
+              {filteredTasks.filter(t => t.approval_status !== "pending").length === 0 ? (
                 <div className="glass-card rounded-lg p-6 sm:p-8 text-center">
                   <p className="text-muted-foreground">No tasks found</p>
                 </div>
@@ -598,6 +705,18 @@ export function AdminDashboard({
             userId={userId}
             onOpenChange={setShowCreateTask}
             onSuccess={loadData}
+          />
+        )}
+
+        {/* Review Task Modal */}
+        {reviewingTask && (
+          <AdminReviewTaskModal
+            open={!!reviewingTask}
+            task={reviewingTask}
+            onOpenChange={(open) => !open && setReviewingTask(null)}
+            onApprove={handleApproveTask}
+            onReject={handleRejectTask}
+            isProcessing={isProcessing}
           />
         )}
 
