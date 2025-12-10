@@ -29,6 +29,22 @@ export interface Task {
     created_at: string
     completed_at?: string | null
     completion_notes?: string | null
+    is_self_created?: boolean
+    approval_status?: "auto_approved" | "pending" | "approved" | "rejected"
+    approved_by?: string | null
+    approved_at?: string | null
+}
+
+export interface TimeLog {
+    id: string
+    user_id: string
+    task_id: string | null
+    clock_in: string
+    clock_out: string | null
+    duration_minutes: number
+    created_at: string
+    is_approved?: boolean
+    billable?: boolean
 }
 
 export interface UserProfile {

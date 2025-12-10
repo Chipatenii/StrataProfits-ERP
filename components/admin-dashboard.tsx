@@ -25,6 +25,8 @@ import { NotificationBell } from "./notification-bell"
 import { AdminEditTaskModal } from "./modals/admin-edit-task-modal"
 import { AdminCreateTaskModal } from "./modals/admin-create-task-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { approveTask, rejectTask } from "@/app/actions/tasks"
+import { toast } from "sonner"
 import Link from "next/link"
 
 interface Task {
@@ -38,6 +40,8 @@ interface Task {
   assigned_to: string | null
   created_at: string
   completed_at?: string
+  is_self_created?: boolean
+  approval_status?: string
 }
 
 interface Member {
@@ -178,6 +182,7 @@ export function AdminDashboard({
     return member?.full_name || "Unknown"
   }
 
+  const pendingTasks = tasks.filter(t => t.approval_status === "pending")
   const filteredTasks = tasks.filter((task) => {
     if (taskFilter === "all") return true
     if (taskFilter === "active") return task.status !== "completed"
@@ -189,6 +194,7 @@ export function AdminDashboard({
     total: tasks.length,
     active: tasks.filter((t) => t.status !== "completed").length,
     completed: tasks.filter((t) => t.status === "completed").length,
+    pending: pendingTasks.length,
   }
 
   if (loading) {
@@ -318,6 +324,28 @@ export function AdminDashboard({
         {/* Overview View */}
         {activeView === "overview" && (
           <div className="space-y-6">
+
+            {/* Task Requests Alert */}
+            {taskStats.pending > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                    <ClipboardList className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-amber-900">Pending Task Approvals</h3>
+                    <p className="text-amber-700 text-sm">You have {taskStats.pending} task request{taskStats.pending !== 1 ? 's' : ''} to review.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveView("tasks")}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+                >
+                  Review Requests
+                </button>
+              </div>
+            )}
+
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="glass-card rounded-2xl p-6">
@@ -484,6 +512,11 @@ export function AdminDashboard({
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
+                          {task.approval_status === "pending" && (
+                            <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
+                              Request
+                            </span>
+                          )}
                           <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <span

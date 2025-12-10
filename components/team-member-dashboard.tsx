@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, CheckCircle, Menu, X, Loader2, Pause, Play } from "lucide-react"
+import { LogOut, Settings, CheckCircle, Menu, X, Loader2, Pause, Play, Plus, Clock } from "lucide-react"
 import { Timer } from "./timer"
 import { TimerNotification } from "./timer-notification"
 import { UserProfileCard } from "./user-profile-card"
@@ -13,6 +13,7 @@ import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { NotificationBell } from "@/components/notification-bell"
 import { calculateTimeSpent } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
 
 interface Task {
   id: string
@@ -26,6 +27,8 @@ interface Task {
   completed_at?: string
   completion_notes?: string
   project_id?: string | null
+  is_self_created?: boolean
+  approval_status?: "auto_approved" | "pending" | "approved" | "rejected"
 }
 
 interface TimeLog {
@@ -76,6 +79,7 @@ export function TeamMemberDashboard({
     taskTitle: string
     remainingMinutes?: number
   } | null>(null)
+  const [showCreateTask, setShowCreateTask] = useState(false)
 
   const filteredTasks = tasks.filter((task) => {
     // Filter by project
@@ -95,11 +99,11 @@ export function TeamMemberDashboard({
       const { data: profileData } = await supabase.from("profiles").select("*").eq("id", userId).single()
       setProfile(profileData)
 
-      // Get assigned tasks
+      // Get assigned tasks AND self-created tasks
       const { data: tasksData } = await supabase
         .from("tasks")
         .select("*")
-        .eq("assigned_to", userId)
+        .or(`assigned_to.eq.${userId},created_by.eq.${userId}`) // Modified to include self-created
         .order("created_at", { ascending: false })
 
 
@@ -427,6 +431,15 @@ export function TeamMemberDashboard({
         />
       )}
 
+      {/* Create Self Task Modal */}
+      {showCreateTask && (
+        <CreateSelfTaskModal
+          open={showCreateTask}
+          onOpenChange={setShowCreateTask}
+          onSuccess={loadData}
+        />
+      )}
+
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {profile && (
           <UserProfileCard
@@ -490,7 +503,16 @@ export function TeamMemberDashboard({
         {/* Tasks Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">My Tasks</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold">My Tasks</h2>
+              <button
+                onClick={() => setShowCreateTask(true)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                New Task
+              </button>
+            </div>
             <div className="flex gap-2">
               <select
                 value={projectFilter}
@@ -540,6 +562,17 @@ export function TeamMemberDashboard({
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="text-lg font-semibold">{task.title}</h3>
                           {task.status === "completed" && <CheckCircle className="w-5 h-5 text-green-500" />}
+                          {task.approval_status === "pending" && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium border border-amber-200">
+                              <Clock className="w-3 h-3" />
+                              Pending Approval
+                            </span>
+                          )}
+                          {task.approval_status === "rejected" && (
+                            <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium border border-red-200">
+                              Rejected
+                            </span>
+                          )}
                         </div>
                         {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
                         {task.project_id && (

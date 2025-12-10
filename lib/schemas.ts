@@ -12,6 +12,16 @@ export const createTaskSchema = z.object({
     created_by: z.string().uuid("Invalid creator ID").optional(),
 })
 
+export const createSelfTaskSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    description: z.string().optional(),
+    is_project_related: z.boolean().default(false),
+    project_id: z.string().uuid("Invalid project ID").optional().nullable(),
+    due_date: z.string().optional().nullable(),
+    estimated_hours: z.number().min(0).optional().nullable(),
+    priority: z.enum(["low", "medium", "high"]),
+})
+
 export const updateMemberSchema = z.object({
     role: z.string().optional(),
     hourly_rate: z.number().min(0).optional(),
