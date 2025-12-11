@@ -57,6 +57,32 @@ export interface UserProfile {
     avatar_url?: string | null
 }
 
+export interface Invoice {
+    id: string
+    client_id: string
+    project_id?: string
+    invoice_number?: string
+    amount: number
+    currency: string
+    status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
+    due_date?: string
+    created_at: string
+    client?: {
+        name: string
+    }
+}
+
+export interface SOP {
+    id: string
+    title: string
+    content: string
+    category?: string
+    tags?: string[]
+    links?: { title: string, url: string }[]
+    created_at: string
+    updated_at: string
+}
+
 export interface Client {
     id: string
     name: string

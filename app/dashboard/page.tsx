@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 import { TeamMemberDashboard } from "@/components/team-member-dashboard"
 import { AdminDashboard } from "@/components/admin-dashboard"
 
+import { VADashboard } from "@/components/va-dashboard"
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 
@@ -18,6 +20,10 @@ export default async function DashboardPage() {
   // Use admin client to bypass RLS and safely determine user role
   const admin = await createAdminClient()
   const { data: profile } = await admin.from("profiles").select("role, full_name").eq("id", user.id).single()
+
+  if (profile?.role === 'virtual_assistant') {
+    return <VADashboard userId={user.id} userName={profile?.full_name || "Virtual Assistant"} />
+  }
 
   const isAdmin = profile?.role === "admin"
 
