@@ -95,10 +95,8 @@ export function TasksView({ userId, userName }: TasksViewProps) {
     }, [loadData])
 
     // Realtime
-    useRealtimeSubscription({
-        table: 'tasks',
-        onEnsure: loadData
-    })
+    useRealtimeSubscription("tasks", loadData)
+    useRealtimeSubscription("time_logs", loadData)
 
     // Handlers
     const handleTaskStartStop = async (taskId: string) => {
@@ -177,24 +175,32 @@ export function TasksView({ userId, userName }: TasksViewProps) {
         return task.project_id === projectFilter
     })
 
+    if (loading) return (
+        <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+    )
+
     // Render
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
                     <h2 className="text-2xl font-bold">My Tasks</h2>
                     <button onClick={() => setShowCreateTask(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm font-medium">
                         <Plus className="w-4 h-4" /> New Task
                     </button>
                 </div>
-                <div className="flex gap-2">
-                    <select value={projectFilter} onChange={e => setProjectFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                {/* Filters - Stack on mobile */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <select value={projectFilter} onChange={e => setProjectFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="all">All Projects</option>
                         {projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
-                    <div className="flex bg-white rounded-lg p-1 border border-border">
-                        <button onClick={() => setActiveTab('active')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'active' ? 'bg-accent text-white' : 'text-muted-foreground hover:text-foreground'}`}>Active</button>
-                        <button onClick={() => setActiveTab('completed')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'completed' ? 'bg-accent text-white' : 'text-muted-foreground hover:text-foreground'}`}>Completed</button>
+                    <div className="flex bg-white rounded-lg p-1 border border-border w-full sm:w-auto">
+                        <button onClick={() => setActiveTab('active')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'active' ? 'bg-accent text-white' : 'text-muted-foreground hover:text-foreground'}`}>Active</button>
+                        <button onClick={() => setActiveTab('completed')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'completed' ? 'bg-accent text-white' : 'text-muted-foreground hover:text-foreground'}`}>Completed</button>
                     </div>
                 </div>
             </div>
@@ -205,29 +211,29 @@ export function TasksView({ userId, userName }: TasksViewProps) {
                 ) : filteredTasks.map(task => {
                     const isTaskActive = activeTaskId === task.id
                     return (
-                        <div key={task.id} className="glass-card rounded-lg p-6">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <h3 className="text-lg font-semibold">{task.title}</h3>
-                                        {task.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                        <div key={task.id} className="glass-card rounded-lg p-4 md:p-6">
+                            <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                                        <h3 className="text-lg font-semibold truncate max-w-full">{task.title}</h3>
+                                        {task.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />}
                                         {task.approval_status === "pending" && <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium border border-amber-200"><Clock className="w-3 h-3" /> Pending Approval</span>}
                                         {task.approval_status === "rejected" && <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium border border-red-200">Rejected</span>}
                                     </div>
-                                    {task.description && <p className="text-muted-foreground mb-3">{task.description}</p>}
+                                    {task.description && <p className="text-muted-foreground mb-3 line-clamp-2">{task.description}</p>}
                                     {task.project_id && <div className="mb-2"><span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-medium">{projects.find(p => p.id === task.project_id)?.name || "Unknown Project"}</span></div>}
                                 </div>
-                                <div className="flex gap-2 ml-4">
+                                <div className="flex gap-2 self-start sm:self-auto shrink-0">
                                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === 'high' ? 'bg-red-100 text-red-700' : task.priority === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>{task.priority}</span>
                                 </div>
                             </div>
 
                             {activeTab === 'active' && (
                                 <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div>
-                                                <p className="text-sm text-muted-foreground mb-2">Time on this task:</p>
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                                            <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                                                <p className="text-sm text-muted-foreground mb-1">Time on this task:</p>
                                                 {isTaskActive ? (
                                                     <Timer isActive={true} startTime={timeLogs.find(l => !l.clock_out && l.task_id === task.id)?.clock_in || ""} estimatedHours={task.estimated_hours} onWarning={(rem) => handleTimerWarning(task.id, task.title, rem)} onTimeElapsed={() => handleTimeElapsed(task.id, task.title)} />
                                                 ) : (
@@ -236,7 +242,7 @@ export function TasksView({ userId, userName }: TasksViewProps) {
                                             </div>
                                             {task.estimated_hours && <TimeAllocationIndicator spentMinutes={calculateTimeSpent(timeLogs, task.id)} estimatedHours={task.estimated_hours} size="sm" />}
                                         </div>
-                                        <button onClick={() => handleTaskStartStop(task.id)} className={`px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center gap-2 ${isTaskActive ? "bg-amber-500 hover:bg-amber-600" : "bg-green-600 hover:bg-green-700"}`}>
+                                        <button onClick={() => handleTaskStartStop(task.id)} className={`w-full sm:w-auto px-6 py-2 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 ${isTaskActive ? "bg-amber-500 hover:bg-amber-600" : "bg-green-600 hover:bg-green-700"}`}>
                                             {isTaskActive ? <><Pause className="w-4 h-4" /> Pause</> : <><Play className="w-4 h-4" /> Start</>}
                                         </button>
                                     </div>

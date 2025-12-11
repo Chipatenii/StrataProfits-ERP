@@ -42,8 +42,8 @@ export function ClientsView() {
                     <p className="text-muted-foreground">Manage your agency clients and their projects</p>
                 </div>
                 <button
-                    onClick={() => setShowCreateModal(true)} // TODO: Implement Modal
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto justify-center"
                 >
                     <Plus className="w-4 h-4" />
                     Add Client
@@ -63,28 +63,30 @@ export function ClientsView() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
-                    <p>Loading clients...</p>
+                    <div className="col-span-full flex justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
                 ) : filteredClients.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-muted-foreground">
                         No clients found.
                     </div>
                 ) : (
                     filteredClients.map(client => (
-                        <div key={client.id} className="glass-card p-6 rounded-xl hover:shadow-lg transition-all group">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white
+                        <div key={client.id} className="glass-card p-6 rounded-xl hover:shadow-lg transition-all group border border-border/50">
+                            <div className="flex justify-between items-start mb-4 gap-2">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0
                                 ${client.type === 'dev' ? 'bg-blue-500' :
                                             client.type === 'design' ? 'bg-purple-500' :
                                                 client.type === 'marketing' ? 'bg-pink-500' : 'bg-gray-500'}`}>
                                         <Users className="w-5 h-5" />
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-lg">{client.name}</h3>
-                                        {client.business_name && <p className="text-sm text-muted-foreground">{client.business_name}</p>}
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-lg truncate">{client.name}</h3>
+                                        {client.business_name && <p className="text-sm text-muted-foreground truncate">{client.business_name}</p>}
                                     </div>
                                 </div>
-                                <span className={`px-2 py-1 text-xs rounded-full font-medium
+                                <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap
                           ${client.status === 'Active' ? 'bg-green-100 text-green-700' :
                                         client.status === 'Lead' ? 'bg-amber-100 text-amber-700' :
                                             'bg-gray-100 text-gray-700'}`}>
@@ -94,13 +96,13 @@ export function ClientsView() {
 
                             <div className="space-y-2 text-sm text-muted-foreground mb-4">
                                 {client.email && (
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="w-4 h-4" /> {client.email}
+                                    <div className="flex items-center gap-2 truncate">
+                                        <Mail className="w-4 h-4 shrink-0" /> <span className="truncate">{client.email}</span>
                                     </div>
                                 )}
                                 {client.location && (
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-4 h-4" /> {client.location}
+                                    <div className="flex items-center gap-2 truncate">
+                                        <MapPin className="w-4 h-4 shrink-0" /> <span className="truncate">{client.location}</span>
                                     </div>
                                 )}
                                 {client.value_tier === 'Premium' && (
@@ -113,7 +115,6 @@ export function ClientsView() {
                     ))
                 )}
             </div>
-
 
             <AdminCreateClientModal
                 open={showCreateModal}

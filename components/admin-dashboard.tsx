@@ -99,7 +99,7 @@ export function AdminDashboard({
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings">("my-day")
   const [stats, setStats] = useState<Stats | null>(null)
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
@@ -261,464 +261,456 @@ export function AdminDashboard({
     )
   }
 
+  const menuItems = [
+    { id: "my-day", label: "My Day", icon: Sun },
+    { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "clients", label: "Clients", icon: Folder },
+    { id: "pipeline", label: "Pipeline", icon: DollarSign },
+    { id: "meetings", label: "Meetings", icon: Calendar },
+    { id: "tasks", label: "Tasks", icon: ClipboardList, badge: taskStats.active },
+    { id: "team", label: "Team", icon: Users, badge: members.length },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-      {/* Header */}
-      <header className="bg-white border-b border-border shadow-sm relative">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">Ostento Tracker</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">Admin Dashboard - Welcome, {userName}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Notification Bell - Always visible */}
-            <NotificationBell userId={userId} isAdmin={true} />
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-2">
-              <button
-                onClick={() => setShowProfileSettings(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Settings
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu Dropdown */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg z-50 p-4 space-y-3 animate-in slide-in-from-top-2">
-            <button
-              onClick={() => {
-                setShowProfileSettings(true)
-                setIsMobileMenuOpen(false)
-              }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-              Settings
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              Logout
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* Profile Settings Modal */}
-      {showProfileSettings && (
-        <ProfileSettingsModal
-          userId={userId}
-          isAdmin={true}
-          onClose={() => setShowProfileSettings(false)}
-          onSuccess={() => {
-            setShowProfileSettings(false)
-            loadData()
-          }}
+    <div className="flex h-screen bg-background relative overflow-hidden">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {profile && (
-          <UserProfileCard
-            fullName={profile.full_name}
-            email={profile.email}
-            role={profile.role}
-            avatarUrl={profile.avatar_url || undefined}
-          />
-        )}
-
-        {/* Navigation Tabs */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-2 bg-white rounded-lg p-2 border border-border shadow-sm">
+      {/* Sidebar */}
+      <div className={`
+        fixed md:relative z-50 h-full
+        transition-all duration-300 ease-in-out
+        bg-card border-r border-border
+        ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
+      `}>
+        <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
+          <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
+            Admin Panel
+          </h2>
           <button
-            onClick={() => setActiveView("my-day")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "my-day" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-2 hover:bg-accent/10 rounded-lg md:hidden"
           >
-            <Sun className="w-4 h-4" />
-            <span className="whitespace-nowrap">My Day</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView("overview")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "overview" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span className="whitespace-nowrap">Overview</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView("clients")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "clients" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <Folder className="w-4 h-4" />
-            <span className="whitespace-nowrap">Clients</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView("pipeline")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "pipeline" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <DollarSign className="w-4 h-4" />
-            <span className="whitespace-nowrap">Pipeline</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView("meetings")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "meetings" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span className="whitespace-nowrap">Meetings</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView("tasks")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "tasks" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <ClipboardList className="w-4 h-4" />
-            <span className="whitespace-nowrap">Tasks ({taskStats.total})</span>
-          </button>
-          <button
-            onClick={() => setActiveView("team")}
-            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-sm font-medium transition-colors ${activeView === "team" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <Users className="w-4 h-4" />
-            <span className="whitespace-nowrap">Team ({members.length})</span>
+            <X size={20} />
           </button>
         </div>
 
-        {/* Views Rendering */}
+        <nav className="space-y-1 p-3 mt-4 overflow-y-auto h-[calc(100vh-8rem)]">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveView(item.id as any)
+                  if (window.innerWidth < 768) setIsSidebarOpen(false)
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${activeView === item.id ? "bg-accent text-white" : "text-muted-foreground hover:bg-accent/10"
+                  }`}
+                title={item.label}
+              >
+                <Icon size={22} className="shrink-0" />
+                <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left`}>
+                  {item.label}
+                </span>
+                {item.badge !== undefined && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${activeView === item.id ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'} ${!isSidebarOpen && "md:hidden lg:block"}`}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
 
-        {activeView === "my-day" && (
-          <MyDayView userId={userId} userName={userName} />
-        )}
+        <div className="absolute bottom-4 left-0 right-0 px-3 space-y-1">
+          <button
+            onClick={() => setShowProfileSettings(true)}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-muted-foreground hover:bg-accent/10 transition-colors"
+            title="Settings"
+          >
+            <Settings size={22} className="shrink-0" />
+            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"}`}>Settings</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+            title="Sign Out"
+          >
+            <LogOut size={22} className="shrink-0" />
+            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"}`}>Sign Out</span>
+          </button>
+        </div>
+      </div>
 
-        {activeView === "clients" && (
-          <ClientsView />
-        )}
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100">
+        {/* Header - Slim Mobile First */}
+        <header className="bg-white border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
+          <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 -ml-2 hover:bg-accent/10 rounded-lg md:hidden text-foreground"
+              >
+                <Menu size={24} />
+              </button>
 
-        {activeView === "pipeline" && (
-          <PipelineView />
-        )}
-
-        {activeView === "meetings" && (
-          <MeetingsView />
-        )}
-
-        {/* Overview View */}
-        {activeView === "overview" && (
-          <OverviewView
-            stats={stats}
-            taskStats={taskStats}
-            membersCount={members.length}
-            setActiveView={setActiveView as any}
-          />
-        )}
-
-
-        {/* Tasks View */}
-        {activeView === "tasks" && (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <h2 className="text-xl sm:text-2xl font-bold">All Tasks</h2>
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => setShowCreateTask(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors font-medium text-sm sm:text-base"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Task
-                </button>
-                <div className="flex bg-white rounded-lg p-1 border border-border">
-                  <button
-                    onClick={() => setTaskFilter("all")}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "all" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setTaskFilter("active")}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    Active
-                  </button>
-                  <button
-                    onClick={() => setTaskFilter("completed")}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "completed"
-                      ? "bg-accent text-white"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    Completed
-                  </button>
-                </div>
+              <div className="flex flex-col">
+                <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
+                  <span className="md:hidden">Ostento Tracker</span>
+                  <span className="hidden md:inline">Ostento Productivity Tracker</span>
+                </h1>
+                <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
               </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="flex items-center gap-2">
+              <NotificationBell userId={userId} isAdmin={true} />
+              <div className="flex-shrink-0">
+                {profile && (
+                  <UserProfileCard
+                    fullName={profile.full_name}
+                    email={profile.email}
+                    role={profile.role}
+                    avatarUrl={profile.avatar_url || undefined}
+                    compact={true}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </header>
 
-              {/* Task Requests Section - Only shown when filtering 'All' or 'Active' */}
-              {(taskFilter === 'all' || taskFilter === 'active') && pendingTasks.length > 0 && (
-                <div className="space-y-3 mb-6">
-                  <h3 className="text-lg font-semibold text-amber-900 flex items-center gap-2">
-                    <span className="w-2 h-8 bg-amber-500 rounded-full"></span>
-                    Pending Reviews ({pendingTasks.length})
-                  </h3>
-                  <div className="grid gap-3">
-                    {pendingTasks.map((task) => (
-                      <div key={task.id} className="glass-card rounded-lg p-4 border-l-4 border-l-amber-500 bg-amber-50/40">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground">{task.title}</h3>
-                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
-                                Needs Approval
-                              </span>
+        {/* Content Area */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
+          <div className="md:hidden mb-4">
+            <p className="text-sm text-muted-foreground">Good Morning, <span className="font-medium text-foreground">{userName.split(' ')[0]}</span></p>
+          </div>
+
+          {/* Views Rendering */}
+          {activeView === "my-day" && (
+            <MyDayView userId={userId} userName={userName} />
+          )}
+
+          {activeView === "clients" && (
+            <ClientsView />
+          )}
+
+          {activeView === "pipeline" && (
+            <PipelineView />
+          )}
+
+          {activeView === "meetings" && (
+            <MeetingsView />
+          )}
+
+          {/* Overview View */}
+          {activeView === "overview" && (
+            <OverviewView
+              stats={stats}
+              taskStats={taskStats}
+              membersCount={members.length}
+              setActiveView={setActiveView as any}
+            />
+          )}
+
+
+          {/* Tasks View */}
+          {activeView === "tasks" && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <h2 className="text-xl sm:text-2xl font-bold">All Tasks</h2>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => setShowCreateTask(true)}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors font-medium text-sm sm:text-base"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Task
+                  </button>
+                  <div className="flex bg-white rounded-lg p-1 border border-border">
+                    <button
+                      onClick={() => setTaskFilter("all")}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "all" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setTaskFilter("active")}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                      Active
+                    </button>
+                    <button
+                      onClick={() => setTaskFilter("completed")}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "completed"
+                        ? "bg-accent text-white"
+                        : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                      Completed
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+
+                {/* Task Requests Section - Only shown when filtering 'All' or 'Active' */}
+                {(taskFilter === 'all' || taskFilter === 'active') && pendingTasks.length > 0 && (
+                  <div className="space-y-3 mb-6">
+                    <h3 className="text-lg font-semibold text-amber-900 flex items-center gap-2">
+                      <span className="w-2 h-8 bg-amber-500 rounded-full"></span>
+                      Pending Reviews ({pendingTasks.length})
+                    </h3>
+                    <div className="grid gap-3">
+                      {pendingTasks.map((task) => (
+                        <div key={task.id} className="glass-card rounded-lg p-4 border-l-4 border-l-amber-500 bg-amber-50/40">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-foreground">{task.title}</h3>
+                                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
+                                  Needs Approval
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span>Requested by: <span className="font-medium text-foreground">{getMemberName(task.assigned_to)}</span></span>
+                                <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                              </div>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>Requested by: <span className="font-medium text-foreground">{getMemberName(task.assigned_to)}</span></span>
-                              <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                            <div>
+                              <button
+                                onClick={() => setReviewingTask(task)}
+                                className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto"
+                              >
+                                Review Request
+                              </button>
                             </div>
                           </div>
-                          <div>
-                            <button
-                              onClick={() => setReviewingTask(task)}
-                              className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto"
+                        </div>
+                      ))}
+                    </div>
+                    <div className="h-px bg-border/50 my-4" />
+                  </div>
+                )}
+
+                {filteredTasks.filter(t => t.approval_status !== "pending").length === 0 ? (
+                  <div className="glass-card rounded-lg p-6 sm:p-8 text-center">
+                    <p className="text-muted-foreground">No tasks found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredTasks.map((task) => (
+                      <div key={task.id} className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
+                            {task.approval_status === "pending" && (
+                              <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
+                                Request
+                              </span>
+                            )}
+                            <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-medium ${task.status === "completed"
+                                  ? "bg-green-100 text-green-700"
+                                  : task.status === "in_progress"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-gray-100 text-gray-700"
+                                  }`}
+                              >
+                                {task.status}
+                              </span>
+                              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                                {getMemberName(task.assigned_to)}
+                              </span>
+                              {task.due_date && (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                                  Due: {new Date(task.due_date).toLocaleDateString()}
+                                </span>
+                              )}
+                              {task.estimated_hours && (
+                                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                                  Est: {task.estimated_hours}h
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <span
+                              className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
+                                ? "bg-red-100 text-red-700"
+                                : task.priority === "medium"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-green-100 text-green-700"
+                                }`}
                             >
-                              Review Request
+                              {task.priority}
+                            </span>
+                            <button
+                              onClick={() => setEditingTask(task)}
+                              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                              title="Edit task"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                              title="Delete task"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="h-px bg-border/50 my-4" />
-                </div>
-              )}
-
-              {filteredTasks.filter(t => t.approval_status !== "pending").length === 0 ? (
-                <div className="glass-card rounded-lg p-6 sm:p-8 text-center">
-                  <p className="text-muted-foreground">No tasks found</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredTasks.map((task) => (
-                    <div key={task.id} className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
-                          {task.approval_status === "pending" && (
-                            <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
-                              Request
-                            </span>
-                          )}
-                          <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${task.status === "completed"
-                                ? "bg-green-100 text-green-700"
-                                : task.status === "in_progress"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-gray-100 text-gray-700"
-                                }`}
-                            >
-                              {task.status}
-                            </span>
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                              {getMemberName(task.assigned_to)}
-                            </span>
-                            {task.due_date && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                                Due: {new Date(task.due_date).toLocaleDateString()}
-                              </span>
-                            )}
-                            {task.estimated_hours && (
-                              <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                                Est: {task.estimated_hours}h
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <span
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                              ? "bg-red-100 text-red-700"
-                              : task.priority === "medium"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-green-100 text-green-700"
-                              }`}
-                          >
-                            {task.priority}
-                          </span>
-                          <button
-                            onClick={() => setEditingTask(task)}
-                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                            title="Edit task"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTask(task.id)}
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                            title="Delete task"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Edit Task Modal */}
-        {editingTask && (
-          <AdminEditTaskModal
-            open={!!editingTask}
-            task={editingTask}
-            members={members}
-            onOpenChange={(open) => !open && setEditingTask(null)}
-            onSuccess={loadData}
-          />
-        )}
+          {/* Team View */}
+          {activeView === "team" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Team Members</h2>
+              </div>
 
-        {/* Create Task Modal */}
-        {showCreateTask && (
-          <AdminCreateTaskModal
-            open={showCreateTask}
-            members={members}
-            userId={userId}
-            onOpenChange={setShowCreateTask}
-            onSuccess={loadData}
-          />
-        )}
-
-        {/* Review Task Modal */}
-        {reviewingTask && (
-          <AdminReviewTaskModal
-            open={!!reviewingTask}
-            task={reviewingTask}
-            onOpenChange={(open) => !open && setReviewingTask(null)}
-            onApprove={handleApproveTask}
-            onReject={handleRejectTask}
-            isProcessing={isProcessing}
-          />
-        )}
-
-        {/* Team View */}
-        {activeView === "team" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Team Members</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {members.length === 0 ? (
-                <div className="glass-card rounded-lg p-8 text-center col-span-full">
-                  <p className="text-muted-foreground">No team members found</p>
-                </div>
-              ) : (
-                members.map((member) => {
-                  const memberTasks = tasks.filter((t) => t.assigned_to === member.id)
-                  return (
-                    <div key={member.id} className="glass-card rounded-lg p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold">{member.full_name}</h3>
-                          <p className="text-sm text-muted-foreground">{member.email}</p>
-                          <div className="mt-2 space-y-1">
-                            <p className="text-sm">
-                              <span className="font-medium">Role:</span>{" "}
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                                {member.role}
-                              </span>
-                            </p>
-                            {member.hourly_rate && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {members.length === 0 ? (
+                  <div className="glass-card rounded-lg p-8 text-center col-span-full">
+                    <p className="text-muted-foreground">No team members found</p>
+                  </div>
+                ) : (
+                  members.map((member) => {
+                    const memberTasks = tasks.filter((t) => t.assigned_to === member.id)
+                    return (
+                      <div key={member.id} className="glass-card rounded-lg p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold">{member.full_name}</h3>
+                            <p className="text-sm text-muted-foreground">{member.email}</p>
+                            <div className="mt-2 space-y-1">
                               <p className="text-sm">
-                                <span className="font-medium">Rate:</span> ZMW {member.hourly_rate}/hr
+                                <span className="font-medium">Role:</span>{" "}
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                                  {member.role}
+                                </span>
                               </p>
-                            )}
-                            <p className="text-sm">
-                              <span className="font-medium">Tasks Assigned:</span> {memberTasks.length}
-                            </p>
-                            <p className="text-sm">
-                              <span className="font-medium">Tasks Completed:</span> {memberTasks.filter(t => t.status === "completed").length}
-                            </p>
+                              {member.hourly_rate && (
+                                <p className="text-sm">
+                                  <span className="font-medium">Rate:</span> ZMW {member.hourly_rate}/hr
+                                </p>
+                              )}
+                              <p className="text-sm">
+                                <span className="font-medium">Tasks Assigned:</span> {memberTasks.length}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-medium">Tasks Completed:</span> {memberTasks.filter(t => t.status === "completed").length}
+                              </p>
+                            </div>
                           </div>
+                          {member.role !== "admin" && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setEditingMember(member)}
+                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                                title="Edit member"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMember(member.id)}
+                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                                title="Delete member"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        {member.role !== "admin" && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setEditingMember(member)}
-                              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                              title="Edit member"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(member.id)}
-                              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                              title="Delete member"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  )
-                })
-              )}
+                    )
+                  })
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Edit Member Modal */}
-        {editingMember && (
-          <ProfileSettingsModal
-            userId={editingMember.id}
-            isAdmin={true}
-            onClose={() => setEditingMember(null)}
-            onSuccess={() => {
-              setEditingMember(null)
-              loadData()
-            }}
-          />
-        )}
-      </main>
+          {/* Edit Member Modal */}
+          {editingMember && (
+            <ProfileSettingsModal
+              userId={editingMember.id}
+              isAdmin={true}
+              onClose={() => setEditingMember(null)}
+              onSuccess={() => {
+                setEditingMember(null)
+                loadData()
+              }}
+            />
+          )}
+
+          {/* Edit Task Modal - Moved inside main to be safe or outside */}
+          {editingTask && (
+            <AdminEditTaskModal
+              open={!!editingTask}
+              task={editingTask}
+              members={members}
+              onOpenChange={(open) => !open && setEditingTask(null)}
+              onSuccess={loadData}
+            />
+          )}
+
+          {/* Create Task Modal */}
+          {showCreateTask && (
+            <AdminCreateTaskModal
+              open={showCreateTask}
+              members={members}
+              userId={userId}
+              onOpenChange={setShowCreateTask}
+              onSuccess={loadData}
+            />
+          )}
+
+          {/* Review Task Modal */}
+          {reviewingTask && (
+            <AdminReviewTaskModal
+              open={!!reviewingTask}
+              task={reviewingTask}
+              onOpenChange={(open) => !open && setReviewingTask(null)}
+              onApprove={handleApproveTask}
+              onReject={handleRejectTask}
+              isProcessing={isProcessing}
+            />
+          )}
+
+          {/* Profile Settings Modal */}
+          {showProfileSettings && (
+            <ProfileSettingsModal
+              userId={userId}
+              isAdmin={true}
+              onClose={() => setShowProfileSettings(false)}
+              onSuccess={() => {
+                setShowProfileSettings(false)
+                loadData()
+              }}
+            />
+          )}
+        </main>
+      </div>
     </div>
   )
 }

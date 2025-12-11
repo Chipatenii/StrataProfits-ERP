@@ -65,17 +65,36 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background relative overflow-hidden">
+      {/* Mobile Overlay Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className={`${isSidebarOpen ? "w-64" : "w-20"} transition-all duration-300 bg-card border-r border-border`}>
-        <div className="p-4 flex items-center justify-between">
-          <h2 className={`font-bold text-accent ${!isSidebarOpen && "hidden"}`}>Ostento VA</h2>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-accent/10 rounded-lg">
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+      <div className={`
+        fixed md:relative z-50 h-full
+        transition-all duration-300 ease-in-out
+        bg-card border-r border-border
+        ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
+      `}>
+        <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
+          <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
+            Ostento VA
+          </h2>
+          {/* Close button only visible on mobile when open */}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-2 hover:bg-accent/10 rounded-lg md:hidden"
+          >
+            <X size={20} />
           </button>
         </div>
 
-        <nav className="space-y-2 px-3 mt-8">
+        <nav className="space-y-1 p-3 mt-4 overflow-y-auto h-[calc(100vh-8rem)]">
           {menuItems.map((item) => {
             const Icon = item.icon
             return (
@@ -83,13 +102,16 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
                 key={item.id}
                 onClick={() => {
                   setActiveView(item.id as View)
-                  setIsSidebarOpen(false)
+                  if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${activeView === item.id ? "bg-accent text-white" : "text-muted-foreground hover:bg-accent/10"
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${activeView === item.id ? "bg-accent text-white" : "text-muted-foreground hover:bg-accent/10"
                   }`}
+                title={item.label}
               >
-                <Icon size={20} />
-                <span className={`${!isSidebarOpen && "hidden"}`}>{item.label}</span>
+                <Icon size={22} className="shrink-0" />
+                <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200`}>
+                  {item.label}
+                </span>
               </button>
             )
           })}
@@ -98,33 +120,59 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
         <div className="absolute bottom-4 left-0 right-0 px-3">
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+            title="Sign Out"
           >
-            <LogOut size={20} />
-            <span className={`${!isSidebarOpen && "hidden"}`}>Sign Out</span>
+            <LogOut size={22} className="shrink-0" />
+            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"}`}>Sign Out</span>
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white border-b border-border shadow-sm">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Ostento Productivity Tracker</h1>
-              <p className="text-sm text-muted-foreground">Welcome, {userName}</p>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background/95">
+        {/* Header - Slim Mobile First */}
+        <header className="bg-white border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
+          <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {/* Hamburger - Only visible on mobile */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 -ml-2 hover:bg-accent/10 rounded-lg md:hidden text-foreground"
+              >
+                <Menu size={24} />
+              </button>
+
+              <div className="flex flex-col">
+                <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
+                  <span className="md:hidden">Ostento Tracker</span>
+                  <span className="hidden md:inline">Ostento Productivity Tracker</span>
+                </h1>
+                <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
+              </div>
             </div>
-            <UserProfileCard
-              fullName={userName}
-              email={userEmail}
-              role={userRole}
-            />
+
+            {/* Profile - Compact on Mobile */}
+            <div className="flex-shrink-0">
+              <UserProfileCard
+                fullName={userName}
+                email={userEmail}
+                role={userRole}
+                compact={true}
+              />
+            </div>
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-auto p-6">{renderView()}</main>
+        {/* Content Area */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
+          {/* Mobile Greeting (if hidden in header) */}
+          <div className="md:hidden mb-4">
+            <p className="text-sm text-muted-foreground">Good Morning, <span className="font-medium text-foreground">{userName.split(' ')[0]}</span></p>
+          </div>
+
+          {renderView()}
+        </main>
       </div>
     </div>
   )

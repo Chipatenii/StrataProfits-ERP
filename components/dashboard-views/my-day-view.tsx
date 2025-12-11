@@ -55,19 +55,23 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
     const todaysMeetings = meetings.filter(m => m.date_time_start.startsWith(todayStr))
 
-    if (loading) return <div>Loading your day...</div>
+    if (loading) return (
+        <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+    )
 
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-orange-100 rounded-full text-orange-600">
-                    <Sun className="w-8 h-8" />
+                <div className="p-3 bg-orange-100 rounded-full text-orange-600 shrink-0">
+                    <Sun className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
                 <div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                    <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent leading-tight">
                         Good Morning, {userName.split(' ')[0]}
                     </h2>
-                    <p className="text-muted-foreground">Here is your focus for today.</p>
+                    <p className="text-sm md:text-base text-muted-foreground">Here is your focus for today.</p>
                 </div>
             </div>
 
@@ -84,8 +88,8 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                             <div className="space-y-2">
                                 {overdue.map(t => (
                                     <div key={t.id} className="bg-white p-3 rounded-lg border border-red-100 flex justify-between items-center shadow-sm">
-                                        <span className="font-medium text-gray-800">{t.title}</span>
-                                        <span className="text-xs text-red-600 font-semibold">{t.due_date}</span>
+                                        <span className="font-medium text-gray-800 truncate mr-2">{t.title}</span>
+                                        <span className="text-xs text-red-600 font-semibold whitespace-nowrap">{t.due_date}</span>
                                     </div>
                                 ))}
                             </div>
@@ -104,13 +108,18 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                         ) : (
                             <div className="space-y-3">
                                 {dueToday.map(t => (
-                                    <div key={t.id} className="glass-card p-4 rounded-xl flex items-center justify-between group hover:border-blue-300 transition-colors">
-                                        <div>
-                                            <h4 className="font-semibold text-lg">{t.title}</h4>
+                                    <div key={t.id} className="glass-card p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group hover:border-blue-300 transition-colors">
+                                        <div className="min-w-0">
+                                            <h4 className="font-semibold text-lg truncate">{t.title}</h4>
                                             <p className="text-sm text-gray-500">{t.project_id ? "Project Task" : "General Task"}</p>
                                         </div>
-                                        <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">
-                                            {t.estimated_hours ? `${t.estimated_hours}h` : 'No est.'}
+                                        <div className="flex items-center gap-3">
+                                            <div className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${t.priority === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}`}>
+                                                {t.priority}
+                                            </div>
+                                            <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium whitespace-nowrap">
+                                                {t.estimated_hours ? `${t.estimated_hours}h` : 'No est.'}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -127,8 +136,8 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                             <div className="space-y-3">
                                 {highPriority.map(t => (
                                     <div key={t.id} className="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
-                                        <span className="font-medium text-gray-800">{t.title}</span>
-                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded uppercase font-bold">High</span>
+                                        <span className="font-medium text-gray-800 truncate mr-2">{t.title}</span>
+                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded uppercase font-bold whitespace-nowrap">High</span>
                                     </div>
                                 ))}
                             </div>
@@ -152,23 +161,20 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                         <p className="text-xs font-bold text-purple-600 mb-1">
                                             {new Date(m.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
-                                        <h4 className="font-bold text-sm">{m.title}</h4>
-                                        <p className="text-xs text-gray-500">{m.mode}</p>
+                                        <h4 className="font-bold text-sm leading-tight text-gray-900">{m.title}</h4>
+                                        <p className="text-xs text-gray-500 mt-0.5">{m.mode}</p>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Time Tracking Widget Placeholer (Actually usually on Dashboard, but summarizing here is nice) */}
-                    <div className="glass-card p-6 rounded-2xl">
+                    {/* Time Tracking Widget Summary */}
+                    <div className="glass-card p-6 rounded-2xl hidden lg:block">
                         <h3 className="flex items-center gap-2 font-bold text-gray-800 mb-2">
                             <Clock className="w-5 h-5 text-green-600" /> Time Tracked
                         </h3>
-                        <div className="text-3xl font-bold text-gray-900">
-                            {/* Access time logs if passed, for now static or 0 */}
-                            0.0 <span className="text-lg text-gray-500 font-medium">hrs</span>
-                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">See dashboard for details</p>
                     </div>
                 </div>
             </div>

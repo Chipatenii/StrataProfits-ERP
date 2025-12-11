@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, DollarSign, Calendar } from "lucide-react"
+import { Plus, DollarSign, Calendar, ChevronRight } from "lucide-react"
 import type { Deal } from "@/lib/types"
 import { CreateDealModal } from "@/components/modals/create-deal-modal"
 import { AttachmentList } from "@/components/attachment-list"
@@ -10,6 +10,10 @@ export function PipelineView() {
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+
+  // Mobile: Active stage state for accordion-like behavior or tabs? 
+  // For "Stacked Cards", we usually mean stacking the columns.
+  // We'll stack them vertically on mobile.
 
   useEffect(() => {
     fetchDeals()
@@ -51,8 +55,8 @@ export function PipelineView() {
   }
 
   return (
-    <div className="space-y-6 overflow-x-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-w-full md:min-w-[800px]">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Sales Pipeline</h2>
           <p className="text-muted-foreground">Track deals and opportunities</p>
@@ -66,27 +70,39 @@ export function PipelineView() {
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 pb-4 overflow-x-auto md:min-w-[1200px]">
-        {stages.map((stage) => (
-          <div key={stage} className="flex-1 min-w-[280px]">
-            <div className={`p-3 rounded-lg border mb-3 font-semibold ${getStageColor(stage)}`}>
-              {stage} <span className="text-xs opacity-70 ml-1">({deals.filter((d) => d.stage === stage).length})</span>
-            </div>
-            <div className="space-y-3">
-              {deals
-                .filter((d) => d.stage === stage)
-                .map((deal) => (
+      {/* 
+        Mobile: Vertical Stack (flex-col) 
+        Desktop: Horizontal Scroll (flex-row + overflow-x-auto)
+      */}
+      <div className="flex flex-col md:flex-row gap-4 pb-4 md:overflow-x-auto md:min-w-0">
+        {stages.map((stage) => {
+          const stageDeals = deals.filter((d) => d.stage === stage)
+          return (
+            <div key={stage} className="flex-1 md:min-w-[280px] md:max-w-[320px]">
+              {/* Header */}
+              <div className={`p-3 rounded-lg border mb-3 font-semibold flex items-center justify-between ${getStageColor(stage)}`}>
+                <span className="flex items-center gap-2">
+                  {stage}
+                </span>
+                <span className="text-xs font-bold py-0.5 px-2 bg-white/30 rounded-full">
+                  {stageDeals.length}
+                </span>
+              </div>
+
+              {/* Deals Grid/Stack */}
+              <div className="space-y-3">
+                {stageDeals.map((deal) => (
                   <div
                     key={deal.id}
-                    className="glass-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    className="glass-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-border/40"
                   >
-                    <h4 className="font-medium mb-1">{deal.title}</h4>
+                    <h4 className="font-medium mb-1 truncate">{deal.title}</h4>
                     <div className="flex justify-between items-center text-sm text-muted-foreground mb-2">
-                      <span>{deal.client?.name || "No Client"}</span>
+                      <span className="truncate max-w-[150px]">{deal.client?.name || "No Client"}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <DollarSign className="w-3 h-3" />
-                      {deal.currency} {deal.estimated_value.toLocaleString()}
+                      <DollarSign className="w-3 h-3 text-green-600" />
+                      <span className="text-green-700">{deal.estimated_value.toLocaleString()}</span> {deal.currency}
                     </div>
                     {deal.expected_close_date && (
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -99,14 +115,17 @@ export function PipelineView() {
                     </div>
                   </div>
                 ))}
-              {deals.filter((d) => d.stage === stage).length === 0 && (
-                <div className="h-24 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-sm text-gray-400">
-                  Empty
-                </div>
-              )}
+
+                {stageDeals.length === 0 && (
+                  <div className="h-16 md:h-24 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-sm text-gray-400">
+                    <span className="md:hidden">No deals</span>
+                    <span className="hidden md:inline">Empty</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <CreateDealModal open={showCreateModal} onOpenChange={setShowCreateModal} onSuccess={fetchDeals} />
