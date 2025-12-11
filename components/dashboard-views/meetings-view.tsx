@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Calendar, Video, MapPin, User, Clock } from "lucide-react"
+import { Plus, Calendar, Video, MapPin, User, Clock, Phone } from "lucide-react"
 import { Meeting } from "@/lib/types"
+import { CreateMeetingModal } from "@/components/modals/create-meeting-modal"
+import { AttachmentList } from "@/components/attachment-list"
 
 export function MeetingsView() {
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [loading, setLoading] = useState(true)
+    const [showCreateModal, setShowCreateModal] = useState(false)
 
     useEffect(() => {
         fetchMeetings()
@@ -47,7 +50,10 @@ export function MeetingsView() {
                     <h2 className="text-2xl font-bold">Meetings & Logistics</h2>
                     <p className="text-muted-foreground">Schedule and manage your calendar</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
                     <Plus className="w-4 h-4" />
                     Schedule Meeting
                 </button>
@@ -93,18 +99,24 @@ export function MeetingsView() {
                             </div>
                             <div className="flex items-center">
                                 <span className={`px-3 py-1 text-xs rounded-full font-medium ${meeting.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                                        meeting.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
-                                            meeting.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                                                'bg-amber-100 text-amber-700'
+                                    meeting.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
+                                        meeting.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                            'bg-amber-100 text-amber-700'
                                     }`}>
                                     {meeting.status}
                                 </span>
+                                <AttachmentList entityType="meeting" entityId={meeting.id} />
                             </div>
                         </div>
                     ))
                 )}
             </div>
+
+            <CreateMeetingModal
+                open={showCreateModal}
+                onOpenChange={setShowCreateModal}
+                onSuccess={fetchMeetings}
+            />
         </div>
     )
 }
-import { Phone } from "lucide-react"

@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react"
 import { Plus, DollarSign, Calendar, ArrowRight } from "lucide-react"
 import { Deal } from "@/lib/types"
+import { CreateDealModal } from "@/components/modals/create-deal-modal"
+import { AttachmentList } from "@/components/attachment-list"
 
 export function PipelineView() {
     const [deals, setDeals] = useState<Deal[]>([])
     const [loading, setLoading] = useState(true)
+    const [showCreateModal, setShowCreateModal] = useState(false)
 
     useEffect(() => {
         fetchDeals()
@@ -47,7 +50,10 @@ export function PipelineView() {
                     <h2 className="text-2xl font-bold">Sales Pipeline</h2>
                     <p className="text-muted-foreground">Track deals and opportunities</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
                     <Plus className="w-4 h-4" />
                     New Deal
                 </button>
@@ -76,6 +82,9 @@ export function PipelineView() {
                                             {new Date(deal.expected_close_date).toLocaleDateString()}
                                         </div>
                                     )}
+                                    <div className="flex justify-end mt-2 pt-2 border-t border-border/30">
+                                        <AttachmentList entityType="deal" entityId={deal.id} />
+                                    </div>
                                 </div>
                             ))}
                             {deals.filter(d => d.stage === stage).length === 0 && (
@@ -87,6 +96,12 @@ export function PipelineView() {
                     </div>
                 ))}
             </div>
-        </div>
+
+            <CreateDealModal
+                open={showCreateModal}
+                onOpenChange={setShowCreateModal}
+                onSuccess={fetchDeals}
+            />
+        </div >
     )
 }

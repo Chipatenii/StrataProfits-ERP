@@ -51,7 +51,7 @@ export interface UserProfile {
     id: string
     full_name: string
     email: string
-    role: "admin" | "team_member"
+    role: "admin" | "team_member" | "virtual_assistant"
     user_id?: string // For backward compatibility if needed, though id usually equals auth.uid
     hourly_rate?: number | null
     avatar_url?: string | null
