@@ -1,11 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createAdminUser } from "@/app/actions/setup"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SetupPage() {
   const [loading, setLoading] = useState(false)
+  const [adminExists, setAdminExists] = useState(false)
+  const [checkingAdmin, setCheckingAdmin] = useState(true)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  useEffect(() => {
+    async function checkAdminExists() {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase.from("profiles").select("id").eq("role", "admin").limit(1)
+
+        if (!error && data && data.length > 0) {
+          setAdminExists(true)
+          setMessage({
+            type: "success",
+            text: "Admin user already exists. Setup is complete!",
+          })
+        }
+      } catch (err) {
+        console.error("[v0] Error checking admin:", err)
+      } finally {
+        setCheckingAdmin(false)
+      }
+    }
+
+    checkAdminExists()
+  }, [])
 
   const handleCreateAdmin = async () => {
     setLoading(true)
@@ -14,6 +40,7 @@ export default function SetupPage() {
     try {
       const result = await createAdminUser()
       if (result.success) {
+        setAdminExists(true)
         setMessage({
           type: "success",
           text: `Admin user created successfully! Email: ${result.email}, Password: ${result.password}`,
@@ -34,32 +61,49 @@ export default function SetupPage() {
     }
   }
 
+  if (checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-slate-600">Checking setup status...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm border border-slate-200">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Setup</h1>
-            <p className="text-slate-600">Initialize your admin account for Ostento Media Agency</p>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-900">
-              <strong>Default Credentials:</strong>
-              <br />
-              Email: admin@ostento.com
-              <br />
-              Password: 1234
+            <p className="text-slate-600">
+              {adminExists ? "Your system is ready" : "Initialize your admin account for Ostento Media Agency"}
             </p>
           </div>
 
-          <button
-            onClick={handleCreateAdmin}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
-          >
-            {loading ? "Creating Admin User..." : "Create Admin User"}
-          </button>
+          {!adminExists && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-900">
+                <strong>Default Credentials:</strong>
+                <br />
+                Email: admin@ostento.com
+                <br />
+                Password: 1234
+              </p>
+            </div>
+          )}
+
+          {!adminExists && (
+            <button
+              onClick={handleCreateAdmin}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
+            >
+              {loading ? "Creating Admin User..." : "Create Admin User"}
+            </button>
+          )}
 
           {message && (
             <div
@@ -71,6 +115,15 @@ export default function SetupPage() {
             >
               <p className="text-sm">{message.text}</p>
             </div>
+          )}
+
+          {adminExists && (
+            <button
+              onClick={() => (window.location.href = "/dashboard")}
+              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
+            >
+              Go to Dashboard
+            </button>
           )}
 
           <p className="text-center text-xs text-slate-500 mt-6">
