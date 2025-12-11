@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
         *,
         client:clients(id, name),
         project:projects(id, name),
-        requested_by:profiles!meetings_requested_by_user_id_fkey(full_name),
-        assigned_to:profiles!meetings_assigned_to_user_id_fkey(full_name)
+        requested_by:profiles!meetings_requested_by_profile_fkey(full_name),
+        assigned_to:profiles!meetings_assigned_to_profile_fkey(full_name)
       `)
             .order("date_time_start", { ascending: true })
 

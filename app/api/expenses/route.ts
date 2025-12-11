@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
             .from("expenses")
             .select(`
         *,
-        submitted_by:profiles(full_name),
+        submitted_by:profiles!expenses_submitted_by_profile_fkey(full_name),
         client:clients(name),
         project:projects(name)
       `)
