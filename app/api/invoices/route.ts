@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
         let query = admin.from("invoices").select(`
             *,
-            client:clients(name),
+            client:clients(name, address, phone, tpin, email, contact_person),
             project:projects(name)
         `).order("created_at", { ascending: false })
 

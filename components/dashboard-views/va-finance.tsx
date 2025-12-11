@@ -1,17 +1,17 @@
-"use client"
-
 import { useState, useEffect } from "react"
-import { Plus, FileText, Check, Clock, AlertCircle } from "lucide-react"
+import { Plus, FileText, Check, Clock, AlertCircle, Printer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Invoice } from "@/lib/types"
+import { InvoiceTemplate } from "@/components/invoice-template"
 
 export function VAFinance() {
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [loading, setLoading] = useState(true)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [printingInvoice, setPrintingInvoice] = useState<Invoice | null>(null)
 
     // Form state (simplified, usually use Zod form)
     const [formData, setFormData] = useState({
@@ -20,12 +20,22 @@ export function VAFinance() {
         status: 'draft',
         due_date: new Date().toISOString().split('T')[0]
     })
-    const [clients, setClients] = useState<{ id: string, name: string }[]>([])
+    const [clients, setClients] = useState<any[]>([])
 
     useEffect(() => {
         fetchInvoices()
         fetchClients()
     }, [])
+
+    useEffect(() => {
+        if (printingInvoice) {
+            // Slight delay to ensure render
+            setTimeout(() => {
+                window.print()
+                setPrintingInvoice(null)
+            }, 100)
+        }
+    }, [printingInvoice])
 
     const fetchInvoices = async () => {
         try {
@@ -72,6 +82,8 @@ export function VAFinance() {
 
     return (
         <div className="space-y-6">
+            {printingInvoice && <InvoiceTemplate invoice={printingInvoice} />}
+
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Finance & Invoices</h2>
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -116,7 +128,7 @@ export function VAFinance() {
 
             <div className="grid gap-4">
                 {invoices.map(inv => (
-                    <div key={inv.id} className="glass-card p-4 rounded-lg flex items-center justify-between">
+                    <div key={inv.id} className="glass-card p-4 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded bg-green-100 flex items-center justify-center text-green-700">
                                 <FileText className="w-5 h-5" />
@@ -129,7 +141,7 @@ export function VAFinance() {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                             <div className="text-right">
                                 <div className="font-bold text-lg">{inv.currency} {inv.amount.toLocaleString()}</div>
                                 <div className={`text-xs font-medium uppercase px-2 py-0.5 rounded-full inline-block mt-1
@@ -138,19 +150,29 @@ export function VAFinance() {
                                     {inv.status}
                                 </div>
                             </div>
-                            {inv.status !== 'paid' && (
-                                <Select onValueChange={(v) => updateStatus(inv.id, v)} value={inv.status}>
-                                    <SelectTrigger className="w-[100px] h-8 text-xs">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="draft">Draft</SelectItem>
-                                        <SelectItem value="sent">Sent</SelectItem>
-                                        <SelectItem value="paid">Paid</SelectItem>
-                                        <SelectItem value="overdue">Overdue</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setPrintingInvoice(inv)}
+                                    title="Print Invoice"
+                                >
+                                    <Printer className="w-4 h-4" />
+                                </Button>
+                                {inv.status !== 'paid' && (
+                                    <Select onValueChange={(v) => updateStatus(inv.id, v)} value={inv.status}>
+                                        <SelectTrigger className="w-[100px] h-8 text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="draft">Draft</SelectItem>
+                                            <SelectItem value="sent">Sent</SelectItem>
+                                            <SelectItem value="paid">Paid</SelectItem>
+                                            <SelectItem value="overdue">Overdue</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}

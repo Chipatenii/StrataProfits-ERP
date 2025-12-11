@@ -69,7 +69,7 @@ export function MeetingsView() {
                 ) : (
                     meetings.map(meeting => (
                         <div key={meeting.id} className="glass-card p-4 rounded-xl flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-l-4 border-l-blue-500">
-                            <div className="flex gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg p-2 min-w-[60px]">
                                     <span className="text-xs font-bold text-blue-700 uppercase">
                                         {new Date(meeting.date_time_start).toLocaleDateString(undefined, { month: 'short' })}

@@ -60,16 +60,15 @@ export interface UserProfile {
 export interface Invoice {
     id: string
     client_id: string
-    project_id?: string
-    invoice_number?: string
     amount: number
     currency: string
-    status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
-    due_date?: string
+    status: "draft" | "sent" | "paid" | "overdue"
+    due_date: string | null
     created_at: string
-    client?: {
-        name: string
-    }
+    invoice_number?: string
+    // Joined fields
+    client?: Client | null
+    project?: { name: string } | null
 }
 
 export interface SOP {

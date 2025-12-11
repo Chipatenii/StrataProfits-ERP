@@ -52,21 +52,21 @@ export function PipelineView() {
 
   return (
     <div className="space-y-6 overflow-x-auto">
-      <div className="flex justify-between items-center min-w-[800px]">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-w-full md:min-w-[800px]">
         <div>
           <h2 className="text-2xl font-bold">Sales Pipeline</h2>
           <p className="text-muted-foreground">Track deals and opportunities</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto justify-center"
         >
           <Plus className="w-4 h-4" />
           New Deal
         </button>
       </div>
 
-      <div className="flex gap-4 min-w-[1200px] pb-4">
+      <div className="flex flex-col md:flex-row gap-4 pb-4 overflow-x-auto md:min-w-[1200px]">
         {stages.map((stage) => (
           <div key={stage} className="flex-1 min-w-[280px]">
             <div className={`p-3 rounded-lg border mb-3 font-semibold ${getStageColor(stage)}`}>
