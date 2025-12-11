@@ -56,3 +56,109 @@ export interface UserProfile {
     hourly_rate?: number | null
     avatar_url?: string | null
 }
+
+export interface Client {
+    id: string
+    name: string
+    business_name: string | null
+    phone: string | null
+    email: string | null
+    location: string | null
+    type: "dev" | "design" | "marketing" | "mixed"
+    value_tier: "Standard" | "Premium" | "HighValue"
+    status: "Lead" | "Active" | "Dormant" | "Past"
+    notes: string | null
+    social_links: {
+        facebook?: string
+        instagram?: string
+        tiktok?: string
+        website?: string
+    }
+    created_at: string
+    updated_at: string
+}
+
+export interface Deal {
+    id: string
+    client_id: string | null
+    project_id: string | null
+    title: string
+    stage: "NewLead" | "Qualified" | "ProposalSent" | "Negotiation" | "Won" | "Lost"
+    estimated_value: number
+    currency: string
+    probability: number
+    expected_close_date: string | null
+    actual_close_date: string | null
+    lost_reason: string | null
+    notes: string | null
+    created_at: string
+    updated_at: string
+    client?: Client
+    project?: Project
+}
+
+export interface Meeting {
+    id: string
+    client_id: string | null
+    project_id: string | null
+    requested_by_user_id: string | null
+    assigned_to_user_id: string | null
+    title: string
+    type: "Discovery" | "Review" | "Renewal" | "Strategy" | "General"
+    mode: "InPerson" | "Zoom" | "GoogleMeet" | "PhoneCall"
+    location: string | null
+    date_time_start: string
+    date_time_end: string | null
+    status: "Proposed" | "Approved" | "Completed" | "Cancelled"
+    agenda: string | null
+    meeting_notes: string | null
+    created_at: string
+    updated_at: string
+    client?: Client
+    project?: Project
+}
+
+export interface Expense {
+    id: string
+    client_id: string | null
+    project_id: string | null
+    meeting_id: string | null
+    submitted_by_user_id: string | null
+    category: "Transport" | "Data" | "OfficeSpace" | "Meal" | "Other"
+    amount: number
+    currency: string
+    description: string | null
+    receipt_url: string | null
+    status: "Pending" | "Approved" | "Rejected" | "Paid"
+    created_at: string
+    updated_at: string
+}
+
+export interface TaskTemplate {
+    id: string
+    name: string
+    description: string | null
+    service_type: "Dev" | "Design" | "Marketing"
+    is_active: boolean
+    items?: TaskTemplateItem[]
+}
+
+export interface TaskTemplateItem {
+    id: string
+    template_id: string
+    name: string
+    description: string | null
+    default_assignee_role: string | null
+    default_estimated_hours: number | null
+    order_index: number
+}
+
+export interface Comment {
+    id: string
+    entity_type: "task" | "project" | "deal" | "meeting"
+    entity_id: string
+    author_user_id: string
+    content: string
+    created_at: string
+    author?: UserProfile
+}
