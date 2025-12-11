@@ -22,7 +22,14 @@ export default async function DashboardPage() {
   const { data: profile } = await admin.from("profiles").select("role, full_name").eq("id", user.id).single()
 
   if (profile?.role === 'virtual_assistant') {
-    return <VADashboard userId={user.id} userName={profile?.full_name || "Virtual Assistant"} />
+    return (
+      <VADashboard
+        userId={user.id}
+        userName={profile?.full_name || "Virtual Assistant"}
+        userEmail={user.email || ""}
+        userRole={profile?.role || "virtual_assistant"}
+      />
+    )
   }
 
   const isAdmin = profile?.role === "admin"

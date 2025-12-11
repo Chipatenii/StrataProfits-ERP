@@ -16,11 +16,13 @@ import { UserProfileCard } from "./user-profile-card"
 interface VADashboardProps {
   userId: string
   userName: string
+  userEmail: string
+  userRole: string
 }
 
 type View = "overview" | "tasks" | "meetings" | "pipeline" | "projects" | "finance" | "sops"
 
-export function VADashboard({ userId, userName }: VADashboardProps) {
+export function VADashboard({ userId, userName, userEmail, userRole }: VADashboardProps) {
   const [activeView, setActiveView] = useState<View>("overview")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const router = useRouter()
@@ -83,9 +85,8 @@ export function VADashboard({ userId, userName }: VADashboardProps) {
                   setActiveView(item.id as View)
                   setIsSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  activeView === item.id ? "bg-accent text-white" : "text-muted-foreground hover:bg-accent/10"
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${activeView === item.id ? "bg-accent text-white" : "text-muted-foreground hover:bg-accent/10"
+                  }`}
               >
                 <Icon size={20} />
                 <span className={`${!isSidebarOpen && "hidden"}`}>{item.label}</span>
@@ -114,7 +115,11 @@ export function VADashboard({ userId, userName }: VADashboardProps) {
               <h1 className="text-2xl font-bold text-foreground">Ostento Productivity Tracker</h1>
               <p className="text-sm text-muted-foreground">Welcome, {userName}</p>
             </div>
-            <UserProfileCard userId={userId} />
+            <UserProfileCard
+              fullName={userName}
+              email={userEmail}
+              role={userRole}
+            />
           </div>
         </header>
 
