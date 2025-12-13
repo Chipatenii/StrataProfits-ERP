@@ -66,6 +66,12 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
     setLoading(true)
     setMessage(null)
 
+    if (!userId) {
+      setMessage({ type: "error", text: "User ID is missing. Please refresh and try again." })
+      setLoading(false)
+      return
+    }
+
     try {
       // 1. Update basic profile info (Name)
       if (fullName) {
@@ -84,7 +90,7 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
       if (isAdmin) {
         const adminBody: any = {}
         if (role) adminBody.role = role
-        if (hourlyRate) adminBody.hourly_rate = parseFloat(hourlyRate)
+        if (hourlyRate) adminBody.hourly_rate = Number.parseFloat(hourlyRate)
 
         if (Object.keys(adminBody).length > 0) {
           const response = await fetch(`/api/admin/members/${userId}`, {
@@ -106,7 +112,9 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
         // Let's stick to the previous behavior but warn or skip if userId != current.
         // Actually, let's try to update via the admin API if it exists or just skip for now to avoid breaking.
         // Or assume the user validates it.
-        const { data: { user } } = await supabase.auth.getUser()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
         if (user?.id === userId) {
           const { error } = await supabase.auth.updateUser({ email })
           if (error) throw error
@@ -121,7 +129,9 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
         if (newPassword !== confirmPassword) {
           throw new Error("Passwords do not match")
         }
-        const { data: { user } } = await supabase.auth.getUser()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
         if (user?.id === userId) {
           const { error } = await supabase.auth.updateUser({ password: newPassword })
           if (error) throw error
@@ -266,8 +276,9 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
 
           {message && (
             <div
-              className={`p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                }`}
+              className={`p-3 rounded-lg text-sm ${
+                message.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              }`}
             >
               {message.text}
             </div>
