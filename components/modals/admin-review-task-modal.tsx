@@ -3,20 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, User, FileText } from "lucide-react"
-
-interface Task {
-    id: string
-    title: string
-    description: string
-    priority: string
-    status: string // Added to match AdminDashboard Task type
-    due_date?: string | null
-    estimated_hours?: number | null
-    approval_status?: string
-    created_at: string
-    assigned_to: string | null
-    created_by?: string
-}
+import { Task } from "@/lib/types"
 
 interface AdminReviewTaskModalProps {
     open: boolean

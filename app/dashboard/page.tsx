@@ -33,9 +33,14 @@ export default async function DashboardPage() {
   }
 
   const isAdmin = profile?.role === "admin"
+  const isBookKeeper = profile?.role === "book_keeper"
 
-  return isAdmin ? (
-    <AdminDashboard userId={user.id} userName={profile?.full_name || "Admin"} />
+  return (isAdmin || isBookKeeper) ? (
+    <AdminDashboard
+      userId={user.id}
+      userName={profile?.full_name || "Admin"}
+      userRole={profile?.role || "admin"}
+    />
   ) : (
     <TeamMemberDashboard userId={user.id} userName={profile?.full_name || "Team Member"} />
   )

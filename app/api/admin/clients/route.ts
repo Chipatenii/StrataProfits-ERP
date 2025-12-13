@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
         const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-        if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+        if (!['admin', 'virtual_assistant', 'book_keeper'].includes(profile?.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 

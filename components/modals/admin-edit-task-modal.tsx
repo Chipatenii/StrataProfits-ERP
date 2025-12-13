@@ -5,27 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
-interface Task {
-    id: string
-    title: string
-    description: string
-    status: string
-    priority: string
-    due_date: string
-    estimated_hours: number | null
-    assigned_to: string | null
-}
-
-interface Member {
-    id: string
-    full_name: string
-}
+import { Task, UserProfile } from "@/lib/types"
 
 interface AdminEditTaskModalProps {
     open: boolean
     task: Task | null
-    members: Member[]
+    members: UserProfile[]
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
 }
@@ -46,7 +31,7 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
         if (task) {
             setFormData({
                 title: task.title,
-                description: task.description,
+                description: task.description || "",
                 status: task.status,
                 priority: task.priority,
                 assigned_to: task.assigned_to || "",

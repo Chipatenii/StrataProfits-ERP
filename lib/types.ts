@@ -265,3 +265,18 @@ export interface Comment {
     created_at: string
     author?: UserProfile
 }
+
+export interface Stats {
+    leaderboard: {
+        id: string
+        name: string
+        completedTasks: number
+        totalEarnings: number
+    }[]
+    bestPerformer: {
+        id: string
+        name: string
+        completedTasks: number
+        totalEarnings: number
+    } | null
+}

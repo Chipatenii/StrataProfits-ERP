@@ -42,73 +42,37 @@ import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ReportsView } from "@/components/dashboard-views/reports-view"
 
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  due_date: string | null
-  estimated_hours: number | null
-  assigned_to: string | null
-  created_at: string
-  completed_at?: string
-  is_self_created?: boolean
-  approval_status?: string
-}
+import { Task, UserProfile, Stats } from "@/lib/types" // Using shared types
+import { QuotesView } from "@/components/dashboard-views/quotes-view"
+import { FinanceView } from "@/components/dashboard-views/finance-view"
+import { InvoicesView } from "@/components/dashboard-views/invoices-view"
 
-interface Member {
-  id: string
-  full_name: string
-  email: string
-  role: string
-  hourly_rate: number | null
-}
-
-interface Profile {
-  full_name: string
-  email: string
-  role: string
-  avatar_url: string | null
-}
-
-interface Stats {
-  leaderboard: {
-    id: string
-    name: string
-    completedTasks: number
-    totalEarnings: number
-  }[]
-  bestPerformer: {
-    id: string
-    name: string
-    completedTasks: number
-    totalEarnings: number
-  } | null
-}
+import { Receipt, Boxes } from "lucide-react"
 
 export function AdminDashboard({
   userId,
   userName,
+  userRole = 'admin'
 }: {
   userId: string
   userName: string
+  userRole?: string
 }) {
   const supabase = createClient()
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
-  const [members, setMembers] = useState<Member[]>([])
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [members, setMembers] = useState<UserProfile[]>([]) // Use UserProfile instead of Member
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings" | "reports">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings" | "reports" | "quotes" | "finance" | "invoices">("my-day")
 
-  const [stats, setStats] = useState<Stats | null>(null)
+  const [stats, setStats] = useState<any>(null) // Stats type in lib/types might differ from local usage, safe with any for now or check
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
-  const [editingMember, setEditingMember] = useState<Member | null>(null)
+  const [editingMember, setEditingMember] = useState<UserProfile | null>(null)
 
   // Review Modal State
   const [reviewingTask, setReviewingTask] = useState<Task | null>(null)
@@ -249,6 +213,7 @@ export function AdminDashboard({
     return true
   })
 
+  // Safe access to length properties
   const taskStats = {
     total: tasks.length,
     active: tasks.filter((t) => t.status !== "completed").length,
@@ -264,17 +229,21 @@ export function AdminDashboard({
     )
   }
 
-  const menuItems = [
-    { id: "my-day", label: "My Day", icon: Sun },
-    { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "clients", label: "Clients", icon: Folder },
-    { id: "pipeline", label: "Pipeline", icon: DollarSign },
-    { id: "meetings", label: "Meetings", icon: Calendar },
-    { id: "reports", label: "Reports", icon: FileText },
-
-    { id: "tasks", label: "Tasks", icon: ClipboardList, badge: taskStats.active },
-    { id: "team", label: "Team", icon: Users, badge: members.length },
+  // Filter Menu Items based on Role
+  const allMenuItems = [
+    { id: "my-day", label: "My Day", icon: Sun, roles: ['admin', 'team_member', 'virtual_assistant', 'book_keeper'] },
+    { id: "overview", label: "Overview", icon: BarChart3, roles: ['admin', 'virtual_assistant'] },
+    { id: "finance", label: "Finance", icon: DollarSign, roles: ['admin', 'book_keeper'] },
+    { id: "quotes", label: "Quotes", icon: FileText, roles: ['admin', 'virtual_assistant'] },
+    { id: "clients", label: "Clients", icon: Folder, roles: ['admin', 'virtual_assistant', 'book_keeper'] },
+    { id: "pipeline", label: "Pipeline", icon: Boxes, roles: ['admin', 'virtual_assistant'] },
+    { id: "meetings", label: "Meetings", icon: Calendar, roles: ['admin', 'virtual_assistant'] },
+    { id: "reports", label: "Reports", icon: ClipboardList, roles: ['admin', 'book_keeper'] },
+    { id: "tasks", label: "Tasks", icon: ClipboardList, badge: taskStats.active, roles: ['admin', 'team_member'] }, // VA manages tasks via separate dashboard mostly? Or here.
+    { id: "team", label: "Team", icon: Users, badge: members.length, roles: ['admin'] },
   ]
+
+  const menuItems = allMenuItems.filter(item => item.roles.includes(userRole))
 
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
@@ -323,8 +292,11 @@ export function AdminDashboard({
                 <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left`}>
                   {item.label}
                 </span>
+                {item.roles && !item.roles.includes('admin') && item.roles.includes('book_keeper') && (
+                  <span className="text-[10px] bg-green-100 text-green-700 px-1 rounded ml-auto">BK</span>
+                )}
                 {item.badge !== undefined && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${activeView === item.id ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'} ${!isSidebarOpen && "md:hidden lg:block"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${activeView === item.id ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'} ${!isSidebarOpen && "md:hidden lg:block"} ml-auto`}>
                     {item.badge}
                   </span>
                 )}
@@ -401,9 +373,21 @@ export function AdminDashboard({
             </p>
           </div>
 
-          {/* Views Rendering */}
+          {activeView === "quotes" && <QuotesView />}
+          {activeView === "finance" && <FinanceView />}
+
+          {/* Existing Views */}
           {activeView === "my-day" && (
             <MyDayView userId={userId} userName={userName} />
+          )}
+
+          {activeView === "overview" && (
+            <OverviewView
+              stats={stats}
+              taskStats={taskStats}
+              membersCount={members.length}
+              setActiveView={setActiveView as any}
+            />
           )}
 
           {activeView === "clients" && (
@@ -421,18 +405,6 @@ export function AdminDashboard({
           {activeView === "reports" && (
             <ReportsView />
           )}
-
-
-          {/* Overview View */}
-          {activeView === "overview" && (
-            <OverviewView
-              stats={stats}
-              taskStats={taskStats}
-              membersCount={members.length}
-              setActiveView={setActiveView as any}
-            />
-          )}
-
 
           {/* Tasks View */}
           {activeView === "tasks" && (
@@ -477,7 +449,7 @@ export function AdminDashboard({
 
               <div className="grid gap-4">
 
-                {/* Task Requests Section - Only shown when filtering 'All' or 'Active' */}
+                {/* Task Requests Section */}
                 {(taskFilter === 'all' || taskFilter === 'active') && pendingTasks.length > 0 && (
                   <div className="space-y-3 mb-6">
                     <h3 className="text-lg font-semibold text-amber-900 flex items-center gap-2">
@@ -676,7 +648,7 @@ export function AdminDashboard({
             />
           )}
 
-          {/* Edit Task Modal - Moved inside main to be safe or outside */}
+          {/* Edit Task Modal */}
           {editingTask && (
             <AdminEditTaskModal
               open={!!editingTask}
