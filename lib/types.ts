@@ -5,6 +5,8 @@ export interface Project {
     status: "active" | "archived" | "completed"
     created_at: string
     updated_at: string
+    client_id: string | null // Added for ERP
+    created_by?: string // Added for ERP
 }
 
 export interface ProjectMember {
@@ -60,6 +62,7 @@ export interface UserProfile {
 export interface Invoice {
     id: string
     client_id: string
+    project_id?: string | null // Added for ERP
     amount: number
     currency: string
     status: "draft" | "sent" | "paid" | "overdue"
@@ -69,6 +72,81 @@ export interface Invoice {
     // Joined fields
     client?: Client | null
     project?: { name: string } | null
+    items?: InvoiceItem[] // Added for ERP
+    payments?: Payment[] // Added for ERP
+}
+
+export interface InvoiceItem {
+    id: string
+    invoice_id: string
+    description: string
+    quantity: number
+    unit_price: number
+    total: number
+    created_at: string
+}
+
+export interface Payment {
+    id: string
+    invoice_id: string
+    amount: number
+    currency: string
+    method: "cash" | "bank_transfer" | "mobile_money" | "card" | "other" | null
+    reference?: string | null
+    paid_at: string
+    received_by_user_id?: string | null
+    created_at: string
+}
+
+export interface Quote {
+    id: string
+    client_id: string
+    deal_id?: string | null
+    project_id?: string | null
+    quote_number?: string | null
+    currency: string
+    status: "draft" | "sent" | "accepted" | "rejected" | "expired"
+    valid_until?: string | null
+    notes?: string | null
+    terms?: string | null
+    created_by?: string | null
+    created_at: string
+    items?: QuoteItem[]
+    client?: Client
+}
+
+export interface QuoteItem {
+    id: string
+    quote_id: string
+    description: string
+    quantity: number
+    unit_price: number
+    total: number
+    created_at: string
+}
+
+export interface ApprovalRequest {
+    id: string
+    entity_type: "task" | "time_log" | "expense" | "invoice" | "quote" | "meeting"
+    entity_id: string
+    requested_by_user_id: string
+    assigned_to_user_id?: string | null
+    assigned_role?: string | null
+    status: "pending" | "approved" | "rejected"
+    decision_note?: string | null
+    decided_by_user_id?: string | null
+    created_at: string
+    decided_at?: string | null
+}
+
+export interface ActivityLog {
+    id: string
+    actor_user_id?: string | null
+    action: string
+    entity_type: string
+    entity_id?: string | null
+    metadata?: any
+    created_at: string
 }
 
 export interface SOP {
