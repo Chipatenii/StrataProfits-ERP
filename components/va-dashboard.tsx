@@ -57,7 +57,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       case "projects":
         return <ProjectListView userId={userId} />
       case "finance":
-        return <VAFinance />
+        return <VAFinance userName={userName} userRole={userRole} />
       case "sops":
         return <VASOPs />
       default:

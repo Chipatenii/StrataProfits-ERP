@@ -8,14 +8,21 @@ const createQuoteSchema = z.object({
     deal_id: z.string().uuid().optional().nullable(),
     project_id: z.string().uuid().optional().nullable(),
     quote_number: z.string().optional(),
+    reference_number: z.string().optional(),
     currency: z.string().default('ZMW'),
     valid_until: z.string().optional(),
     terms: z.string().optional(),
     notes: z.string().optional(),
+    customer_notes: z.string().optional(),
+    discount_rate: z.number().min(0).default(0),
+    discount_amount: z.number().min(0).default(0),
+    adjustment: z.number().default(0),
     items: z.array(z.object({
         description: z.string(),
         quantity: z.number().min(0),
-        unit_price: z.number().min(0)
+        unit_price: z.number().min(0),
+        tax_rate: z.number().min(0).default(0),
+        tax_amount: z.number().min(0).default(0)
     })).min(1)
 })
 
@@ -84,7 +91,9 @@ export async function POST(request: NextRequest) {
                 quote_id: quote.id,
                 description: item.description,
                 quantity: item.quantity,
-                unit_price: item.unit_price
+                unit_price: item.unit_price,
+                tax_rate: item.tax_rate,
+                tax_amount: item.tax_amount
             }))
 
             const { error: itemsError } = await admin.from("quote_items").insert(itemsWithId)

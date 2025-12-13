@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2, Loader2, ArrowUp, ArrowDown } from "lucide-react"
 import { Client } from "@/lib/types"
 
-interface CreateInvoiceModalProps {
+interface CreateQuoteModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
@@ -23,7 +23,7 @@ interface LineItem {
     tax_rate: number
 }
 
-export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvoiceModalProps) {
+export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteModalProps) {
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<Client[]>([])
     const [loadingClients, setLoadingClients] = useState(true)
@@ -31,10 +31,10 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
     // Form State
     const [clientId, setClientId] = useState("")
     const [currency, setCurrency] = useState("ZMW")
-    const [invoiceNumber, setInvoiceNumber] = useState("")
-    const [orderNumber, setOrderNumber] = useState("")
-    const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0])
-    const [dueDate, setDueDate] = useState("")
+    const [quoteNumber, setQuoteNumber] = useState("")
+    const [referenceNumber, setReferenceNumber] = useState("")
+    const [quoteDate, setQuoteDate] = useState(new Date().toISOString().split('T')[0])
+    const [expiryDate, setExpiryDate] = useState("")
 
     // Financials
     const [discountRate, setDiscountRate] = useState(0)
@@ -116,15 +116,14 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
             const payload = {
                 client_id: clientId,
                 currency,
-                invoice_number: invoiceNumber || undefined,
-                order_number: orderNumber || undefined,
-                due_date: dueDate || undefined,
+                quote_number: quoteNumber || undefined,
+                reference_number: referenceNumber || undefined,
+                valid_until: expiryDate || undefined,
                 customer_notes: customerNotes,
                 terms: terms,
                 discount_rate: discountRate,
                 discount_amount: discountAmount,
                 adjustment: adjustment,
-                amount: total, // Still send total, though backend might recalc
                 items: items.filter(i => i.description.trim() !== "").map(i => ({
                     description: i.description,
                     quantity: i.quantity,
@@ -134,27 +133,30 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                 }))
             }
 
-            const res = await fetch("/api/invoices", {
+            const res = await fetch("/api/quotes", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
 
-            if (!res.ok) throw new Error("Failed to create invoice")
+            if (!res.ok) throw new Error("Failed to create quote")
 
             onSuccess()
             onOpenChange(false)
             // Reset form
             setClientId("")
             setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
-            setOrderNumber("")
+            setQuoteNumber("")
+            setReferenceNumber("")
+            setQuoteDate(new Date().toISOString().split('T')[0])
+            setExpiryDate("")
             setDiscountRate(0)
             setAdjustment(0)
             setCustomerNotes("")
             setTerms("")
         } catch (error) {
             console.error(error)
-            alert("Failed to create invoice")
+            alert("Failed to create quote")
         } finally {
             setLoading(false)
         }
@@ -164,17 +166,17 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto w-full">
                 <DialogHeader>
-                    <DialogTitle>Create Invoice</DialogTitle>
+                    <DialogTitle>Create New Quote</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6 mt-2">
                     {/* Header Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-purple-50 rounded-lg border border-purple-100">
                         <div className="space-y-4">
                             <div>
                                 <Label>Customer Name</Label>
                                 <select
-                                    className="w-full mt-1 px-3 py-2 rounded-md bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                    className="w-full mt-1 px-3 py-2 rounded-md bg-white border border-gray-300 focus:ring-2 focus:ring-purple-500"
                                     value={clientId}
                                     onChange={(e) => setClientId(e.target.value)}
                                     required
@@ -186,11 +188,11 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                 </select>
                             </div>
                             <div>
-                                <Label>Order Number</Label>
+                                <Label>Reference #</Label>
                                 <Input
-                                    value={orderNumber}
-                                    onChange={(e) => setOrderNumber(e.target.value)}
-                                    placeholder="PO-12345"
+                                    value={referenceNumber}
+                                    onChange={(e) => setReferenceNumber(e.target.value)}
+                                    placeholder="REF-12345"
                                     className="bg-white"
                                 />
                             </div>
@@ -198,10 +200,10 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                         <div className="space-y-4">
                             <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <Label>Invoice #</Label>
+                                    <Label>Quote #</Label>
                                     <Input
-                                        value={invoiceNumber}
-                                        onChange={(e) => setInvoiceNumber(e.target.value)}
+                                        value={quoteNumber}
+                                        onChange={(e) => setQuoteNumber(e.target.value)}
                                         placeholder="Auto-generated"
                                         className="bg-white"
                                     />
@@ -219,20 +221,20 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                             </div>
                             <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <Label>Invoice Date</Label>
+                                    <Label>Quote Date</Label>
                                     <Input
                                         type="date"
-                                        value={invoiceDate}
-                                        onChange={(e) => setInvoiceDate(e.target.value)}
+                                        value={quoteDate}
+                                        onChange={(e) => setQuoteDate(e.target.value)}
                                         className="bg-white"
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <Label>Due Date</Label>
+                                    <Label>Expiry Date</Label>
                                     <Input
                                         type="date"
-                                        value={dueDate}
-                                        onChange={(e) => setDueDate(e.target.value)}
+                                        value={expiryDate}
+                                        onChange={(e) => setExpiryDate(e.target.value)}
                                         className="bg-white"
                                     />
                                 </div>
@@ -254,10 +256,10 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                         {items.map((item, index) => (
                             <div key={item.id} className="grid grid-cols-12 gap-2 items-start py-2 border-b border-gray-100 group hover:bg-gray-50/50 rounded-lg px-2 transition-colors">
                                 <div className="col-span-1 flex flex-col items-center gap-1 pt-2">
-                                    <button type="button" onClick={() => moveItem(index, 'up')} className="text-gray-400 hover:text-blue-600 disabled:opacity-20" disabled={index === 0}>
+                                    <button type="button" onClick={() => moveItem(index, 'up')} className="text-gray-400 hover:text-purple-600 disabled:opacity-20" disabled={index === 0}>
                                         <ArrowUp size={14} />
                                     </button>
-                                    <button type="button" onClick={() => moveItem(index, 'down')} className="text-gray-400 hover:text-blue-600 disabled:opacity-20" disabled={index === items.length - 1}>
+                                    <button type="button" onClick={() => moveItem(index, 'down')} className="text-gray-400 hover:text-purple-600 disabled:opacity-20" disabled={index === items.length - 1}>
                                         <ArrowDown size={14} />
                                     </button>
                                 </div>
@@ -306,7 +308,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                             </div>
                         ))}
 
-                        <Button type="button" variant="outline" size="sm" onClick={addItem} className="mt-2 text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-50">
+                        <Button type="button" variant="outline" size="sm" onClick={addItem} className="mt-2 text-purple-600 border-purple-200 bg-purple-50/50 hover:bg-purple-50">
                             <Plus className="w-4 h-4 mr-2" /> Add Item
                         </Button>
                     </div>
@@ -327,7 +329,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                 <Label>Terms & Conditions</Label>
                                 <Textarea
                                     className="mt-1 min-h-[100px]"
-                                    placeholder="Payment terms, delivery details..."
+                                    placeholder="Validity period, payment terms..."
                                     value={terms}
                                     onChange={(e) => setTerms(e.target.value)}
                                 />
@@ -369,16 +371,16 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
 
                             <div className="border-t border-gray-200 pt-4 flex justify-between items-center">
                                 <span className="font-bold text-lg">Total ({currency})</span>
-                                <span className="font-bold text-xl text-blue-700">{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <span className="font-bold text-xl text-purple-700">{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
+                        <Button type="submit" disabled={loading || !clientId} className="bg-purple-600 hover:bg-purple-700">
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Save & Send Invoice
+                            Create Quote
                         </Button>
                     </DialogFooter>
                 </form>

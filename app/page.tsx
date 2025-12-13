@@ -1,38 +1,16 @@
-"use client"
+import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+export default async function Home() {
+  const supabase = await createClient()
 
-export default function Home() {
-  const supabase = createClient()
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        router.push("/dashboard")
-      } else {
-        router.push("/auth/login")
-      }
-      setLoading(false)
-    }
-
-    checkAuth()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-800 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    )
+  if (user) {
+    redirect("/dashboard")
+  } else {
+    redirect("/auth/login")
   }
-
-  return null
 }

@@ -4,10 +4,13 @@ import { useEffect, useState } from "react"
 import { getQuotes } from "@/lib/data/quotes" // We will need to expose this via API or generic fetcher since this is client component
 import { Quote } from "@/lib/types"
 import { Plus, Loader2, FileText } from "lucide-react"
+import { CreateQuoteModal } from "@/components/modals/create-quote-modal"
 
 export function QuotesView() {
     const [quotes, setQuotes] = useState<Quote[]>([])
     const [loading, setLoading] = useState(true)
+
+    const [showCreate, setShowCreate] = useState(false)
 
     useEffect(() => {
         fetchQuotes()
@@ -34,7 +37,10 @@ export function QuotesView() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Quotes & Proposals</h2>
-                <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <button
+                    onClick={() => setShowCreate(true)}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
                     <Plus className="w-4 h-4" /> Create Quote
                 </button>
             </div>
@@ -74,6 +80,12 @@ export function QuotesView() {
                     ))
                 )}
             </div>
+
+            <CreateQuoteModal
+                open={showCreate}
+                onOpenChange={setShowCreate}
+                onSuccess={fetchQuotes}
+            />
         </div>
     )
 }

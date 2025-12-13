@@ -8,7 +8,8 @@ const createPaymentSchema = z.object({
     amount: z.number().positive(),
     currency: z.string().default('ZMW'),
     method: z.enum(['cash', 'bank_transfer', 'mobile_money', 'card', 'other']),
-    reference: z.string().optional()
+    reference: z.string().optional(),
+    receipt_number: z.string().optional()
 })
 
 export async function POST(request: NextRequest) {

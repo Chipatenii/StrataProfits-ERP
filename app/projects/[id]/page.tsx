@@ -17,9 +17,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
     // Ideally allow members to view if they are in the project
     // But for now, stick to Admin access for this "management" view as per plan
-    if (profile?.role !== "admin") {
+    if (profile?.role !== "admin" && profile?.role !== "virtual_assistant" && profile?.role !== "book_keeper") {
         // TODO: Check if member is in project_members, if so allow?
-        // For simplicity and matching plan, redirect for now.
+        // For now allowing core roles
         redirect("/dashboard")
     }
 

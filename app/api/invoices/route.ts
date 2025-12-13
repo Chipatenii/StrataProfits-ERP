@@ -7,10 +7,17 @@ const createInvoiceSchema = z.object({
     client_id: z.string().uuid(),
     project_id: z.string().uuid().optional().nullable(),
     amount: z.number().min(0),
-    currency: z.string().default('USD'),
+    currency: z.string().default('ZMW'),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']).default('draft'),
     due_date: z.string().optional(), // Date string
-    invoice_number: z.string().optional()
+    invoice_number: z.string().optional(),
+    order_number: z.string().optional(),
+    terms: z.string().optional(),
+    customer_notes: z.string().optional(),
+    discount_rate: z.number().min(0).default(0),
+    discount_amount: z.number().min(0).default(0),
+    adjustment: z.number().default(0),
+    is_tax_inclusive: z.boolean().default(false)
 })
 
 const updateInvoiceSchema = z.object({
@@ -92,7 +99,9 @@ export async function POST(request: NextRequest) {
             items: z.array(z.object({
                 description: z.string(),
                 quantity: z.number().min(0),
-                unit_price: z.number().min(0)
+                unit_price: z.number().min(0),
+                tax_rate: z.number().min(0).default(0),
+                tax_amount: z.number().min(0).default(0)
             })).optional()
         })
 
@@ -127,7 +136,9 @@ export async function POST(request: NextRequest) {
                 invoice_id: invoice.id,
                 description: item.description,
                 quantity: item.quantity,
-                unit_price: item.unit_price
+                unit_price: item.unit_price,
+                tax_rate: item.tax_rate,
+                tax_amount: item.tax_amount
             }))
 
             const { error: itemsError } = await admin

@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/button"
 import { CreateProjectModal } from "./create-project-modal"
 import { Project } from "@/lib/types"
 
-export function ProjectListView() {
+interface ProjectListViewProps {
+    userId?: string
+}
+
+export function ProjectListView({ userId }: ProjectListViewProps) {
     const router = useRouter()
     const [projects, setProjects] = useState<(Project & { tasks: { count: number }[], members: { count: number }[] })[]>([])
     const [loading, setLoading] = useState(true)
@@ -75,8 +79,8 @@ export function ProjectListView() {
                                     <Folder className="w-6 h-6 text-blue-600" />
                                 </div>
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${project.status === 'active' ? 'bg-green-100 text-green-700' :
-                                        project.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                                            'bg-gray-100 text-gray-700'
+                                    project.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                                        'bg-gray-100 text-gray-700'
                                     }`}>
                                     {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                                 </span>

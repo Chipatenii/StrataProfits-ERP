@@ -74,6 +74,14 @@ export interface Invoice {
     project?: { name: string } | null
     items?: InvoiceItem[] // Added for ERP
     payments?: Payment[] // Added for ERP
+    // New Fields
+    order_number?: string | null
+    terms?: string | null
+    customer_notes?: string | null
+    discount_rate?: number
+    discount_amount?: number
+    adjustment?: number
+    is_tax_inclusive?: boolean
 }
 
 export interface InvoiceItem {
@@ -84,6 +92,8 @@ export interface InvoiceItem {
     unit_price: number
     total: number
     created_at: string
+    tax_rate?: number
+    tax_amount?: number
 }
 
 export interface Payment {
@@ -96,6 +106,7 @@ export interface Payment {
     paid_at: string
     received_by_user_id?: string | null
     created_at: string
+    receipt_number?: string | null
 }
 
 export interface Quote {
@@ -113,6 +124,12 @@ export interface Quote {
     created_at: string
     items?: QuoteItem[]
     client?: Client
+    // New Fields
+    reference_number?: string | null
+    customer_notes?: string | null
+    discount_rate?: number
+    discount_amount?: number
+    adjustment?: number
 }
 
 export interface QuoteItem {
@@ -123,6 +140,8 @@ export interface QuoteItem {
     unit_price: number
     total: number
     created_at: string
+    tax_rate?: number
+    tax_amount?: number
 }
 
 export interface ApprovalRequest {
