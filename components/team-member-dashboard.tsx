@@ -28,7 +28,7 @@ import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
 import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { NotificationBell } from "@/components/notification-bell"
-import { calculateTimeSpent } from "@/lib/time-utils"
+import { calculateTimeSpent, getTimeBasedGreeting } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
 
@@ -499,8 +499,9 @@ export function TeamMemberDashboard({
         {/* Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
           <div className="md:hidden mb-4">
-            <p className="text-sm text-muted-foreground">Good Morning, <span className="font-medium text-foreground">{userName.split(' ')[0]}</span></p>
+            <p className="text-sm text-muted-foreground">{getTimeBasedGreeting(userName)}</p>
           </div>
+
 
           {activeView === "my-day" ? (
             <MyDayView userId={userId} userName={userName} />
@@ -614,8 +615,8 @@ export function TeamMemberDashboard({
                       <button
                         onClick={() => setActiveTab("completed")}
                         className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "completed"
-                            ? "bg-accent text-white"
-                            : "text-muted-foreground hover:text-foreground"
+                          ? "bg-accent text-white"
+                          : "text-muted-foreground hover:text-foreground"
                           }`}
                       >
                         Completed
@@ -667,10 +668,10 @@ export function TeamMemberDashboard({
                             <div className="flex gap-2 w-full sm:w-auto">
                               <span
                                 className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                                    ? "bg-red-100 text-red-700"
-                                    : task.priority === "medium"
-                                      ? "bg-amber-100 text-amber-700"
-                                      : "bg-green-100 text-green-700"
+                                  ? "bg-red-100 text-red-700"
+                                  : task.priority === "medium"
+                                    ? "bg-amber-100 text-amber-700"
+                                    : "bg-green-100 text-green-700"
                                   }`}
                               >
                                 {task.priority}
@@ -714,10 +715,10 @@ export function TeamMemberDashboard({
                                 <button
                                   onClick={() => handleTaskStartStop(task.id)}
                                   className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 ${isTaskActive
-                                      ? "bg-amber-500 hover:bg-amber-600"
-                                      : calculateTimeSpent(timeLogs, task.id) > 0
-                                        ? "bg-blue-600 hover:bg-blue-700"
-                                        : "bg-green-600 hover:bg-green-700"
+                                    ? "bg-amber-500 hover:bg-amber-600"
+                                    : calculateTimeSpent(timeLogs, task.id) > 0
+                                      ? "bg-blue-600 hover:bg-blue-700"
+                                      : "bg-green-600 hover:bg-green-700"
                                     }`}
                                 >
                                   {isTaskActive ? (

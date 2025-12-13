@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
         // Check role
         const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-        const isAdmin = profile?.role === 'admin'
+        const isAdminOrVA = profile?.role === 'admin' || profile?.role === 'virtual_assistant'
 
         let query = admin
             .from("meetings")
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
             .order("date_time_start", { ascending: true })
 
         // Non-admins only see meetings they requested or are assigned to
-        if (!isAdmin) {
+        if (!isAdminOrVA) {
             query = query.or(`requested_by_user_id.eq.${user.id},assigned_to_user_id.eq.${user.id}`)
         }
 

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon } from "lucide-react"
 import { Task, Meeting } from "@/lib/types"
+import { getTimeBasedGreeting } from "@/lib/time-utils"
+
 
 interface MyDayViewProps {
     userId: string
@@ -69,10 +71,11 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 </div>
                 <div>
                     <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent leading-tight">
-                        Good Morning, {userName.split(' ')[0]}
+                        {getTimeBasedGreeting(userName)}
                     </h2>
                     <p className="text-sm md:text-base text-muted-foreground">Here is your focus for today.</p>
                 </div>
+
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -136,42 +136,7 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
                 </div>
             )}
 
-            {/* Quick Actions */}
-            <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Link
-                        href="/reports"
-                        className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200"
-                    >
-                        <FileText className="w-6 h-6 text-blue-600 shrink-0" />
-                        <div className="overflow-hidden">
-                            <p className="font-medium text-blue-900 truncate">Monthly Reports</p>
-                            <p className="text-sm text-blue-700 truncate">View detailed team reports</p>
-                        </div>
-                    </Link>
-                    <button
-                        onClick={() => setActiveView("clients")}
-                        className="flex items-center gap-3 p-4 rounded-lg bg-green-50 hover:bg-green-100 transition-colors border border-green-200 text-left"
-                    >
-                        <Folder className="w-6 h-6 text-green-600 shrink-0" />
-                        <div className="overflow-hidden">
-                            <p className="font-medium text-green-900 truncate">Clients & Projects</p>
-                            <p className="text-sm text-green-700 truncate">Manage agency clients</p>
-                        </div>
-                    </button>
-                    <button
-                        onClick={() => setActiveView("tasks")}
-                        className="flex items-center gap-3 p-4 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors border border-purple-200 text-left"
-                    >
-                        <ClipboardList className="w-6 h-6 text-purple-600 shrink-0" />
-                        <div className="overflow-hidden">
-                            <p className="font-medium text-purple-900 truncate">Manage Tasks</p>
-                            <p className="text-sm text-purple-700 truncate">Create and assign tasks</p>
-                        </div>
-                    </button>
-                </div>
-            </div>
+
         </div>
     )
 }

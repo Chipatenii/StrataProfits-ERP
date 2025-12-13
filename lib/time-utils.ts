@@ -206,6 +206,7 @@ export function shouldShowWarning(startTime: string, estimatedHours: number, war
     return remainingMinutes <= warningMinutes && remainingMinutes > 0
 }
 
+
 /**
  * Get remaining minutes before time limit
  */
@@ -214,4 +215,21 @@ export function getRemainingMinutesFromStart(startTime: string, estimatedHours: 
     const elapsedMinutes = getElapsedMinutes(startTime)
     const estimatedMinutes = estimatedHours * 60
     return Math.max(0, estimatedMinutes - elapsedMinutes)
+}
+
+/**
+ * Get greeting based on time of day
+ */
+export function getTimeBasedGreeting(userName: string): string {
+    const hour = new Date().getHours()
+    const firstName = userName.split(' ')[0]
+
+    let greeting = "Good morning"
+    if (hour >= 12 && hour < 17) {
+        greeting = "Good afternoon"
+    } else if (hour >= 17) {
+        greeting = "Good evening"
+    }
+
+    return `${greeting}, ${firstName}`
 }

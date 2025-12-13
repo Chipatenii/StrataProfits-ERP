@@ -6,6 +6,22 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function GET(request: NextRequest) {
     try {
         const admin = await createAdminClient()
+        const supabase = await createClient()
+
+        // Auth Check
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        // Role Check
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        // Allowed roles: admin, virtual_assistant (can see everything for now, or filter to assigned)
+        // For now, allow admin and VAs to see the pipeline.
+        if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
 
         // Fetch deals with related client and project info
         const { data: deals, error } = await admin

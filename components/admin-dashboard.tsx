@@ -39,6 +39,8 @@ import { OverviewView } from "@/components/dashboard-views/overview-view"
 import { ClientsView } from "@/components/dashboard-views/clients-view"
 import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
+import { ReportsView } from "@/components/dashboard-views/reports-view"
+
 
 interface Task {
   id: string
@@ -46,7 +48,7 @@ interface Task {
   description: string
   status: string
   priority: string
-  due_date: string
+  due_date: string | null
   estimated_hours: number | null
   assigned_to: string | null
   created_at: string
@@ -100,7 +102,8 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings" | "reports">("my-day")
+
   const [stats, setStats] = useState<Stats | null>(null)
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -267,6 +270,8 @@ export function AdminDashboard({
     { id: "clients", label: "Clients", icon: Folder },
     { id: "pipeline", label: "Pipeline", icon: DollarSign },
     { id: "meetings", label: "Meetings", icon: Calendar },
+    { id: "reports", label: "Reports", icon: FileText },
+
     { id: "tasks", label: "Tasks", icon: ClipboardList, badge: taskStats.active },
     { id: "team", label: "Team", icon: Users, badge: members.length },
   ]
@@ -409,6 +414,11 @@ export function AdminDashboard({
           {activeView === "meetings" && (
             <MeetingsView />
           )}
+
+          {activeView === "reports" && (
+            <ReportsView />
+          )}
+
 
           {/* Overview View */}
           {activeView === "overview" && (

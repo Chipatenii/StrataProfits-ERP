@@ -181,6 +181,41 @@ export function TasksView({ userId, userName }: TasksViewProps) {
         </div>
     )
 
+    const handleTaskComplete = async (notes: string) => {
+        if (!completingTask) return
+
+        try {
+            // Stop timer if running for this task
+            if (activeTaskId === completingTask.id) {
+                await handleTaskStartStop(completingTask.id)
+            }
+
+            const { error } = await supabase
+                .from("tasks")
+                .update({
+                    status: "completed",
+                    completion_notes: notes,
+                    completed_at: new Date().toISOString(),
+                })
+                .eq("id", completingTask.id)
+
+            if (error) throw error
+
+            const completedTaskId = completingTask.id
+            setCompletingTask(null)
+
+            // Animation handling
+            setAnimatingTaskId(completedTaskId)
+            setTimeout(() => {
+                setAnimatingTaskId(null)
+                loadData()
+            }, 500)
+
+        } catch (error) {
+            console.error("Error completing task:", error)
+        }
+    }
+
     // Render
     return (
         <div className="space-y-6">
@@ -211,7 +246,7 @@ export function TasksView({ userId, userName }: TasksViewProps) {
                 ) : filteredTasks.map(task => {
                     const isTaskActive = activeTaskId === task.id
                     return (
-                        <div key={task.id} className="glass-card rounded-lg p-4 md:p-6">
+                        <div key={task.id} className={`glass-card rounded-lg p-4 md:p-6 transition-all duration-500 ${animatingTaskId === task.id ? "opacity-0 translate-x-10" : "opacity-100"}`}>
                             <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -265,8 +300,18 @@ export function TasksView({ userId, userName }: TasksViewProps) {
 
             {/* Modals */}
             {showCreateTask && <CreateSelfTaskModal open={showCreateTask} onOpenChange={setShowCreateTask} onSuccess={loadData} />}
-            {completingTask && <TaskCompletionModal open={!!completingTask} onOpenChange={(o) => !o && setCompletingTask(null)} taskTitle={completingTask.title} taskId={completingTask.id} onSuccess={loadData} />}
+            {completingTask && (
+                <TaskCompletionModal
+                    isOpen={!!completingTask}
+                    onClose={() => setCompletingTask(null)}
+                    taskTitle={completingTask.title}
+                    spentMinutes={calculateTimeSpent(timeLogs, completingTask.id)}
+                    estimatedHours={completingTask.estimated_hours}
+                    onComplete={handleTaskComplete}
+                />
+            )}
             {timerNotification && <TimerNotification type={timerNotification.type} taskTitle={timerNotification.taskTitle} remainingMinutes={timerNotification.remainingMinutes} onClose={() => setTimerNotification(null)} />}
         </div>
     )
+
 }
