@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Notifications policies
+DROP POLICY IF EXISTS "Admins can view their own notifications" ON public.notifications;
 CREATE POLICY "Admins can view their own notifications"
   ON public.notifications FOR SELECT
   USING (
@@ -29,14 +30,17 @@ CREATE POLICY "Admins can view their own notifications"
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
 
+DROP POLICY IF EXISTS "System can create notifications" ON public.notifications;
 CREATE POLICY "System can create notifications"
   ON public.notifications FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Admins can update their own notifications" ON public.notifications;
 CREATE POLICY "Admins can update their own notifications"
   ON public.notifications FOR UPDATE
   USING (auth.uid() = admin_id);
 
+DROP POLICY IF EXISTS "Admins can delete their own notifications" ON public.notifications;
 CREATE POLICY "Admins can delete their own notifications"
   ON public.notifications FOR DELETE
   USING (auth.uid() = admin_id);

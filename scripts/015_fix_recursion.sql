@@ -21,6 +21,7 @@ DROP POLICY IF EXISTS "Admin/VA manage quotes" ON quotes;
 
 -- 3. Re-create secure policies for PROFILES
 -- Users can read their own profile
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles
     FOR SELECT
     USING (id = auth.uid());

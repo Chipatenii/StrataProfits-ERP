@@ -14,17 +14,20 @@ CREATE TABLE IF NOT EXISTS notifications (
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Admins can only see their own notifications
+DROP POLICY IF EXISTS "Admins can view their own notifications" ON notifications;
 CREATE POLICY "Admins can view their own notifications"
   ON notifications
   FOR SELECT
   USING (admin_id = auth.uid());
 
+DROP POLICY IF EXISTS "Admins can update their own notifications" ON notifications;
 CREATE POLICY "Admins can update their own notifications"
   ON notifications
   FOR UPDATE
   USING (admin_id = auth.uid())
   WITH CHECK (admin_id = auth.uid());
 
+DROP POLICY IF EXISTS "Admins can delete their own notifications" ON notifications;
 CREATE POLICY "Admins can delete their own notifications"
   ON notifications
   FOR DELETE
