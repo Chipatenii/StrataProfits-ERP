@@ -30,7 +30,20 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+        let data, error
+
+        if (isAdmin) {
+          // Admin viewing/editing another user (or self via admin view)
+          const response = await fetch(`/api/admin/members/${userId}`)
+          if (!response.ok) throw new Error("Failed to fetch profile via API")
+          data = await response.json()
+        } else {
+          // Standard user viewing self
+          const result = await supabase.from("profiles").select("*").eq("id", userId).single()
+          data = result.data
+          error = result.error
+        }
+
         if (error) throw error
         if (data) {
           setFullName(data.full_name || "")

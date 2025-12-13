@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Fragment } from "react"
 import { Download, Loader2 } from "lucide-react"
 import jsPDF from "jspdf"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
@@ -266,9 +266,8 @@ export function ReportsView() {
                                 </tr>
                             ) : (
                                 reports.map((report) => (
-                                    <>
+                                    <Fragment key={report.user_id}>
                                         <tr
-                                            key={report.user_id}
                                             className="hover:bg-muted/20 transition-colors cursor-pointer"
                                             onClick={() => setExpandedUser(expandedUser === report.user_id ? null : report.user_id)}
                                         >
@@ -294,7 +293,7 @@ export function ReportsView() {
                                                                         <div className="flex items-center gap-2 shrink-0">
                                                                             <span className="font-mono">{task.hours.toFixed(1)}h</span>
                                                                             <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${task.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                                                    task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                                                                                task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
                                                                                 }`}>
                                                                                 {task.status.replace('_', ' ')}
                                                                             </span>
@@ -312,7 +311,7 @@ export function ReportsView() {
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </Fragment>
                                 ))
                             )}
                         </tbody>
