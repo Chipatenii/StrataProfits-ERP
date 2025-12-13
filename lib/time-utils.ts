@@ -222,7 +222,8 @@ export function getRemainingMinutesFromStart(startTime: string, estimatedHours: 
  */
 export function getTimeBasedGreeting(userName: string): string {
     const hour = new Date().getHours()
-    const firstName = userName.split(' ')[0]
+    // Safe access for firstName, default to 'User' if missing
+    const firstName = userName ? userName.split(' ')[0] : 'User'
 
     let greeting = "Good morning"
     if (hour >= 12 && hour < 17) {

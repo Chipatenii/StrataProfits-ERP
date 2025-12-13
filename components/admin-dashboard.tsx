@@ -395,7 +395,10 @@ export function AdminDashboard({
         {/* Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
           <div className="md:hidden mb-4">
-            <p className="text-sm text-muted-foreground">Good Morning, <span className="font-medium text-foreground">{userName.split(' ')[0]}</span></p>
+            <p className="text-sm text-muted-foreground">
+              {typeof window !== 'undefined' && (new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening")},
+              <span className="font-medium text-foreground"> {userName?.split(' ')?.[0] || 'User'}</span>
+            </p>
           </div>
 
           {/* Views Rendering */}

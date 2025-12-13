@@ -24,7 +24,7 @@ export function UserProfileCard({ fullName, email, role, avatarUrl, compact = fa
         </div>
         <div className="hidden md:block">
           <h3 className="text-sm font-semibold text-foreground leading-none">{fullName}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5 capitalize">{role.replace('_', ' ')}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 capitalize">{(role || 'member').replace('_', ' ')}</p>
         </div>
       </div>
     )
@@ -49,7 +49,7 @@ export function UserProfileCard({ fullName, email, role, avatarUrl, compact = fa
           <p className="text-sm text-muted-foreground">{email}</p>
           <div className="mt-2">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent">
-              {role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              {(role || 'member').split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </span>
           </div>
         </div>

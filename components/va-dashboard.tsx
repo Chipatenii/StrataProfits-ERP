@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { LayoutDashboard, DollarSign, FolderKanban, FileText, Book, LogOut, Menu, X } from "lucide-react"
+import { getTimeBasedGreeting } from "@/lib/time-utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { VAOverview } from "@/components/dashboard-views/va-overview"
@@ -46,21 +47,21 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
   const renderView = () => {
     switch (activeView) {
       case "overview":
-        return <VAOverview userId={userId} />
+        return <VAOverview userId={userId} userName={userName} />
       case "tasks":
-        return <TasksView userId={userId} role="virtual_assistant" />
+        return <TasksView userId={userId} userName={userName} />
       case "meetings":
-        return <MeetingsView userId={userId} role="virtual_assistant" />
+        return <MeetingsView />
       case "pipeline":
-        return <PipelineView userId={userId} />
+        return <PipelineView />
       case "projects":
         return <ProjectListView userId={userId} />
       case "finance":
-        return <VAFinance userId={userId} />
+        return <VAFinance />
       case "sops":
-        return <VASOPs userId={userId} />
+        return <VASOPs />
       default:
-        return <VAOverview userId={userId} />
+        return <VAOverview userId={userId} userName={userName} />
     }
   }
 
@@ -168,7 +169,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
         <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
           {/* Mobile Greeting (if hidden in header) */}
           <div className="md:hidden mb-4">
-            <p className="text-sm text-muted-foreground">Good Morning, <span className="font-medium text-foreground">{userName.split(' ')[0]}</span></p>
+            <p className="text-sm text-muted-foreground">{getTimeBasedGreeting(userName)}</p>
           </div>
 
           {renderView()}
