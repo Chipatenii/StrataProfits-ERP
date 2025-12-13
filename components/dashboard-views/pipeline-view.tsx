@@ -70,15 +70,15 @@ export function PipelineView() {
         </button>
       </div>
 
-      {/* 
-        Mobile: Vertical Stack (flex-col) 
-        Desktop: Horizontal Scroll (flex-row + overflow-x-auto)
-      */}
-      <div className="flex flex-col md:flex-row gap-4 pb-4 md:overflow-x-auto md:min-w-0">
+      {/* Vertical Stack Layout for All Screens */}
+      <div className="flex flex-col gap-6 w-full">
         {stages.map((stage) => {
           const stageDeals = deals.filter((d) => d.stage === stage)
+          // Hide empty stages? Or show them collapsed? 
+          // Requirement: "Stacked". We'll show all stages as sections.
+
           return (
-            <div key={stage} className="flex-1 md:min-w-[280px] md:max-w-[320px]">
+            <div key={stage} className="w-full">
               {/* Header */}
               <div className={`p-3 rounded-lg border mb-3 font-semibold flex items-center justify-between ${getStageColor(stage)}`}>
                 <span className="flex items-center gap-2">
@@ -89,8 +89,11 @@ export function PipelineView() {
                 </span>
               </div>
 
-              {/* Deals Grid/Stack */}
-              <div className="space-y-3">
+              {/* Deals Grid - 2 columns on desktop for better space usage if stacked vertically, or just list? 
+                 "Stacked not horizontal" -> let's default to a list or simple grid that wraps.
+                 Let's do a uniform list or a responsive grid for items *within* the stage.
+              */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {stageDeals.map((deal) => (
                   <div
                     key={deal.id}
@@ -115,14 +118,13 @@ export function PipelineView() {
                     </div>
                   </div>
                 ))}
-
-                {stageDeals.length === 0 && (
-                  <div className="h-16 md:h-24 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-sm text-gray-400">
-                    <span className="md:hidden">No deals</span>
-                    <span className="hidden md:inline">Empty</span>
-                  </div>
-                )}
               </div>
+
+              {stageDeals.length === 0 && (
+                <div className="h-16 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-sm text-gray-400">
+                  Empty
+                </div>
+              )}
             </div>
           )
         })}
