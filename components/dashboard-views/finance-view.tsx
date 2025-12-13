@@ -11,6 +11,7 @@ export function FinanceView() {
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<any>(null)
     const [fiscalYear, setFiscalYear] = useState("this-year")
+    const [showReceiptModal, setShowReceiptModal] = useState(false)
 
     useEffect(() => {
         fetchReport()
@@ -52,7 +53,6 @@ export function FinanceView() {
         amount: item.net_cash
     })) || []
 
-    const [showReceiptModal, setShowReceiptModal] = useState(false)
 
     // ... (fetchReport logic stays same)
 
