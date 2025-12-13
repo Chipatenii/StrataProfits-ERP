@@ -10,6 +10,7 @@ export function MeetingsView() {
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [loading, setLoading] = useState(true)
     const [showCreateModal, setShowCreateModal] = useState(false)
+    const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
 
     useEffect(() => {
         fetchMeetings()
@@ -26,6 +27,22 @@ export function MeetingsView() {
             console.error("Error loading meetings:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleUpdateStatus = async (id: string, newStatus: string) => {
+        try {
+            const response = await fetch('/api/meetings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status: newStatus })
+            })
+
+            if (response.ok) {
+                fetchMeetings()
+            }
+        } catch (error) {
+            console.error("Error updating status:", error)
         }
     }
 
@@ -102,13 +119,34 @@ export function MeetingsView() {
 
                                 {/* Status & Actions */}
                                 <div className="flex items-center justify-between md:justify-end gap-3 mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-border/50">
-                                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${meeting.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                                        meeting.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
-                                            meeting.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                                                'bg-amber-100 text-amber-700'
-                                        }`}>
-                                        {meeting.status}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            value={meeting.status}
+                                            onChange={(e) => handleUpdateStatus(meeting.id, e.target.value)}
+                                            className={`px-2 py-1 text-xs rounded-full font-medium border-none focus:ring-1 focus:ring-blue-500 cursor-pointer ${meeting.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                                meeting.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
+                                                    meeting.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                                        'bg-amber-100 text-amber-700'
+                                                }`}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <option value="Pending">Pending</option>
+                                            <option value="Approved">Approved</option>
+                                            <option value="Completed">Completed</option>
+                                            <option value="Cancelled">Cancelled</option>
+                                        </select>
+
+                                        <button
+                                            onClick={() => {
+                                                setEditingMeeting(meeting)
+                                                setShowCreateModal(true)
+                                            }}
+                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit Meeting"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                        </button>
+                                    </div>
                                     <AttachmentList entityType="meeting" entityId={meeting.id} />
                                 </div>
                             </div>
@@ -119,8 +157,15 @@ export function MeetingsView() {
 
             <CreateMeetingModal
                 open={showCreateModal}
-                onOpenChange={setShowCreateModal}
-                onSuccess={fetchMeetings}
+                onOpenChange={(open) => {
+                    setShowCreateModal(open)
+                    if (!open) setEditingMeeting(null)
+                }}
+                onSuccess={() => {
+                    fetchMeetings()
+                    setEditingMeeting(null)
+                }}
+                meetingToEdit={editingMeeting}
             />
         </div>
     )

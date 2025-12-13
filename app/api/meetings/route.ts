@@ -84,3 +84,39 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Failed to create meeting" }, { status: 500 })
     }
 }
+
+export async function PATCH(request: NextRequest) {
+    try {
+        const supabase = await createClient()
+        const admin = await createAdminClient()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const { id, ...updates } = body
+
+        if (!id) {
+            return NextResponse.json({ error: "Meeting ID required" }, { status: 400 })
+        }
+
+        // Validate basic update structure (optional but good practice)
+        // For now allowing partial updates to any field except ID
+
+        const { data: meeting, error } = await admin
+            .from("meetings")
+            .update(updates)
+            .eq("id", id)
+            .select()
+            .single()
+
+        if (error) throw error
+
+        return NextResponse.json(meeting)
+    } catch (error) {
+        console.error("Error updating meeting:", error)
+        return NextResponse.json({ error: "Failed to update meeting" }, { status: 500 })
+    }
+}

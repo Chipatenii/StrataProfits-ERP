@@ -34,9 +34,22 @@ export function VAOverview({ userName, userId }: VAOverviewProps) {
             })
             .catch(console.error)
 
-        // Mock stats for now or fetch from pipeline
-        // In a real scenario, we'd fetch these from /api/admin/deals/stats or similar
-        setStats({ leads: 12, proposals: 4 })
+        // Fetch pipeline stats
+        fetch('/api/admin/deals')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    // Calculate stats
+                    const now = new Date();
+                    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+                    const newLeads = data.filter(d => new Date(d.created_at) > oneWeekAgo).length;
+                    const proposals = data.filter(d => d.stage === 'Proposal').length;
+
+                    setStats({ leads: newLeads, proposals });
+                }
+            })
+            .catch(console.error)
     }, [userId])
 
     return (

@@ -200,6 +200,9 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
                     >
                       <option value="team_member">Team Member</option>
                       <option value="virtual_assistant">Virtual Assistant</option>
+                      <option value="social_media_manager">Social Media Manager</option>
+                      <option value="developer">Developer</option>
+                      <option value="book_keeper">Book Keeper</option>
                       <option value="admin">Admin</option>
                     </select>
                   </div>

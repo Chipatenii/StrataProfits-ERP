@@ -5,15 +5,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Client, Project } from "@/lib/types"
+import { Meeting, Client, Project } from "@/lib/types"
 
 interface CreateMeetingModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
+    meetingToEdit?: Meeting | null
 }
 
-export function CreateMeetingModal({ open, onOpenChange, onSuccess }: CreateMeetingModalProps) {
+export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdit }: CreateMeetingModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         date_time_start: "",
@@ -34,8 +35,27 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess }: CreateMeet
         if (open) {
             fetchClients()
             fetchProjects()
+
+            if (meetingToEdit) {
+                setFormData({
+                    title: meetingToEdit.title,
+                    date_time_start: meetingToEdit.date_time_start,
+                    date_time_end: meetingToEdit.date_time_end || "",
+                    type: meetingToEdit.type,
+                    mode: meetingToEdit.mode,
+                    client_id: meetingToEdit.client_id || "",
+                    project_id: meetingToEdit.project_id || "",
+                    location: meetingToEdit.location || "",
+                    agenda: meetingToEdit.agenda || "",
+                })
+            } else {
+                // Reset form for create mode
+                setFormData({
+                    title: "", date_time_start: "", date_time_end: "", type: "General", mode: "Zoom", client_id: "", project_id: "", location: "", agenda: ""
+                })
+            }
         }
-    }, [open])
+    }, [open, meetingToEdit])
 
     const fetchClients = async () => {
         try { const res = await fetch("/api/admin/clients"); if (res.ok) setClients(await res.json()); } catch (e) { }
@@ -51,15 +71,19 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess }: CreateMeet
         setIsLoading(true)
 
         try {
+            const url = meetingToEdit ? `/api/meetings` : "/api/meetings" // Same URL, different method
+            const method = meetingToEdit ? "PATCH" : "POST"
+
             const payload = {
                 ...formData,
+                id: meetingToEdit?.id, // Include ID for PATCH
                 client_id: formData.client_id || null, // Convert empty string to null
                 project_id: formData.project_id || null,
                 date_time_end: formData.date_time_end || null
             }
 
-            const response = await fetch("/api/meetings", {
-                method: "POST",
+            const response = await fetch(url, {
+                method: method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             })
@@ -86,7 +110,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess }: CreateMeet
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">Schedule Meeting</DialogTitle>
+                    <DialogTitle className="text-primary">{meetingToEdit ? "Edit Meeting" : "Schedule Meeting"}</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
