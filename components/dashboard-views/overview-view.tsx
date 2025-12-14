@@ -1,6 +1,8 @@
 "use client"
 
-import { ClipboardList, CheckCircle, Users, BarChart3, FileText, Folder } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ClipboardList, CheckCircle, Users, BarChart3, FileText, Folder, AlertCircle } from "lucide-react"
+import type { Invoice } from "@/lib/types"
 import Link from "next/link"
 
 interface OverviewViewProps {
@@ -16,8 +18,54 @@ interface OverviewViewProps {
 }
 
 export function OverviewView({ stats, taskStats, membersCount, setActiveView }: OverviewViewProps) {
+    const [overdueInvoices, setOverdueInvoices] = useState<Invoice[]>([])
+    const [pipelineStats, setPipelineStats] = useState({ leads: 0, proposals: 0 })
+
+    useEffect(() => {
+        // Fetch overdue invoices
+        fetch('/api/invoices?status=overdue')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setOverdueInvoices(data)
+            })
+            .catch(console.error)
+
+        // Fetch pipeline stats
+        fetch('/api/admin/deals')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    // Calculate stats
+                    const now = new Date();
+                    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+                    const newLeads = data.filter(d => new Date(d.created_at) > oneWeekAgo).length;
+                    const proposals = data.filter(d => d.stage === 'Proposal').length;
+
+                    setPipelineStats({ leads: newLeads, proposals });
+                }
+            })
+            .catch(console.error)
+    }, [])
+
     return (
         <div className="space-y-6">
+            {/* Operational Alerts Section */}
+            {(overdueInvoices.length > 0) && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 mt-0.5" />
+                    <div>
+                        <h4 className="font-semibold">Attention Needed</h4>
+                        <ul className="list-disc list-inside text-sm mt-1 space-y-1">
+                            {overdueInvoices.map(inv => (
+                                <li key={inv.id}>
+                                    Invoice {inv.invoice_number || 'Unknown'} for {inv.client?.name || 'Client'} is Overdue.
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            )}
             {/* Task Requests Alert */}
             {taskStats.pending > 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -43,6 +91,21 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Pipeline Stats */}
+                <div className="glass-card rounded-2xl p-4 md:p-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-muted-foreground">New Leads (Wk)</h3>
+                        <BarChart3 className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                    </div>
+                    <p className="text-2xl md:text-3xl font-bold">{pipelineStats.leads}</p>
+                </div>
+                <div className="glass-card rounded-2xl p-4 md:p-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-muted-foreground">Proposals</h3>
+                        <FileText className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
+                    </div>
+                    <p className="text-2xl md:text-3xl font-bold">{pipelineStats.proposals}</p>
+                </div>
                 {/* Pending Requests Card - Full width on mobile if pending > 0, else follows grid */}
                 <div className={`glass-card rounded-2xl p-4 md:p-6 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 ${taskStats.pending > 0 ? "col-span-2 md:col-span-1" : ""}`}>
                     <div className="flex items-center justify-between mb-2">

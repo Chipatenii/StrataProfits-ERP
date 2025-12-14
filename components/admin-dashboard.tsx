@@ -44,8 +44,10 @@ import { ReportsView } from "@/components/dashboard-views/reports-view"
 
 import { Task, UserProfile, Stats } from "@/lib/types" // Using shared types
 import { QuotesView } from "@/components/dashboard-views/quotes-view"
-import { FinanceView } from "@/components/dashboard-views/finance-view"
+import { VAFinance } from "@/components/dashboard-views/va-finance"
 import { InvoicesView } from "@/components/dashboard-views/invoices-view"
+import { ProjectListView } from "@/components/projects/project-list-view"
+import { VASOPs } from "@/components/dashboard-views/va-sops"
 
 import { Receipt, Boxes } from "lucide-react"
 
@@ -66,7 +68,7 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings" | "reports" | "quotes" | "finance" | "invoices">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops">("my-day")
 
   const [stats, setStats] = useState<any>(null) // Stats type in lib/types might differ from local usage, safe with any for now or check
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
@@ -233,12 +235,14 @@ export function AdminDashboard({
   const allMenuItems = [
     { id: "my-day", label: "My Day", icon: Sun, roles: ['admin', 'team_member', 'virtual_assistant', 'book_keeper'] },
     { id: "overview", label: "Overview", icon: BarChart3, roles: ['admin', 'virtual_assistant'] },
+    { id: "projects", label: "Projects", icon: Folder, roles: ['admin', 'virtual_assistant'] },
     { id: "finance", label: "Finance", icon: DollarSign, roles: ['admin', 'book_keeper'] },
     { id: "quotes", label: "Quotes", icon: FileText, roles: ['admin', 'virtual_assistant'] },
-    { id: "clients", label: "Clients", icon: Folder, roles: ['admin', 'virtual_assistant', 'book_keeper'] },
+    { id: "clients", label: "Clients", icon: Users, roles: ['admin', 'virtual_assistant', 'book_keeper'] },
     { id: "pipeline", label: "Pipeline", icon: Boxes, roles: ['admin', 'virtual_assistant'] },
     { id: "meetings", label: "Meetings", icon: Calendar, roles: ['admin', 'virtual_assistant'] },
     { id: "reports", label: "Reports", icon: ClipboardList, roles: ['admin', 'book_keeper'] },
+    { id: "sops", label: "SOPs", icon: Briefcase, roles: ['admin', 'virtual_assistant'] },
     { id: "tasks", label: "Tasks", icon: ClipboardList, badge: taskStats.active, roles: ['admin', 'team_member'] }, // VA manages tasks via separate dashboard mostly? Or here.
     { id: "team", label: "Team", icon: Users, badge: members.length, roles: ['admin'] },
   ]
@@ -374,7 +378,9 @@ export function AdminDashboard({
           </div>
 
           {activeView === "quotes" && <QuotesView />}
-          {activeView === "finance" && <FinanceView />}
+          {activeView === "finance" && <VAFinance userName={userName} userRole={userRole} />}
+          {activeView === "projects" && <ProjectListView userId={userId} />}
+          {activeView === "sops" && <VASOPs />}
 
           {/* Existing Views */}
           {activeView === "my-day" && (
