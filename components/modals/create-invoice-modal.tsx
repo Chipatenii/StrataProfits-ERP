@@ -56,12 +56,18 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
 
     const fetchClients = async () => {
         try {
+            console.log("[Invoice Modal] Fetching clients from /api/admin/clients...")
             const res = await fetch("/api/admin/clients")
+            console.log("[Invoice Modal] Response status:", res.status, res.ok)
             if (res.ok) {
-                setClients(await res.json())
+                const data = await res.json()
+                console.log("[Invoice Modal] Clients received:", data.length, "clients", data)
+                setClients(data)
+            } else {
+                console.error("[Invoice Modal] Failed to fetch clients - non-OK response")
             }
         } catch (error) {
-            console.error(error)
+            console.error("[Invoice Modal] Error fetching clients:", error)
         } finally {
             setLoadingClients(false)
         }

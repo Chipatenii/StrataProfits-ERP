@@ -120,7 +120,42 @@ export function InvoicesView() {
                 </div>
             ) : (
                 <div className="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
+                    {/* Mobile Card View */}
+                    <div className="md:hidden divide-y divide-gray-100">
+                        {filteredInvoices.map((invoice) => (
+                            <div
+                                key={invoice.id}
+                                className="p-4 space-y-3 hover:bg-blue-50/50 transition-colors cursor-pointer"
+                                onClick={() => setSelectedInvoice(invoice)}
+                            >
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <p className="font-medium text-gray-900 text-sm">
+                                            {invoice.invoice_number || "Draft"}
+                                        </p>
+                                        <p className="text-sm text-gray-600 mt-0.5">
+                                            {invoice.client?.name || "Unknown Client"}
+                                        </p>
+                                    </div>
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${getStatusColor(invoice.status)}`}>
+                                        {getStatusIcon(invoice.status)}
+                                        <span className="capitalize">{invoice.status}</span>
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-500">
+                                        {new Date(invoice.created_at).toLocaleDateString()}
+                                    </span>
+                                    <span className="font-mono font-medium text-gray-900">
+                                        {invoice.currency} {invoice.amount.toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50/50">
                                 <tr>

@@ -290,11 +290,8 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
 
           {/* Total Payables Card */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="p-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Total Payables</h3>
-              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 gap-1">
-                <Plus className="w-4 h-4" /> New
-              </Button>
             </div>
             <div className="p-4">
               <p className="text-sm text-blue-600 mb-2">Total Unpaid Bills {formatCurrency(summary.totalPayables)}</p>
@@ -521,7 +518,50 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
               <RefreshCcw className="w-4 h-4" /> Refresh
             </Button>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {invoices.slice(0, 5).map((inv) => (
+              <div key={inv.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium text-blue-600 text-sm">
+                      {inv.invoice_number || "Draft"}
+                    </p>
+                    <p className="text-sm text-gray-700 mt-0.5">{inv.client?.name || "Unknown"}</p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap
+                    ${inv.status === "paid"
+                        ? "bg-green-100 text-green-700"
+                        : inv.status === "overdue"
+                          ? "bg-red-100 text-red-700"
+                          : inv.status === "sent"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-700"
+                      }`}
+                  >
+                    {inv.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">
+                    Due: {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "-"}
+                  </span>
+                  <span className="font-mono font-medium text-gray-900">
+                    {inv.currency || "ZMW"} {inv.amount?.toLocaleString() || "0"}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {invoices.length === 0 && (
+              <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                No invoices found. Create your first invoice to get started.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
                 <tr>

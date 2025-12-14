@@ -74,11 +74,11 @@ export function ProjectListView({ userId }: ProjectListViewProps) {
                             href={`/projects/${project.id}`}
                             className="group block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-6"
                         >
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                                 <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
                                     <Folder className="w-6 h-6 text-blue-600" />
                                 </div>
-                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${project.status === 'active' ? 'bg-green-100 text-green-700' :
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${project.status === 'active' ? 'bg-green-100 text-green-700' :
                                     project.status === 'completed' ? 'bg-blue-100 text-blue-700' :
                                         'bg-gray-100 text-gray-700'
                                     }`}>
@@ -93,7 +93,7 @@ export function ProjectListView({ userId }: ProjectListViewProps) {
                                 {project.description || "No description provided."}
                             </p>
 
-                            <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4">
                                 <div className="flex items-center gap-1.5">
                                     <CheckCircle className="w-4 h-4" />
                                     <span>{project.tasks?.[0]?.count || 0} Tasks</span>
@@ -104,7 +104,7 @@ export function ProjectListView({ userId }: ProjectListViewProps) {
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+                            <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm">
                                 <span className="text-gray-400">
                                     Created {new Date(project.created_at).toLocaleDateString()}
                                 </span>

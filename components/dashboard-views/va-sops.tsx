@@ -85,7 +85,7 @@ export function VASOPs() {
                         onClick={() => setSelectedSOP(sop)}
                         className="glass-card p-6 rounded-xl hover:shadow-md transition-all cursor-pointer group"
                     >
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
                             <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                 <Book className="w-4 h-4" />
                             </div>

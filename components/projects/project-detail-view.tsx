@@ -69,22 +69,24 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
 
     return (
         <div className="space-y-8">
-            <div className="flex items-center gap-4">
-                <Link href="/projects" className="p-2 hover:bg-gray-100 rounded-full">
-                    <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold">{project.name}</h1>
-                        <span className={`px-2.5 py-0.5 rounded-full text-sm font-medium ${project.status === 'active' ? 'bg-green-100 text-green-700' :
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 justify-between">
+                <div className="flex items-start md:items-center gap-4 w-full md:w-auto">
+                    <Link href="/projects" className="p-2 hover:bg-gray-100 rounded-full mt-1 md:mt-0">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    <div className="flex-1">
+                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                            <h1 className="text-2xl md:text-3xl font-bold">{project.name}</h1>
+                            <span className={`w-fit px-2.5 py-0.5 rounded-full text-sm font-medium ${project.status === 'active' ? 'bg-green-100 text-green-700' :
                                 'bg-gray-100 text-gray-700'
-                            }`}>
-                            {project.status}
-                        </span>
+                                }`}>
+                                {project.status}
+                            </span>
+                        </div>
+                        <p className="text-gray-500 mt-1">{project.description}</p>
                     </div>
-                    <p className="text-gray-500 mt-1">{project.description}</p>
                 </div>
-                <Button variant="outline" onClick={handleDeleteProject} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                <Button variant="outline" onClick={handleDeleteProject} className="w-full md:w-auto text-red-600 hover:text-red-700 hover:bg-red-50 mt-4 md:mt-0">
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Project
                 </Button>
@@ -119,16 +121,16 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
             </div>
 
             <div>
-                <div className="flex bg-gray-100 p-1 rounded-lg w-fit mb-6">
+                <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-fit mb-6">
                     <button
                         onClick={() => setActiveTab("tasks")}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'tasks' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'tasks' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         Tasks
                     </button>
                     <button
                         onClick={() => setActiveTab("members")}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'members' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'members' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         Team Members
                     </button>
@@ -144,7 +146,7 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                         ) : (
                             <div className="divide-y divide-gray-100">
                                 {project.tasks.map(task => (
-                                    <div key={task.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                                    <div key={task.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-2">
                                         <div>
                                             <p className="font-medium">{task.title}</p>
                                             <div className="flex gap-2 mt-1">
@@ -173,7 +175,7 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                         ) : (
                             <div className="divide-y divide-gray-100">
                                 {project.members.map(member => (
-                                    <div key={member.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                                    <div key={member.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium">
                                                 {member.profile.full_name.charAt(0)}
@@ -183,7 +185,7 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                                                 <p className="text-sm text-gray-500">{member.profile.role}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 pt-2 md:pt-0 mt-2 md:mt-0">
                                             <span className="text-sm text-gray-500 uppercase">{member.role}</span>
                                             <Button variant="ghost" size="sm" onClick={() => handleDeleteMember(member.user_id)}>
                                                 <Trash2 className="w-4 h-4 text-red-500" />

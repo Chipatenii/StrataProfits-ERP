@@ -309,7 +309,7 @@ export function AdminDashboard({
           })}
         </nav>
 
-        <div className="absolute bottom-4 left-0 right-0 px-3 space-y-1">
+        <div className="absolute bottom-4 left-0 right-0 px-3 space-y-1 hidden sm:block">
           <button
             onClick={() => setShowProfileSettings(true)}
             className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-muted-foreground hover:bg-accent/10 transition-colors"

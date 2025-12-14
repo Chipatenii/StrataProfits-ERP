@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,13 +34,15 @@ export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSu
 
     const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
 
-    // Fetch projects on mount
-    useState(() => {
-        fetch("/api/admin/projects")
-            .then(res => res.json())
-            .then(data => setProjects(data || []))
-            .catch(err => console.error("Failed to load projects", err))
-    })
+    // Fetch projects when modal opens
+    useEffect(() => {
+        if (open) {
+            fetch("/api/admin/projects")
+                .then(res => res.json())
+                .then(data => setProjects(data || []))
+                .catch(err => console.error("Failed to load projects", err))
+        }
+    }, [open])
 
     const resetForm = () => {
         setFormData({
