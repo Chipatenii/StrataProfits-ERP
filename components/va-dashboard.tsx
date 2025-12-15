@@ -1,5 +1,7 @@
 "use client"
 
+import { APP_NAME } from "@/lib/config"
+import { getNavItemsForRole } from "@/lib/navigation"
 import { useState } from "react"
 import { LayoutDashboard, DollarSign, FolderKanban, FileText, Book, LogOut, Menu, X } from "lucide-react"
 import { getTimeBasedGreeting } from "@/lib/time-utils"
@@ -34,15 +36,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
     router.push("/auth/login")
   }
 
-  const menuItems = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "tasks", label: "Tasks", icon: FolderKanban },
-    { id: "meetings", label: "Meetings", icon: FileText },
-    { id: "pipeline", label: "Sales Pipeline", icon: DollarSign },
-    { id: "projects", label: "Projects", icon: FolderKanban },
-    { id: "finance", label: "Finance", icon: DollarSign },
-    { id: "sops", label: "SOPs", icon: Book },
-  ]
+  const menuItems = getNavItemsForRole(userRole as any)
 
   const renderView = () => {
     switch (activeView) {
@@ -146,8 +140,8 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
 
               <div className="flex flex-col">
                 <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
-                  <span className="md:hidden">Ostento Tracker</span>
-                  <span className="hidden md:inline">Ostento Productivity Tracker</span>
+                  <span className="md:hidden">{APP_NAME}</span>
+                  <span className="hidden md:inline">{APP_NAME}</span>
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
               </div>

@@ -146,7 +146,10 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                 body: JSON.stringify(payload)
             })
 
-            if (!res.ok) throw new Error("Failed to create invoice")
+            if (!res.ok) {
+                const errData = await res.json()
+                throw new Error(errData.error || "Failed to create invoice")
+            }
 
             onSuccess()
             onOpenChange(false)
@@ -158,9 +161,9 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
             setAdjustment(0)
             setCustomerNotes("")
             setTerms("")
-        } catch (error) {
+        } catch (error: any) {
             console.error(error)
-            alert("Failed to create invoice")
+            alert(error.message || "Failed to create invoice")
         } finally {
             setLoading(false)
         }
@@ -174,8 +177,8 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6 mt-2">
-                    {/* Header Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border">
+                    {/* Header Section - Stacked Layout */}
+                    <div className="space-y-6 p-4 bg-gray-50 rounded-lg border">
                         <div className="space-y-4">
                             <div>
                                 <Label>Customer Name</Label>
@@ -201,9 +204,10 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                 />
                             </div>
                         </div>
+
                         <div className="space-y-4">
-                            <div className="flex gap-4">
-                                <div className="flex-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
                                     <Label>Invoice #</Label>
                                     <Input
                                         value={invoiceNumber}
@@ -212,7 +216,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                         className="bg-white"
                                     />
                                 </div>
-                                <div className="flex-1">
+                                <div>
                                     <Label>Currency</Label>
                                     <select
                                         className="w-full h-10 px-3 py-2 rounded-md bg-white border border-gray-300"
@@ -223,8 +227,8 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                     </select>
                                 </div>
                             </div>
-                            <div className="flex gap-4">
-                                <div className="flex-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
                                     <Label>Invoice Date</Label>
                                     <Input
                                         type="date"
@@ -233,7 +237,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                         className="bg-white"
                                     />
                                 </div>
-                                <div className="flex-1">
+                                <div>
                                     <Label>Due Date</Label>
                                     <Input
                                         type="date"
@@ -318,8 +322,9 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                     </div>
 
                     {/* Footer Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                        <div className="space-y-4">
+                    {/* Footer Section */}
+                    <div className="flex flex-col md:grid md:grid-cols-2 gap-8 pt-4">
+                        <div className="space-y-4 order-2 md:order-1">
                             <div>
                                 <Label>Customer Notes</Label>
                                 <Textarea
@@ -340,7 +345,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+                        <div className="bg-gray-50 rounded-lg p-4 md:p-6 space-y-4 order-1 md:order-2">
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600">Sub Total (Tax Exclusive)</span>
                                 <span className="font-medium">{subTotal.toLocaleString()}</span>
@@ -356,7 +361,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                         type="number"
                                         min="0"
                                         max="100"
-                                        className="h-8 text-right"
+                                        className="h-8 text-right bg-white"
                                         value={discountRate}
                                         onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)}
                                     />
@@ -367,7 +372,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                                 <span className="text-gray-600 text-sm">Adjustment</span>
                                 <Input
                                     type="number"
-                                    className="h-8 text-right max-w-[120px]"
+                                    className="h-8 text-right max-w-[120px] bg-white"
                                     value={adjustment}
                                     onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
                                 />

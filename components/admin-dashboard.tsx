@@ -1,7 +1,10 @@
-"use client"
 
-import { useEffect, useState, useCallback } from "react"
+"use client"
+import { APP_NAME } from "@/lib/config"
+import { getNavItemsForRole } from "@/lib/navigation"
+
 import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import {
   LogOut,
@@ -40,13 +43,16 @@ import { ClientsView } from "@/components/dashboard-views/clients-view"
 import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ReportsView } from "@/components/dashboard-views/reports-view"
+import { TasksView } from "@/components/dashboard-views/tasks-view"
+import { FinanceView } from "@/components/dashboard-views/finance-view"
+import { SalesView } from "@/components/dashboard-views/sales-view" // New Import
 
 
 import { Task, UserProfile, Stats } from "@/lib/types" // Using shared types
-import { QuotesView } from "@/components/dashboard-views/quotes-view"
 import { VAFinance } from "@/components/dashboard-views/va-finance"
-import { InvoicesView } from "@/components/dashboard-views/invoices-view"
+
 import { ProjectListView } from "@/components/projects/project-list-view"
+import { ProjectDetailView } from "@/components/projects/project-detail-view"
 import { VASOPs } from "@/components/dashboard-views/va-sops"
 
 import { Receipt, Boxes } from "lucide-react"
@@ -68,13 +74,14 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "pipeline" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline">("my-day")
 
   const [stats, setStats] = useState<any>(null) // Stats type in lib/types might differ from local usage, safe with any for now or check
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [editingMember, setEditingMember] = useState<UserProfile | null>(null)
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
 
   // Review Modal State
   const [reviewingTask, setReviewingTask] = useState<Task | null>(null)
@@ -132,7 +139,7 @@ export function AdminDashboard({
     if (!confirm("Are you sure you want to delete this task?")) return
 
     try {
-      const response = await fetch(`/api/admin/tasks?id=${taskId}`, {
+      const response = await fetch(`/ api / admin / tasks ? id = ${taskId} `, {
         method: "DELETE",
       })
 
@@ -148,7 +155,7 @@ export function AdminDashboard({
     if (!confirm("Are you sure you want to delete this team member? This action cannot be undone.")) return
 
     try {
-      const response = await fetch(`/api/admin/members/${memberId}`, {
+      const response = await fetch(`/ api / admin / members / ${memberId} `, {
         method: "DELETE",
       })
 
@@ -232,22 +239,10 @@ export function AdminDashboard({
   }
 
   // Filter Menu Items based on Role
-  const allMenuItems = [
-    { id: "my-day", label: "My Day", icon: Sun, roles: ['admin', 'team_member', 'virtual_assistant', 'book_keeper'] },
-    { id: "overview", label: "Overview", icon: BarChart3, roles: ['admin', 'virtual_assistant'] },
-    { id: "projects", label: "Projects", icon: Folder, roles: ['admin', 'virtual_assistant'] },
-    { id: "finance", label: "Finance", icon: DollarSign, roles: ['admin', 'book_keeper'] },
-    { id: "quotes", label: "Quotes", icon: FileText, roles: ['admin', 'virtual_assistant'] },
-    { id: "clients", label: "Clients", icon: Users, roles: ['admin', 'virtual_assistant', 'book_keeper'] },
-    { id: "pipeline", label: "Pipeline", icon: Boxes, roles: ['admin', 'virtual_assistant'] },
-    { id: "meetings", label: "Meetings", icon: Calendar, roles: ['admin', 'virtual_assistant'] },
-    { id: "reports", label: "Reports", icon: ClipboardList, roles: ['admin', 'book_keeper'] },
-    { id: "sops", label: "SOPs", icon: Briefcase, roles: ['admin', 'virtual_assistant'] },
-    { id: "tasks", label: "Tasks", icon: ClipboardList, badge: taskStats.active, roles: ['admin', 'team_member'] }, // VA manages tasks via separate dashboard mostly? Or here.
-    { id: "team", label: "Team", icon: Users, badge: members.length, roles: ['admin'] },
-  ]
-
-  const menuItems = allMenuItems.filter(item => item.roles.includes(userRole))
+  const menuItems = getNavItemsForRole(userRole as any).map(item => ({
+    ...item,
+    badge: item.id === 'tasks' ? taskStats.active : item.id === 'team' ? members.length : undefined
+  }))
 
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
@@ -261,13 +256,13 @@ export function AdminDashboard({
 
       {/* Sidebar */}
       <div className={`
-        fixed md:relative z-50 h-full
-        transition-all duration-300 ease-in-out
-        bg-card border-r border-border
+        fixed md:relative z - 50 h - full
+transition - all duration - 300 ease -in -out
+bg - card border - r border - border
         ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
-      `}>
+`}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
-          <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
+          <h2 className={`font - bold text - accent truncate text - lg ${!isSidebarOpen && "md:hidden lg:block"} `}>
             Admin Panel
           </h2>
           <button
@@ -278,9 +273,10 @@ export function AdminDashboard({
           </button>
         </div>
 
-        <nav className="space-y-1 p-3 mt-4 overflow-y-auto h-[calc(100vh-8rem)]">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon
+            const isActive = activeView === item.id
             return (
               <button
                 key={item.id}
@@ -288,19 +284,28 @@ export function AdminDashboard({
                   setActiveView(item.id as any)
                   if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${activeView === item.id ? "bg-accent text-white" : "text-muted-foreground hover:bg-accent/10"
+                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 
+                    ${isActive
+                    ? "bg-slate-100 text-slate-900 font-semibold shadow-sm ring-1 ring-slate-200"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 title={item.label}
               >
-                <Icon size={22} className="shrink-0" />
-                <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left`}>
+                <Icon
+                  size={20}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={`shrink-0 transition-colors ${isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                />
+                <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left text-sm`}>
                   {item.label}
                 </span>
-                {item.roles && !item.roles.includes('admin') && item.roles.includes('book_keeper') && (
-                  <span className="text-[10px] bg-green-100 text-green-700 px-1 rounded ml-auto">BK</span>
-                )}
+
                 {item.badge !== undefined && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${activeView === item.id ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'} ${!isSidebarOpen && "md:hidden lg:block"} ml-auto`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto border
+                      ${isActive
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-slate-100 text-slate-500 border-slate-200'
+                    } ${!isSidebarOpen && "md:hidden lg:block"}`}>
                     {item.badge}
                   </span>
                 )}
@@ -309,22 +314,22 @@ export function AdminDashboard({
           })}
         </nav>
 
-        <div className="absolute bottom-4 left-0 right-0 px-3 space-y-1 hidden sm:block">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-card border-t border-border/10 space-y-1 hidden sm:block">
           <button
             onClick={() => setShowProfileSettings(true)}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-muted-foreground hover:bg-accent/10 transition-colors"
+            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200"
             title="Settings"
           >
-            <Settings size={22} className="shrink-0" />
-            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"}`}>Settings</span>
+            <Settings size={20} className="shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} text-sm font-medium`}>Settings</span>
           </button>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
             title="Sign Out"
           >
-            <LogOut size={22} className="shrink-0" />
-            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"}`}>Sign Out</span>
+            <LogOut size={20} className="shrink-0 transition-colors" />
+            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} text-sm font-medium`}>Sign Out</span>
           </button>
         </div>
       </div>
@@ -344,8 +349,8 @@ export function AdminDashboard({
 
               <div className="flex flex-col">
                 <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
-                  <span className="md:hidden">Ostento Tracker</span>
-                  <span className="hidden md:inline">Ostento Productivity Tracker</span>
+                  <span className="md:hidden">{APP_NAME}</span>
+                  <span className="hidden md:inline">{APP_NAME}</span>
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
               </div>
@@ -377,9 +382,20 @@ export function AdminDashboard({
             </p>
           </div>
 
-          {activeView === "quotes" && <QuotesView />}
-          {activeView === "finance" && <VAFinance userName={userName} userRole={userRole} />}
-          {activeView === "projects" && <ProjectListView userId={userId} />}
+          {activeView === "sales" && <SalesView />}
+
+          {/* Finance handles existing Finance logic + Expenses */}
+          {activeView === "finance" && (
+            userRole === 'admin' ? <FinanceView /> : <VAFinance userName={userName} userRole={userRole} />
+          )}
+
+          {activeView === "projects" && (
+            selectedProjectId ? (
+              <ProjectDetailView projectId={selectedProjectId} onBack={() => setSelectedProjectId(null)} />
+            ) : (
+              <ProjectListView userId={userId} onSelectProject={setSelectedProjectId} />
+            )
+          )}
           {activeView === "sops" && <VASOPs />}
 
           {/* Existing Views */}
@@ -400,9 +416,7 @@ export function AdminDashboard({
             <ClientsView />
           )}
 
-          {activeView === "pipeline" && (
-            <PipelineView />
-          )}
+
 
           {activeView === "meetings" && (
             <MeetingsView />
@@ -412,165 +426,15 @@ export function AdminDashboard({
             <ReportsView />
           )}
 
-          {/* Tasks View */}
+          {/* Tasks View for List */}
           {activeView === "tasks" && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <h2 className="text-xl sm:text-2xl font-bold">All Tasks</h2>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => setShowCreateTask(true)}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors font-medium text-sm sm:text-base"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Create Task
-                  </button>
-                  <div className="flex bg-white rounded-lg p-1 border border-border">
-                    <button
-                      onClick={() => setTaskFilter("all")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "all" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setTaskFilter("active")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "active" ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                      Active
-                    </button>
-                    <button
-                      onClick={() => setTaskFilter("completed")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === "completed"
-                        ? "bg-accent text-white"
-                        : "text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                      Completed
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-
-                {/* Task Requests Section */}
-                {(taskFilter === 'all' || taskFilter === 'active') && pendingTasks.length > 0 && (
-                  <div className="space-y-3 mb-6">
-                    <h3 className="text-lg font-semibold text-amber-900 flex items-center gap-2">
-                      <span className="w-2 h-8 bg-amber-500 rounded-full"></span>
-                      Pending Reviews ({pendingTasks.length})
-                    </h3>
-                    <div className="grid gap-3">
-                      {pendingTasks.map((task) => (
-                        <div key={task.id} className="glass-card rounded-lg p-4 border-l-4 border-l-amber-500 bg-amber-50/40">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-foreground">{task.title}</h3>
-                                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
-                                  Needs Approval
-                                </span>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                <span>Requested by: <span className="font-medium text-foreground">{getMemberName(task.assigned_to)}</span></span>
-                                <span>{new Date(task.created_at).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                            <div>
-                              <button
-                                onClick={() => setReviewingTask(task)}
-                                className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium shadow-sm w-full sm:w-auto"
-                              >
-                                Review Request
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="h-px bg-border/50 my-4" />
-                  </div>
-                )}
-
-                {filteredTasks.filter(t => t.approval_status !== "pending").length === 0 ? (
-                  <div className="glass-card rounded-lg p-6 sm:p-8 text-center">
-                    <p className="text-muted-foreground">No tasks found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {filteredTasks.map((task) => (
-                      <div key={task.id} className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
-                            {task.approval_status === "pending" && (
-                              <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded uppercase font-bold tracking-wider">
-                                Request
-                              </span>
-                            )}
-                            <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <span
-                                className={`px-2 py-1 rounded text-xs font-medium ${task.status === "completed"
-                                  ? "bg-green-100 text-green-700"
-                                  : task.status === "in_progress"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-gray-100 text-gray-700"
-                                  }`}
-                              >
-                                {task.status}
-                              </span>
-                              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                                {getMemberName(task.assigned_to)}
-                              </span>
-                              {task.due_date && (
-                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                                  Due: {new Date(task.due_date).toLocaleDateString()}
-                                </span>
-                              )}
-                              {task.estimated_hours && (
-                                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                                  Est: {task.estimated_hours}h
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-2 flex-shrink-0">
-                            <span
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                                ? "bg-red-100 text-red-700"
-                                : task.priority === "medium"
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-green-100 text-green-700"
-                                }`}
-                            >
-                              {task.priority}
-                            </span>
-                            <button
-                              onClick={() => setEditingTask(task)}
-                              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                              title="Edit task"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                              title="Delete task"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <TasksView
+              tasks={tasks}
+              members={members}
+              onUpdateTask={setEditingTask}
+              onDeleteTask={handleDeleteTask}
+              onCreateTask={() => setShowCreateTask(true)}
+            />
           )}
 
           {/* Team View */}

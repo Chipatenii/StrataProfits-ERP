@@ -4,20 +4,21 @@ import { type NextRequest, NextResponse } from "next/server"
 
 import { updateMemberSchema } from "@/lib/schemas"
 
-export async function GET(request: NextRequest, { params }: { params: { memberId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
   try {
-    const { memberId } = params
+    const { memberId } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     // Check if admin
     const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile, error: profileError } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    console.log("[API Admin Member] User:", user.id, "Role:", profile?.role, "Error:", profileError)
 
     if (profile?.role !== 'admin') {
-      // Allow self-fetch via this route? Maybe, but simpler to restrict to admin for now as self-fetch works via standard client.
-      // Actually, profile settings modal uses this for admins editing others. 
+      console.log("[API Admin Member] Access denied. Role is not admin.")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -36,9 +37,9 @@ export async function GET(request: NextRequest, { params }: { params: { memberId
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { memberId: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
   try {
-    const { memberId } = params
+    const { memberId } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -49,7 +50,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { member
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // ... rest of PATCH
     const body = await request.json()
 
     // Validate request body
@@ -83,9 +83,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { member
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { memberId: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
   try {
-    const { memberId } = params
+    const { memberId } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -123,3 +123,4 @@ export async function DELETE(request: NextRequest, { params }: { params: { membe
     )
   }
 }
+

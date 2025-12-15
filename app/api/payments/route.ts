@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 
+export const dynamic = 'force-dynamic'
+
 const createPaymentSchema = z.object({
     invoice_id: z.string().uuid(),
     amount: z.number().positive(),
@@ -11,6 +13,33 @@ const createPaymentSchema = z.object({
     reference: z.string().optional(),
     receipt_number: z.string().optional()
 })
+
+export async function GET(request: NextRequest) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (!['admin', 'book_keeper', 'virtual_assistant'].includes(profile?.role)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    try {
+        const { data: payments, error } = await admin
+            .from("payments")
+            .select("*")
+            .order("paid_at", { ascending: false })
+
+        if (error) throw error
+
+        return NextResponse.json(payments)
+    } catch (error) {
+        console.error("Error fetching payments:", error)
+        return NextResponse.json({ error: "Failed to fetch payments" }, { status: 500 })
+    }
+}
 
 export async function POST(request: NextRequest) {
     const supabase = await createClient()

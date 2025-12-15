@@ -184,6 +184,8 @@ export interface Client {
     name: string
     business_name: string | null
     phone: string | null
+    tpin: string | null
+    contact_person: string | null
     email: string | null
     location: string | null
     type: "dev" | "design" | "marketing" | "mixed"

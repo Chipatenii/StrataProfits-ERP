@@ -5,11 +5,14 @@ import { Plus, Users, Search, Folder, Globe, Facebook, Instagram, Phone, Mail, M
 import { Client } from "@/lib/types"
 import { AdminCreateClientModal } from "@/components/modals/admin-create-client-modal"
 
+import { Edit } from "lucide-react"
+
 export function ClientsView() {
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const [editingClient, setEditingClient] = useState<Client | null>(null)
 
     useEffect(() => {
         fetchClients()
@@ -33,6 +36,16 @@ export function ClientsView() {
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.business_name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
+
+    const handleEditClick = (client: Client) => {
+        setEditingClient(client)
+        setShowCreateModal(true)
+    }
+
+    const handleModalClose = (open: boolean) => {
+        setShowCreateModal(open)
+        if (!open) setEditingClient(null)
+    }
 
     return (
         <div className="space-y-6">
@@ -72,8 +85,14 @@ export function ClientsView() {
                     </div>
                 ) : (
                     filteredClients.map(client => (
-                        <div key={client.id} className="glass-card p-6 rounded-xl hover:shadow-lg transition-all group border border-border/50">
-                            <div className="flex justify-between items-start mb-4 gap-2">
+                        <div key={client.id} className="glass-card p-6 rounded-xl hover:shadow-lg transition-all group border border-border/50 relative">
+                            <button
+                                onClick={() => handleEditClick(client)}
+                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </button>
+                            <div className="flex justify-between items-start mb-4 gap-2 pr-8">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0
                                 ${client.type === 'dev' ? 'bg-blue-500' :
@@ -86,8 +105,11 @@ export function ClientsView() {
                                         {client.business_name && <p className="text-sm text-muted-foreground truncate">{client.business_name}</p>}
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="mb-4">
                                 <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap
-                          ${client.status === 'Active' ? 'bg-green-100 text-green-700' :
+                        ${client.status === 'Active' ? 'bg-green-100 text-green-700' :
                                         client.status === 'Lead' ? 'bg-amber-100 text-amber-700' :
                                             'bg-gray-100 text-gray-700'}`}>
                                     {client.status}
@@ -100,11 +122,44 @@ export function ClientsView() {
                                         <Mail className="w-4 h-4 shrink-0" /> <span className="truncate">{client.email}</span>
                                     </div>
                                 )}
+                                {client.phone && (
+                                    <div className="flex items-center gap-2 truncate">
+                                        <Phone className="w-4 h-4 shrink-0" /> <span className="truncate">{client.phone}</span>
+                                    </div>
+                                )}
                                 {client.location && (
                                     <div className="flex items-center gap-2 truncate">
                                         <MapPin className="w-4 h-4 shrink-0" /> <span className="truncate">{client.location}</span>
                                     </div>
                                 )}
+                                {client.contact_person && (
+                                    <div className="flex items-center gap-2 truncate text-xs">
+                                        <span className="font-semibold text-gray-500">Contact:</span> <span className="truncate">{client.contact_person}</span>
+                                    </div>
+                                )}
+                                {client.tpin && (
+                                    <div className="flex items-center gap-2 truncate text-xs">
+                                        <span className="font-semibold text-gray-500">TPIN:</span> <span className="font-mono bg-gray-100 px-1 rounded">{client.tpin}</span>
+                                    </div>
+                                )}
+                                <div className="flex gap-3 mt-2 pt-2 border-t border-border/50">
+                                    {client.social_links?.website && (
+                                        <a href={client.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
+                                            <Globe className="w-4 h-4" />
+                                        </a>
+                                    )}
+                                    {client.social_links?.facebook && (
+                                        <a href={client.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors">
+                                            <Facebook className="w-4 h-4" />
+                                        </a>
+                                    )}
+                                    {client.social_links?.instagram && (
+                                        <a href={client.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors">
+                                            <Instagram className="w-4 h-4" />
+                                        </a>
+                                    )}
+                                </div>
+
                                 {client.value_tier === 'Premium' && (
                                     <div className="inline-block px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded text-xs mt-2">
                                         💎 Premium Client
@@ -118,8 +173,9 @@ export function ClientsView() {
 
             <AdminCreateClientModal
                 open={showCreateModal}
-                onOpenChange={setShowCreateModal}
+                onOpenChange={handleModalClose}
                 onSuccess={fetchClients}
+                client={editingClient}
             />
         </div>
     )

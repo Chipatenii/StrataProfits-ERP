@@ -36,7 +36,7 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
   const [loading, setLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [printingInvoice, setPrintingInvoice] = useState<Invoice | null>(null)
-  const [fiscalYear, setFiscalYear] = useState("this-year")
+  const [fiscalYear, setFiscalYear] = useState("this-month")
 
   // Form state
   const [formData, setFormData] = useState({
@@ -66,7 +66,7 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
       const [invoicesRes, clientsRes, expensesRes, paymentsRes] = await Promise.all([
         fetch("/api/invoices"),
         fetch("/api/admin/clients"),
-        fetch("/api/admin/expenses"),
+        fetch("/api/expenses"),
         fetch("/api/payments").catch(() => ({ ok: false })),
       ])
 
@@ -333,9 +333,9 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="this-month">This Month</SelectItem>
                 <SelectItem value="this-year">This Fiscal Year</SelectItem>
                 <SelectItem value="last-year">Last Fiscal Year</SelectItem>
-                <SelectItem value="this-quarter">This Quarter</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -382,7 +382,11 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
               {/* Summary Stats */}
               <div className="space-y-4">
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">Cash as on 01 {new Date().toLocaleString('default', { month: 'short' })} {new Date().getFullYear()}</p>
+                  <p className="text-sm text-gray-500">Opening Balance ({
+                    fiscalYear === 'this-month'
+                      ? new Date().toLocaleString('default', { day: '2-digit', month: 'short' })
+                      : `01 Jan ${fiscalYear === 'last-year' ? new Date().getFullYear() - 1 : new Date().getFullYear()}`
+                  })</p>
                   <p className="text-xl font-bold text-gray-900">{formatCurrency(summary.cashStart)}</p>
                 </div>
                 <div className="text-right">

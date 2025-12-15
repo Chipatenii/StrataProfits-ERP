@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ClipboardList, CheckCircle, Users, BarChart3, FileText, Folder, AlertCircle } from "lucide-react"
-import type { Invoice } from "@/lib/types"
+import { ClipboardList, CheckCircle, Users, BarChart3, FileText, Folder, AlertCircle, TrendingUp, DollarSign, Wallet } from "lucide-react"
+import type { Invoice, Deal, Project } from "@/lib/types"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 
 interface OverviewViewProps {
     stats: any
@@ -19,187 +20,225 @@ interface OverviewViewProps {
 
 export function OverviewView({ stats, taskStats, membersCount, setActiveView }: OverviewViewProps) {
     const [overdueInvoices, setOverdueInvoices] = useState<Invoice[]>([])
-    const [pipelineStats, setPipelineStats] = useState({ leads: 0, proposals: 0 })
+    const [pipelineStats, setPipelineStats] = useState({ count: 0, value: 0 })
+    const [financeStats, setFinanceStats] = useState({ revenueYTD: 0, outstanding: 0, outstandingCount: 0 })
+    const [activeProjectsCount, setActiveProjectsCount] = useState(0)
+    const supabase = createClient()
 
     useEffect(() => {
-        // Fetch overdue invoices
-        fetch('/api/invoices?status=overdue')
+        // Fetch overdue invoices and calculate outstanding
+        fetch('/api/invoices')
             .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setOverdueInvoices(data)
-            })
-            .catch(console.error)
-
-        // Fetch pipeline stats
-        fetch('/api/admin/deals')
-            .then(res => res.json())
-            .then(data => {
+            .then((data: Invoice[]) => {
                 if (Array.isArray(data)) {
-                    // Calculate stats
-                    const now = new Date();
-                    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    const overdue = data.filter(inv => inv.status === 'overdue')
+                    const outstanding = data.filter(inv => inv.status === 'sent' || inv.status === 'overdue')
 
-                    const newLeads = data.filter(d => new Date(d.created_at) > oneWeekAgo).length;
-                    const proposals = data.filter(d => d.stage === 'Proposal').length;
+                    const outstandingAmount = outstanding.reduce((acc, inv) => acc + (inv.total || 0), 0)
 
-                    setPipelineStats({ leads: newLeads, proposals });
+                    setOverdueInvoices(overdue)
+                    setFinanceStats(prev => ({
+                        ...prev,
+                        outstanding: outstandingAmount,
+                        outstandingCount: outstanding.length
+                    }))
                 }
             })
             .catch(console.error)
+
+        // Fetch Pipeline Stats
+        fetch('/api/admin/deals')
+            .then(res => res.json())
+            .then((data: Deal[]) => {
+                if (Array.isArray(data)) {
+                    const activeDeals = data.filter(d => d.stage !== 'Won' && d.stage !== 'Lost')
+                    const value = activeDeals.reduce((acc, d) => acc + (d.estimated_value || 0), 0)
+                    setPipelineStats({ count: activeDeals.length, value })
+                }
+            })
+            .catch(console.error)
+
+        // Fetch Payments for Revenue YTD
+        fetch('/api/payments')
+            .then(res => res.json())
+            .then((data: any[]) => {
+                if (Array.isArray(data)) {
+                    // Simple YTD calculation
+                    const currentYear = new Date().getFullYear()
+                    const ytdPayments = data.filter(p => new Date(p.payment_date).getFullYear() === currentYear)
+                    const revenue = ytdPayments.reduce((acc, p) => acc + (p.amount || 0), 0)
+                    setFinanceStats(prev => ({ ...prev, revenueYTD: revenue }))
+                }
+            })
+            .catch(console.error)
+
+        // Fetch Active Projects Count
+        const fetchProjects = async () => {
+            const { count } = await supabase.from('projects').select('*', { count: 'exact', head: true }).eq('status', 'active')
+            setActiveProjectsCount(count || 0)
+        }
+        fetchProjects()
+
     }, [])
 
     return (
         <div className="space-y-6">
+            <h2 className="text-2xl font-bold tracking-tight">Executive Summary</h2>
+
             {/* Operational Alerts Section */}
-            {(overdueInvoices.length > 0) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 mt-0.5" />
-                    <div>
-                        <h4 className="font-semibold">Attention Needed</h4>
-                        <ul className="list-disc list-inside text-sm mt-1 space-y-1">
-                            {overdueInvoices.map(inv => (
-                                <li key={inv.id}>
-                                    Invoice {inv.invoice_number || 'Unknown'} for {inv.client?.name || 'Client'} is Overdue.
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            )}
-            {/* Task Requests Alert */}
-            {taskStats.pending > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="p-2 bg-amber-100 rounded-full text-amber-600 shrink-0">
-                            <ClipboardList className="w-5 h-5" />
+            {(overdueInvoices.length > 0 || taskStats.pending > 0) && (
+                <div className="grid gap-4 md:grid-cols-2">
+                    {overdueInvoices.length > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 mt-0.5" />
+                            <div className="flex-1">
+                                <h4 className="font-bold">Overdue Invoices ({overdueInvoices.length})</h4>
+                                <p className="text-sm mt-1">Action required for overdue payments.</p>
+                                <button onClick={() => setActiveView("sales")} className="text-sm font-semibold underline mt-2">View Invoices</button>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-semibold text-amber-900">Pending Task Approvals</h3>
-                            <p className="text-amber-700 text-sm">
-                                You have {taskStats.pending} task request{taskStats.pending !== 1 ? "s" : ""} to review.
-                            </p>
+                    )}
+                    {taskStats.pending > 0 && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                                    <ClipboardList className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-amber-900">{taskStats.pending} Pending Task{taskStats.pending !== 1 ? 's' : ''}</h3>
+                                    <p className="text-amber-700 text-sm">Approvals waiting for review.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setActiveView("tasks")}
+                                className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm font-medium"
+                            >
+                                Review
+                            </button>
                         </div>
-                    </div>
-                    <button
-                        onClick={() => setActiveView("tasks")}
-                        className="w-full sm:w-auto px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
-                    >
-                        Review Requests
-                    </button>
+                    )}
                 </div>
             )}
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* Pipeline Stats */}
-                <div className="glass-card rounded-2xl p-4 md:p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">New Leads (Wk)</h3>
-                        <BarChart3 className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold">{pipelineStats.leads}</p>
-                </div>
-                <div className="glass-card rounded-2xl p-4 md:p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Proposals</h3>
-                        <FileText className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold">{pipelineStats.proposals}</p>
-                </div>
-                {/* Pending Requests Card - Full width on mobile if pending > 0, else follows grid */}
-                <div className={`glass-card rounded-2xl p-4 md:p-6 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 ${taskStats.pending > 0 ? "col-span-2 md:col-span-1" : ""}`}>
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-amber-800">Pending</h3>
-                        <div className="p-1.5 md:p-2 bg-amber-200/50 rounded-full">
-                            <ClipboardList className="w-4 h-4 md:w-5 md:h-5 text-amber-700" />
+            {/* Key Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Revenue Card */}
+                <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-muted-foreground">Revenue (YTD)</h3>
+                        <div className="p-2 bg-green-100 rounded-full text-green-600">
+                            <DollarSign className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="flex items-end justify-between">
-                        <p className="text-2xl md:text-3xl font-bold text-amber-900">{taskStats.pending}</p>
-                        {taskStats.pending > 0 && (
-                            <button
-                                onClick={() => setActiveView("tasks")}
-                                className="text-xs font-semibold px-2 py-1 bg-amber-200/80 text-amber-800 rounded hover:bg-amber-300 transition-colors"
-                            >
-                                Review &rarr;
-                            </button>
-                        )}
-                    </div>
+                    <p className="text-3xl font-bold text-foreground">ZMW {financeStats.revenueYTD.toLocaleString()}</p>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
                 </div>
-                <div className="glass-card rounded-2xl p-4 md:p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Total</h3>
-                        <ClipboardList className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+
+                {/* Outstanding Invoices */}
+                <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-muted-foreground">Outstanding</h3>
+                        <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+                            <Wallet className="w-4 h-4" />
+                        </div>
                     </div>
-                    <p className="text-2xl md:text-3xl font-bold">{taskStats.total}</p>
+                    <p className="text-3xl font-bold text-foreground">ZMW {financeStats.outstanding.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{financeStats.outstandingCount} invoices pending payment</p>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-amber-500" />
                 </div>
-                <div className="glass-card rounded-2xl p-4 md:p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Active</h3>
-                        <ClipboardList className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />
+
+                {/* Sales Pipeline */}
+                <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-muted-foreground">Active Pipeline</h3>
+                        <div className="p-2 bg-blue-100 rounded-full text-blue-600">
+                            <TrendingUp className="w-4 h-4" />
+                        </div>
                     </div>
-                    <p className="text-2xl md:text-3xl font-bold">{taskStats.active}</p>
+                    <p className="text-3xl font-bold text-foreground">{pipelineStats.count}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Est. Value: ZMW {pipelineStats.value.toLocaleString()}</p>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-500" />
                 </div>
-                <div className="glass-card rounded-2xl p-4 md:p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Done</h3>
-                        <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
+
+                {/* Active Projects */}
+                <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-muted-foreground">Active Projects</h3>
+                        <div className="p-2 bg-purple-100 rounded-full text-purple-600">
+                            <Folder className="w-4 h-4" />
+                        </div>
                     </div>
-                    <p className="text-2xl md:text-3xl font-bold">{taskStats.completed}</p>
-                </div>
-                {/* Team count - visible on larger screens or as extra */}
-                <div className="glass-card rounded-2xl p-4 md:p-6 col-span-2 md:col-span-1 md:hidden lg:block">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Team</h3>
-                        <Users className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold">{membersCount}</p>
+                    <p className="text-3xl font-bold text-foreground">{activeProjectsCount}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Projects currently in progress</p>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-violet-500" />
                 </div>
             </div>
 
-            {/* Analytics Section */}
-            {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="glass-card rounded-2xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">Best Performer</h3>
-                            <div className="p-2 bg-amber-100 rounded-full text-amber-600">
-                                <CheckCircle className="w-5 h-5" />
-                            </div>
+            {/* Secondary Stats & Top Performer */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Team Productivity Card */}
+                <div className="glass-card rounded-2xl p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        Team Overview
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-muted/30 rounded-lg text-center">
+                            <p className="text-2xl font-bold">{membersCount}</p>
+                            <p className="text-xs text-muted-foreground">Active Members</p>
                         </div>
-                        {stats.bestPerformer ? (
-                            <div>
-                                <p className="text-2xl font-bold truncate">{stats.bestPerformer.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {stats.bestPerformer.completedTasks} tasks completed
-                                </p>
-                            </div>
-                        ) : (
-                            <p className="text-muted-foreground">No data available</p>
-                        )}
-                    </div>
-
-                    <div className="glass-card rounded-2xl p-6">
-                        <h3 className="text-lg font-semibold mb-4">Team Leaderboard</h3>
-                        <div className="space-y-3">
-                            {stats.leaderboard.slice(0, 5).map((member: any, index: number) => (
-                                <div
-                                    key={member.id}
-                                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                                >
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <span className="text-sm font-medium text-muted-foreground w-4 shrink-0">{index + 1}</span>
-                                        <span className="font-medium truncate">{member.name}</span>
-                                    </div>
-                                    <span className="text-green-600 font-semibold shrink-0 whitespace-nowrap ml-2">ZMW {member.totalEarnings.toFixed(2)}</span>
-                                </div>
-                            ))}
+                        <div className="p-4 bg-muted/30 rounded-lg text-center">
+                            <p className="text-2xl font-bold">{taskStats.active}</p>
+                            <p className="text-xs text-muted-foreground">Tasks In Progress</p>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg text-center">
+                            <p className="text-2xl font-bold">{taskStats.completed}</p>
+                            <p className="text-xs text-muted-foreground">Tasks Completed</p>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg text-center">
+                            {/* Simple utilization metric if available, otherwise total hours from stats? 
+                                Stats object has leaderboard, we can sum totals.
+                            */}
+                            <p className="text-xl font-bold">
+                                {stats?.leaderboard ?
+                                    Math.round(stats.leaderboard.reduce((acc: any, curr: any) => acc + curr.totalHours, 0)) + 'h'
+                                    : '-'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Total Hours Logged</p>
                         </div>
                     </div>
                 </div>
-            )}
 
+                {/* Top Performer Highlight */}
+                <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold text-green-900">Top Performer 🏆</h3>
+                        {stats?.bestPerformer && (
+                            <div className="text-right">
+                                <p className="text-sm text-green-700 font-medium">Earnings</p>
+                                <p className="text-xl font-bold text-green-800">ZMW {stats.bestPerformer.totalEarnings.toFixed(2)}</p>
+                            </div>
+                        )}
+                    </div>
 
+                    {stats?.bestPerformer ? (
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-green-200 flex items-center justify-center text-2xl font-bold text-green-700">
+                                {stats.bestPerformer.name.charAt(0)}
+                            </div>
+                            <div>
+                                <p className="text-xl font-bold text-green-900">{stats.bestPerformer.name}</p>
+                                <p className="text-green-700">{stats.bestPerformer.completedTasks} tasks completed</p>
+                                <p className="text-sm text-green-600 mt-1">{stats.bestPerformer.totalHours} hours logged</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="h-32 flex items-center justify-center text-green-800/50 italic">
+                            No performance data available yet.
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }

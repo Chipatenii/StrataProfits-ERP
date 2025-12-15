@@ -15,19 +15,27 @@ export function PipelineView() {
   // For "Stacked Cards", we usually mean stacking the columns.
   // We'll stack them vertically on mobile.
 
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     fetchDeals()
   }, [])
 
   const fetchDeals = async () => {
+    setError(null)
     try {
       const response = await fetch("/api/admin/deals")
       if (response.ok) {
         const data = await response.json()
         setDeals(data)
+      } else {
+        const errText = await response.text()
+        console.error("Failed to load deals:", response.status, errText)
+        setError(`Failed to load deals: ${response.status} ${response.statusText}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading deals:", error)
+      setError(error.message || "Failed to load deals")
     } finally {
       setLoading(false)
     }
@@ -56,6 +64,11 @@ export function PipelineView() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
+          {error}
+        </div>
+      )}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Sales Pipeline</h2>

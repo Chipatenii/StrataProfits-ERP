@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Fragment } from "react"
 import { Download, Loader2 } from "lucide-react"
 import jsPDF from "jspdf"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface TeamMemberReport {
     user_id: string
@@ -24,6 +25,75 @@ interface TeamMemberReport {
 }
 
 export function ReportsView() {
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
+                <p className="text-muted-foreground">Comprehensive business intelligence and reporting.</p>
+            </div>
+
+            <Tabs defaultValue="workforce" className="space-y-4">
+                <TabsList>
+                    <TabsTrigger value="workforce">Workforce & Payroll</TabsTrigger>
+                    <TabsTrigger value="financial">Financial Statements</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="workforce" className="space-y-4">
+                    <WorkforceReports />
+                </TabsContent>
+                <TabsContent value="financial" className="space-y-4">
+                    <FinancialPlaceholder />
+                </TabsContent>
+            </Tabs>
+        </div>
+    )
+}
+
+import { toast } from "sonner"
+
+function FinancialPlaceholder() {
+    const handlePlaceholderClick = (reportName: string) => {
+        toast.info(`${reportName} is coming soon!`, {
+            description: "Detailed financial reporting features are currently under development.",
+            duration: 3000,
+        })
+    }
+
+    return (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div
+                onClick={() => handlePlaceholderClick("Profit & Loss")}
+                className="glass-card p-6 rounded-xl border border-border/50 hover:border-accent/50 transition-colors cursor-pointer group active:scale-95 duration-200"
+            >
+                <h3 className="font-semibold text-lg mb-2 group-hover:text-accent">Profit & Loss</h3>
+                <p className="text-sm text-muted-foreground">Detailed breakdown of revenues, costs, and expenses over time.</p>
+            </div>
+            <div
+                onClick={() => handlePlaceholderClick("Balance Sheet")}
+                className="glass-card p-6 rounded-xl border border-border/50 hover:border-accent/50 transition-colors cursor-pointer group active:scale-95 duration-200"
+            >
+                <h3 className="font-semibold text-lg mb-2 group-hover:text-accent">Balance Sheet</h3>
+                <p className="text-sm text-muted-foreground">Snapshot of company assets, liabilities, and equity.</p>
+            </div>
+            <div
+                onClick={() => handlePlaceholderClick("Aged Receivables")}
+                className="glass-card p-6 rounded-xl border border-border/50 hover:border-accent/50 transition-colors cursor-pointer group active:scale-95 duration-200"
+            >
+                <h3 className="font-semibold text-lg mb-2 group-hover:text-accent">Aged Receivables</h3>
+                <p className="text-sm text-muted-foreground">Report on unpaid invoices and aging analysis.</p>
+            </div>
+            <div
+                onClick={() => handlePlaceholderClick("Tax Summary")}
+                className="glass-card p-6 rounded-xl border border-border/50 hover:border-accent/50 transition-colors cursor-pointer group active:scale-95 duration-200"
+            >
+                <h3 className="font-semibold text-lg mb-2 group-hover:text-accent">Tax Summary</h3>
+                <p className="text-sm text-muted-foreground">Estimated tax liabilities and deductions.</p>
+            </div>
+        </div>
+    )
+}
+
+function WorkforceReports() {
     const [reports, setReports] = useState<TeamMemberReport[]>([])
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
     const [loading, setLoading] = useState(true)
@@ -163,7 +233,7 @@ export function ReportsView() {
             {/* Header & Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-foreground">Monthly Reports</h2>
+                    <h2 className="text-xl font-semibold text-foreground">Monthly Workforce Report</h2>
                     <p className="text-sm text-muted-foreground">Track team hours, payroll, and productivity.</p>
                 </div>
 

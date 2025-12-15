@@ -6,8 +6,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Button } from "@/components/ui/button"
 import { CreateReceiptModal } from "@/components/modals/create-receipt-modal"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ExpensesView } from "./expenses-view"
 
 export function FinanceView() {
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">Finance</h1>
+                <p className="text-muted-foreground">Monitor financial health and manage expenses.</p>
+            </div>
+
+            <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-4">
+                    <FinanceOverview />
+                </TabsContent>
+                <TabsContent value="expenses" className="space-y-4">
+                    <ExpensesView />
+                </TabsContent>
+            </Tabs>
+        </div>
+    )
+}
+
+function FinanceOverview() {
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<any>(null)
     const [fiscalYear, setFiscalYear] = useState("this-year")
@@ -54,10 +81,8 @@ export function FinanceView() {
     })) || []
 
 
-    // ... (fetchReport logic stays same)
-
     return (
-        <div className="space-y-6 bg-gray-50 min-h-full -m-4 md:-m-6 p-4 md:p-6">
+        <div className="space-y-6 bg-gray-50 min-h-full -m-4 md:-m-6 p-4 md:p-6 rounded-lg border">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">

@@ -10,9 +10,10 @@ import { Project } from "@/lib/types"
 
 interface ProjectListViewProps {
     userId?: string
+    onSelectProject?: (projectId: string) => void
 }
 
-export function ProjectListView({ userId }: ProjectListViewProps) {
+export function ProjectListView({ userId, onSelectProject }: ProjectListViewProps) {
     const router = useRouter()
     const [projects, setProjects] = useState<(Project & { tasks: { count: number }[], members: { count: number }[] })[]>([])
     const [loading, setLoading] = useState(true)
@@ -69,10 +70,16 @@ export function ProjectListView({ userId }: ProjectListViewProps) {
                     </div>
                 ) : (
                     projects.map((project) => (
-                        <Link
+                        <div
                             key={project.id}
-                            href={`/projects/${project.id}`}
-                            className="group block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-6"
+                            onClick={() => {
+                                if (onSelectProject) {
+                                    onSelectProject(project.id)
+                                } else {
+                                    router.push(`/projects/${project.id}`)
+                                }
+                            }}
+                            className="group block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-6 cursor-pointer"
                         >
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                                 <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
@@ -110,7 +117,7 @@ export function ProjectListView({ userId }: ProjectListViewProps) {
                                 </span>
                                 <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                             </div>
-                        </Link>
+                        </div>
                     ))
                 )}
             </div>

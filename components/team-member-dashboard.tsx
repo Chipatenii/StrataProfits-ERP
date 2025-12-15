@@ -1,5 +1,7 @@
 "use client"
 
+import { APP_NAME } from "@/lib/config"
+import { getNavItemsForRole } from "@/lib/navigation"
 import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -358,15 +360,7 @@ export function TeamMemberDashboard({
     )
   }
 
-  const menuItems = [
-    { id: "my-day", label: "My Day", icon: Sun },
-    { id: "tasks", label: "Tasks", icon: List },
-  ]
-
-  // Pipeline check
-  if (profile?.role === "virtual_assistant") {
-    menuItems.push({ id: "pipeline", label: "Pipeline", icon: DollarSign })
-  }
+  const menuItems = getNavItemsForRole(profile?.role as any)
 
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
@@ -387,7 +381,7 @@ export function TeamMemberDashboard({
       `}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
           <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
-            Ostento Media
+            {APP_NAME}
           </h2>
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -472,8 +466,8 @@ export function TeamMemberDashboard({
 
               <div className="flex flex-col">
                 <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
-                  <span className="md:hidden">Ostento Tracker</span>
-                  <span className="hidden md:inline">Ostento Productivity Tracker</span>
+                  <span className="md:hidden">{APP_NAME}</span>
+                  <span className="hidden md:inline">{APP_NAME} Productivity Tracker</span>
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
               </div>

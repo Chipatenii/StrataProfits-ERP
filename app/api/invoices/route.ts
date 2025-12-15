@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
                 .from("invoices")
                 .select(`
                     *,
-                    client:clients(name, address, phone, tpin, email, contact_person),
+                    client:clients(name, location, phone, email),
                     project:projects(name),
                     items:invoice_items(*),
                     payments(*)
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
         let query = admin.from("invoices").select(`
             *,
-            client:clients(name, address, phone, tpin, email, contact_person),
+            client:clients(name, location, phone, email),
             project:projects(name)
         `).order("created_at", { ascending: false })
 
@@ -114,9 +114,17 @@ export async function POST(request: NextRequest) {
         const admin = await createAdminClient()
 
         // 1. Create Invoice
-        // Calculate total amount from items if provided, otherwise trust the basic amount (legacy behavior)
+        // Calculate total amount correctly on server side to ensure data integrity
         if (items && items.length > 0) {
-            invoiceData.amount = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+            const itemSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+            const itemTaxTotal = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0)
+
+            // Use provided discount/adjustment or defaults
+            const discount = invoiceData.discount_amount || 0
+            const adjust = invoiceData.adjustment || 0
+
+            // Final Amount = Subtotal - Discount + Tax + Adjustment
+            invoiceData.amount = itemSubtotal - discount + itemTaxTotal + adjust
         }
 
         const { data: invoice, error } = await admin

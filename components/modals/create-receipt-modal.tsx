@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -99,6 +99,9 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
             <DialogContent className="max-w-md glass-card">
                 <DialogHeader>
                     <DialogTitle>Create Receipt</DialogTitle>
+                    <DialogDescription>
+                        Record a payment and generate a receipt for an invoice.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">

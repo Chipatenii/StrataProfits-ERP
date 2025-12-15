@@ -13,7 +13,7 @@ interface ProjectDetail extends Project {
     tasks: Task[]
 }
 
-export function ProjectDetailView({ projectId }: { projectId: string }) {
+export function ProjectDetailView({ projectId, onBack }: { projectId: string; onBack?: () => void }) {
     const router = useRouter()
     const [project, setProject] = useState<ProjectDetail | null>(null)
     const [loading, setLoading] = useState(true)
@@ -58,7 +58,11 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
 
         try {
             await fetch(`/api/admin/projects/${projectId}`, { method: "DELETE" })
-            router.push("/projects")
+            if (onBack) {
+                onBack()
+            } else {
+                router.push("/projects")
+            }
         } catch (error) {
             console.error("Failed to delete project", error)
         }
@@ -71,9 +75,15 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 justify-between">
                 <div className="flex items-start md:items-center gap-4 w-full md:w-auto">
-                    <Link href="/projects" className="p-2 hover:bg-gray-100 rounded-full mt-1 md:mt-0">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Link>
+                    {onBack ? (
+                        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full mt-1 md:mt-0">
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                    ) : (
+                        <Link href="/projects" className="p-2 hover:bg-gray-100 rounded-full mt-1 md:mt-0">
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
+                    )}
                     <div className="flex-1">
                         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                             <h1 className="text-2xl md:text-3xl font-bold">{project.name}</h1>
@@ -144,14 +154,16 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                         {project.tasks.length === 0 ? (
                             <div className="p-8 text-center text-gray-500">No tasks in this project yet.</div>
                         ) : (
-                            <div className="divide-y divide-gray-100">
+                            <div className="flex flex-col gap-0 md:block divide-y divide-gray-100 p-2 md:p-0">
                                 {project.tasks.map(task => (
-                                    <div key={task.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-2">
+                                    <div key={task.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white">
                                         <div>
-                                            <p className="font-medium">{task.title}</p>
-                                            <div className="flex gap-2 mt-1">
-                                                <span className="text-xs px-2 py-0.5 bg-gray-100 rounded text-gray-600 uppercase">{task.status}</span>
-                                                <span className="text-xs px-2 py-0.5 bg-gray-100 rounded text-gray-600 uppercase">{task.priority}</span>
+                                            <p className="font-medium text-base">{task.title}</p>
+                                            <div className="flex gap-2 mt-2 md:mt-1">
+                                                <span className={`text-xs px-2 py-0.5 rounded uppercase font-medium ${task.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                    {task.status}
+                                                </span>
+                                                <span className="text-xs px-2 py-0.5 bg-gray-100 rounded text-gray-600 uppercase font-medium">{task.priority}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -163,9 +175,9 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
 
                 {activeTab === "members" && (
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <h3 className="font-semibold">Project Team</h3>
-                            <Button size="sm" onClick={() => setShowAddMember(true)}>
+                            <Button size="sm" onClick={() => setShowAddMember(true)} className="w-full sm:w-auto">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Add Member
                             </Button>
@@ -173,11 +185,11 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                         {project.members.length === 0 ? (
                             <div className="p-8 text-center text-gray-500">No members added yet.</div>
                         ) : (
-                            <div className="divide-y divide-gray-100">
+                            <div className="flex flex-col gap-0 md:block divide-y divide-gray-100 p-2 md:p-0">
                                 {project.members.map(member => (
-                                    <div key={member.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3">
+                                    <div key={member.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium">
+                                            <div className="w-10 h-10 md:w-8 md:h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium shrink-0">
                                                 {member.profile.full_name.charAt(0)}
                                             </div>
                                             <div>
@@ -185,10 +197,10 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                                                 <p className="text-sm text-gray-500">{member.profile.role}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 pt-2 md:pt-0 mt-2 md:mt-0">
-                                            <span className="text-sm text-gray-500 uppercase">{member.role}</span>
-                                            <Button variant="ghost" size="sm" onClick={() => handleDeleteMember(member.user_id)}>
-                                                <Trash2 className="w-4 h-4 text-red-500" />
+                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 mt-2 md:mt-0">
+                                            <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded text-gray-600 uppercase">{member.role}</span>
+                                            <Button variant="ghost" size="sm" onClick={() => handleDeleteMember(member.user_id)} className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50">
+                                                <Trash2 className="w-4 h-4" />
                                             </Button>
                                         </div>
                                     </div>

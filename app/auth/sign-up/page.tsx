@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { APP_NAME } from "@/lib/config"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -54,7 +55,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md">
         <div className="glass-card rounded-2xl p-8 space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Ostento Productivity Tracker</h1>
+            <h1 className="text-3xl font-bold text-foreground">{APP_NAME}</h1>
             <p className="text-sm text-muted-foreground mt-2">Create your account</p>
           </div>
 

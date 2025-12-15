@@ -77,10 +77,10 @@ export function MeetingsView() {
                             {/* Mobile: Stacked | Desktop: Row (using md:flex-row) is hard because of grid inside 
                                  Let's allow grid to handle responsive
                              */}
-                            <div className="flex flex-col md:flex-row gap-4 justify-between">
-                                <div className="flex gap-4 items-start">
+                            <div className="flex flex-col gap-4">
+                                <div className="flex gap-4 items-start w-full">
                                     {/* Date Box */}
-                                    <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg p-2 min-w-[60px] h-min">
+                                    <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg p-2 min-w-[60px] h-min shrink-0">
                                         <span className="text-xs font-bold text-blue-700 uppercase">
                                             {new Date(meeting.date_time_start).toLocaleDateString(undefined, { month: 'short' })}
                                         </span>
@@ -90,8 +90,8 @@ export function MeetingsView() {
                                     </div>
 
                                     {/* Content */}
-                                    <div>
-                                        <h3 className="font-bold text-lg leading-tight">{meeting.title}</h3>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-lg leading-tight truncate">{meeting.title}</h3>
 
                                         <div className="flex flex-wrap gap-y-2 gap-x-4 text-sm text-muted-foreground mt-2">
                                             <span className="flex items-center gap-1.5 min-w-[100px]">
@@ -118,7 +118,7 @@ export function MeetingsView() {
                                 </div>
 
                                 {/* Status & Actions */}
-                                <div className="flex items-center justify-between md:justify-end gap-3 mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-border/50">
+                                <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/50 w-full">
                                     <div className="flex items-center gap-2">
                                         <select
                                             value={meeting.status}

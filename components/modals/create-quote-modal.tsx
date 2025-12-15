@@ -32,16 +32,15 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
     const [clientId, setClientId] = useState("")
     const [currency, setCurrency] = useState("ZMW")
     const [quoteNumber, setQuoteNumber] = useState("")
-    const [referenceNumber, setReferenceNumber] = useState("")
     const [quoteDate, setQuoteDate] = useState(new Date().toISOString().split('T')[0])
-    const [expiryDate, setExpiryDate] = useState("")
+    const [validUntil, setValidUntil] = useState("")
 
     // Financials
     const [discountRate, setDiscountRate] = useState(0)
     const [adjustment, setAdjustment] = useState(0)
 
     // Notes & Terms
-    const [customerNotes, setCustomerNotes] = useState("")
+    const [notes, setNotes] = useState("")
     const [terms, setTerms] = useState("")
 
     const [items, setItems] = useState<LineItem[]>([
@@ -58,10 +57,11 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
         try {
             const res = await fetch("/api/admin/clients")
             if (res.ok) {
-                setClients(await res.json())
+                const data = await res.json()
+                setClients(data)
             }
         } catch (error) {
-            console.error(error)
+            console.error("Error fetching clients:", error)
         } finally {
             setLoadingClients(false)
         }
@@ -117,13 +117,14 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                 client_id: clientId,
                 currency,
                 quote_number: quoteNumber || undefined,
-                reference_number: referenceNumber || undefined,
-                valid_until: expiryDate || undefined,
-                customer_notes: customerNotes,
+                valid_until: validUntil || undefined,
+                notes: notes,
                 terms: terms,
                 discount_rate: discountRate,
                 discount_amount: discountAmount,
                 adjustment: adjustment,
+                amount: total,
+                status: "draft",
                 items: items.filter(i => i.description.trim() !== "").map(i => ({
                     description: i.description,
                     quantity: i.quantity,
@@ -147,12 +148,9 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
             setClientId("")
             setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
             setQuoteNumber("")
-            setReferenceNumber("")
-            setQuoteDate(new Date().toISOString().split('T')[0])
-            setExpiryDate("")
             setDiscountRate(0)
             setAdjustment(0)
-            setCustomerNotes("")
+            setNotes("")
             setTerms("")
         } catch (error) {
             console.error(error)
@@ -166,40 +164,32 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto w-full">
                 <DialogHeader>
-                    <DialogTitle>Create New Quote</DialogTitle>
+                    <DialogTitle>Create Quote / Proposal</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6 mt-2">
-                    {/* Header Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-purple-50 rounded-lg border border-purple-100">
+                    {/* Header Section - Stacked Layout */}
+                    <div className="space-y-6 p-4 bg-gray-50 rounded-lg border">
                         <div className="space-y-4">
                             <div>
-                                <Label>Customer Name</Label>
+                                <Label>Prospective Client</Label>
                                 <select
-                                    className="w-full mt-1 px-3 py-2 rounded-md bg-white border border-gray-300 focus:ring-2 focus:ring-purple-500"
+                                    className="w-full mt-1 px-3 py-2 rounded-md bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500"
                                     value={clientId}
                                     onChange={(e) => setClientId(e.target.value)}
                                     required
                                 >
-                                    <option value="">Select Customer...</option>
+                                    <option value="">Select Client...</option>
                                     {clients.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div>
-                                <Label>Reference #</Label>
-                                <Input
-                                    value={referenceNumber}
-                                    onChange={(e) => setReferenceNumber(e.target.value)}
-                                    placeholder="REF-12345"
-                                    className="bg-white"
-                                />
-                            </div>
                         </div>
+
                         <div className="space-y-4">
-                            <div className="flex gap-4">
-                                <div className="flex-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
                                     <Label>Quote #</Label>
                                     <Input
                                         value={quoteNumber}
@@ -208,7 +198,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                                         className="bg-white"
                                     />
                                 </div>
-                                <div className="flex-1">
+                                <div>
                                     <Label>Currency</Label>
                                     <select
                                         className="w-full h-10 px-3 py-2 rounded-md bg-white border border-gray-300"
@@ -216,12 +206,13 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                                         onChange={(e) => setCurrency(e.target.value)}
                                     >
                                         <option value="ZMW">ZMW (K)</option>
+                                        <option value="USD">USD ($)</option>
                                     </select>
                                 </div>
                             </div>
-                            <div className="flex gap-4">
-                                <div className="flex-1">
-                                    <Label>Quote Date</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <Label>Date</Label>
                                     <Input
                                         type="date"
                                         value={quoteDate}
@@ -229,12 +220,12 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                                         className="bg-white"
                                     />
                                 </div>
-                                <div className="flex-1">
-                                    <Label>Expiry Date</Label>
+                                <div>
+                                    <Label>Valid Until</Label>
                                     <Input
                                         type="date"
-                                        value={expiryDate}
-                                        onChange={(e) => setExpiryDate(e.target.value)}
+                                        value={validUntil}
+                                        onChange={(e) => setValidUntil(e.target.value)}
                                         className="bg-white"
                                     />
                                 </div>
@@ -242,7 +233,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                         </div>
                     </div>
 
-                    {/* Items Table */}
+                    {/* Items Table - Reused Logic */}
                     <div className="space-y-2">
                         <div className="grid grid-cols-12 gap-2 text-xs uppercase text-gray-500 font-semibold px-2">
                             <div className="col-span-1 text-center">Order</div>
@@ -256,16 +247,16 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                         {items.map((item, index) => (
                             <div key={item.id} className="grid grid-cols-12 gap-2 items-start py-2 border-b border-gray-100 group hover:bg-gray-50/50 rounded-lg px-2 transition-colors">
                                 <div className="col-span-1 flex flex-col items-center gap-1 pt-2">
-                                    <button type="button" onClick={() => moveItem(index, 'up')} className="text-gray-400 hover:text-purple-600 disabled:opacity-20" disabled={index === 0}>
+                                    <button type="button" onClick={() => moveItem(index, 'up')} className="text-gray-400 hover:text-blue-600 disabled:opacity-20" disabled={index === 0}>
                                         <ArrowUp size={14} />
                                     </button>
-                                    <button type="button" onClick={() => moveItem(index, 'down')} className="text-gray-400 hover:text-purple-600 disabled:opacity-20" disabled={index === items.length - 1}>
+                                    <button type="button" onClick={() => moveItem(index, 'down')} className="text-gray-400 hover:text-blue-600 disabled:opacity-20" disabled={index === items.length - 1}>
                                         <ArrowDown size={14} />
                                     </button>
                                 </div>
                                 <div className="col-span-5">
                                     <Textarea
-                                        placeholder="Item description"
+                                        placeholder="Service or item description"
                                         value={item.description}
                                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                         className="min-h-[2.5rem] resize-none"
@@ -308,37 +299,38 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                             </div>
                         ))}
 
-                        <Button type="button" variant="outline" size="sm" onClick={addItem} className="mt-2 text-purple-600 border-purple-200 bg-purple-50/50 hover:bg-purple-50">
-                            <Plus className="w-4 h-4 mr-2" /> Add Item
+                        <Button type="button" variant="outline" size="sm" onClick={addItem} className="mt-2 text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-50">
+                            <Plus className="w-4 h-4 mr-2" /> Add Line Item
                         </Button>
                     </div>
 
                     {/* Footer Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                        <div className="space-y-4">
+                    {/* Footer Section */}
+                    <div className="flex flex-col md:grid md:grid-cols-2 gap-8 pt-4">
+                        <div className="space-y-4 order-2 md:order-1">
                             <div>
-                                <Label>Customer Notes</Label>
+                                <Label>Notes</Label>
                                 <Textarea
                                     className="mt-1 min-h-[100px]"
-                                    placeholder="Notes for the customer..."
-                                    value={customerNotes}
-                                    onChange={(e) => setCustomerNotes(e.target.value)}
+                                    placeholder="Additional notes for the client..."
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
                                 />
                             </div>
                             <div>
                                 <Label>Terms & Conditions</Label>
                                 <Textarea
                                     className="mt-1 min-h-[100px]"
-                                    placeholder="Validity period, payment terms..."
+                                    placeholder="Validity, payment terms, etc..."
                                     value={terms}
                                     onChange={(e) => setTerms(e.target.value)}
                                 />
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+                        <div className="bg-gray-50 rounded-lg p-4 md:p-6 space-y-4 order-1 md:order-2">
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">Sub Total (Tax Exclusive)</span>
+                                <span className="text-gray-600">Sub Total</span>
                                 <span className="font-medium">{subTotal.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
@@ -352,7 +344,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                                         type="number"
                                         min="0"
                                         max="100"
-                                        className="h-8 text-right"
+                                        className="h-8 text-right bg-white"
                                         value={discountRate}
                                         onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)}
                                     />
@@ -363,22 +355,22 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
                                 <span className="text-gray-600 text-sm">Adjustment</span>
                                 <Input
                                     type="number"
-                                    className="h-8 text-right max-w-[120px]"
+                                    className="h-8 text-right max-w-[120px] bg-white"
                                     value={adjustment}
                                     onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
                                 />
                             </div>
 
                             <div className="border-t border-gray-200 pt-4 flex justify-between items-center">
-                                <span className="font-bold text-lg">Total ({currency})</span>
-                                <span className="font-bold text-xl text-purple-700">{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <span className="font-bold text-lg">Quote Total ({currency})</span>
+                                <span className="font-bold text-xl text-blue-700">{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={loading || !clientId} className="bg-purple-600 hover:bg-purple-700">
+                        <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             Create Quote
                         </Button>
