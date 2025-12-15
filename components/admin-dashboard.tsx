@@ -255,11 +255,11 @@ export function AdminDashboard({
 
       {/* Sidebar */}
       <div className={`
-        fixed md:relative z - 50 h - full
-transition - all duration - 300 ease -in -out
-bg - card border - r border - border
+        fixed md:relative z-50 h-full
+        transition-all duration-300 ease-in-out
+        bg-white border-r border-slate-200 shadow-xl md:shadow-none
         ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
-`}>
+      `}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
           <h2 className={`font - bold text - accent truncate text - lg ${!isSidebarOpen && "md:hidden lg:block"} `}>
             Admin Panel

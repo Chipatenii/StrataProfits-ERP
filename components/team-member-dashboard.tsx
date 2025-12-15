@@ -376,7 +376,7 @@ export function TeamMemberDashboard({
       <div className={`
         fixed md:relative z-50 h-full
         transition-all duration-300 ease-in-out
-        bg-card border-r border-border flex flex-col
+        bg-white border-r border-slate-200 shadow-xl md:shadow-none flex flex-col
         ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
       `}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
@@ -418,12 +418,19 @@ export function TeamMemberDashboard({
                   setActiveView(item.id as any)
                   if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${activeView === item.id ? "bg-accent text-white" : "text-muted-foreground hover:bg-accent/10"
+                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 
+                  ${activeView === item.id
+                    ? "bg-slate-100 text-slate-900 font-semibold shadow-sm ring-1 ring-slate-200"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 title={item.label}
               >
-                <Icon size={22} className="shrink-0" />
-                <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200`}>
+                <Icon
+                  size={20}
+                  strokeWidth={activeView === item.id ? 2.5 : 2}
+                  className={`shrink-0 transition-colors ${activeView === item.id ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                />
+                <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left text-sm`}>
                   {item.label}
                 </span>
               </button>
@@ -434,19 +441,19 @@ export function TeamMemberDashboard({
         <div className="p-3 space-y-1">
           <button
             onClick={() => setShowProfileSettings(true)}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-muted-foreground hover:bg-accent/10 transition-colors"
+            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200"
             title="Settings"
           >
-            <Settings size={22} className="shrink-0" />
-            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"}`}>Settings</span>
+            <Settings size={20} className="shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} text-sm font-medium`}>Settings</span>
           </button>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
             title="Sign Out"
           >
-            <LogOut size={22} className="shrink-0" />
-            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"}`}>Sign Out</span>
+            <LogOut size={20} className="shrink-0 transition-colors" />
+            <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} text-sm font-medium`}>Sign Out</span>
           </button>
         </div>
       </div>
@@ -553,20 +560,16 @@ export function TeamMemberDashboard({
                   </div>
 
                   <div className="glass-card rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold mb-4">Team Earnings Leaderboard</h3>
-                    <div className="space-y-3">
-                      {stats.leaderboard.map((member: any, index: number) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium text-muted-foreground w-4">{index + 1}</span>
-                            <span className="font-medium">{member.name}</span>
-                          </div>
-                          <span className="text-green-600 font-semibold">ZMW {member.totalEarnings.toFixed(2)}</span>
-                        </div>
-                      ))}
+                    <h3 className="text-lg font-semibold mb-4">My Performance</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Tasks Completed</span>
+                        <span className="font-bold">{filteredTasks.filter(t => t.status === 'completed').length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Hours Logged (Today)</span>
+                        <span className="font-bold">{todayHours}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
