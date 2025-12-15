@@ -1,4 +1,3 @@
-
 "use client"
 import { APP_NAME } from "@/lib/config"
 import { getNavItemsForRole } from "@/lib/navigation"

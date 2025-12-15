@@ -1,4 +1,4 @@
-﻿-- Add new columns to clients table
+-- Add new columns to clients table
 ALTER TABLE clients 
 ADD COLUMN IF NOT EXISTS tpin TEXT,
 ADD COLUMN IF NOT EXISTS contact_person TEXT;
