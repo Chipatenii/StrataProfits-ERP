@@ -73,7 +73,7 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales">("my-day")
 
   const [stats, setStats] = useState<any>(null) // Stats type in lib/types might differ from local usage, safe with any for now or check
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
@@ -96,14 +96,14 @@ export function AdminDashboard({
       const tasksResponse = await fetch("/api/admin/tasks")
       if (tasksResponse.ok) {
         const tasksData = await tasksResponse.json()
-        setTasks(tasksData || [])
+        setTasks(Array.isArray(tasksData) ? tasksData : [])
       }
 
       // Load team members
       const membersResponse = await fetch("/api/admin/members")
       if (membersResponse.ok) {
         const membersData = await membersResponse.json()
-        setMembers(membersData || [])
+        setMembers(Array.isArray(membersData) ? membersData : [])
       }
 
       // Load stats

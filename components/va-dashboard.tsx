@@ -78,7 +78,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       `}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
           <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
-            Ostento VA
+            Virtual Assistant
           </h2>
           {/* Close button only visible on mobile when open */}
           <button

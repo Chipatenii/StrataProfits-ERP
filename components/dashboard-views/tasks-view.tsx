@@ -12,18 +12,21 @@ interface TasksViewProps {
     onCreateTask: () => void
 }
 
-export function TasksView({ tasks, members, onUpdateTask, onDeleteTask, onCreateTask }: TasksViewProps) {
+export function TasksView({ tasks = [], members = [], onUpdateTask, onDeleteTask, onCreateTask }: TasksViewProps) {
     const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
     const [reviewingTask, setReviewingTask] = useState<Task | null>(null) // Local state for review if needed, or bubble up
 
-    const filteredTasks = tasks.filter((task) => {
+    // Safety guard
+    const safeTasks = Array.isArray(tasks) ? tasks : []
+
+    const filteredTasks = safeTasks.filter((task) => {
         if (taskFilter === "all") return true
         if (taskFilter === "active") return task.status !== "completed"
         if (taskFilter === "completed") return task.status === "completed"
         return true
     })
 
-    const pendingTasks = tasks.filter(t => t.approval_status === 'pending')
+    const pendingTasks = safeTasks.filter(t => t.approval_status === 'pending')
 
     const getMemberName = (id?: string | null) => {
         if (!id) return "Unassigned"
