@@ -26,8 +26,8 @@ If you are updating an existing database that was already on Version 1 (Core Tas
 
 After deployment, run the following SQL to verify the `invoices` table exists and has the correct fields:
 
-\`\`\`sql
+```sql
 SELECT column_name, data_type 
 FROM information_schema.columns 
 WHERE table_name = 'invoices';
-\`\`\`
+```
