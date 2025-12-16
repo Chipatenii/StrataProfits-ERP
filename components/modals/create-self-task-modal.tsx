@@ -32,9 +32,15 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSel
     useEffect(() => {
         if (open) {
             const loadProjects = async () => {
-                const supabase = createClient()
-                const { data } = await supabase.from("projects").select("id, name").eq("status", "active")
-                if (data) setProjects(data)
+                try {
+                    const response = await fetch("/api/projects")
+                    if (response.ok) {
+                        const data = await response.json()
+                        setProjects(data)
+                    }
+                } catch (error) {
+                    console.error("Failed to load projects", error)
+                }
             }
             loadProjects()
         }

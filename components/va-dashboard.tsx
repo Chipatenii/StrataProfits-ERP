@@ -14,6 +14,8 @@ import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { ProjectListView } from "@/components/projects/project-list-view"
 import { TasksView } from "@/components/dashboard-views/tasks-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
+import { ClientsView } from "@/components/dashboard-views/clients-view"
+import { SalesView } from "@/components/dashboard-views/sales-view"
 import { UserProfileCard } from "./user-profile-card"
 
 interface VADashboardProps {
@@ -23,7 +25,7 @@ interface VADashboardProps {
   userRole: string
 }
 
-type View = "overview" | "tasks" | "meetings" | "pipeline" | "projects" | "finance" | "sops"
+type View = "overview" | "tasks" | "meetings" | "pipeline" | "projects" | "finance" | "sops" | "clients" | "sales"
 
 export function VADashboard({ userId, userName, userEmail, userRole }: VADashboardProps) {
   const [activeView, setActiveView] = useState<View>("overview")
@@ -41,7 +43,11 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
   const renderView = () => {
     switch (activeView) {
       case "overview":
-        return <VAOverview userId={userId} userName={userName} />
+        return <VAOverview userId={userId} userName={userName} onViewChange={(view) => setActiveView(view as View)} />
+      case "clients":
+        return <ClientsView />
+      case "sales":
+        return <SalesView />
       case "tasks":
         return <TasksView userId={userId} userName={userName} />
       case "meetings":
@@ -55,7 +61,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       case "sops":
         return <VASOPs />
       default:
-        return <VAOverview userId={userId} userName={userName} />
+        return <VAOverview userId={userId} userName={userName} onViewChange={(view) => setActiveView(view as View)} />
     }
   }
 

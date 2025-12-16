@@ -55,11 +55,9 @@ const ROLE_PERMISSIONS: Record<UserProfile["role"], Permission[]> = {
         "sops:read", "sops:write",
     ],
     team_member: [
-        "projects:read", // Only assigned projects via RLS
-        "tasks:read", "tasks:write", // Own tasks
+        "tasks:write", // Own tasks
         "time_logs:read", "time_logs:write", // Own logs
         "meetings:read", // Own meetings
-        "sops:read",
         "dashboard:my_day",
     ],
     developer: [

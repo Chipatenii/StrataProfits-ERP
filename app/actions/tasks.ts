@@ -24,7 +24,10 @@ export async function createSelfCreatedTask(data: z.infer<typeof createSelfTaskS
     // If not project related, ensure project_id is null
     const finalProjectId = is_project_related ? project_id : null
 
-    const { data: task, error } = await supabase
+    // Use admin client to bypass potential RLS recursion on insert
+    const admin = await createAdminClient()
+
+    const { data: task, error } = await admin
         .from("tasks")
         .insert({
             title,

@@ -5,21 +5,20 @@ import { AlertCircle, CheckCircle, Clock } from "lucide-react"
 import { Task, Invoice } from "@/lib/types"
 import { getTimeBasedGreeting } from "@/lib/time-utils"
 
-
 interface VAOverviewProps {
     userName: string
     userId: string
+    onViewChange?: (view: string) => void
 }
 
-export function VAOverview({ userName, userId }: VAOverviewProps) {
+export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) {
     const [tasks, setTasks] = useState<Task[]>([])
     const [overdueInvoices, setOverdueInvoices] = useState<Invoice[]>([])
     const [stats, setStats] = useState({ leads: 0, proposals: 0 })
 
     useEffect(() => {
         // Fetch tasks
-        // This is a simplified fetch, normally we'd allow filtering logic
-        fetch(`/api/tasks?assignee_id=${userId}&status=pending`) // Assuming this route exists and filters
+        fetch(`/api/tasks?assignee_id=${userId}&status=pending`)
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setTasks(data.slice(0, 5)) // Top 5
@@ -43,8 +42,8 @@ export function VAOverview({ userName, userId }: VAOverviewProps) {
                     const now = new Date();
                     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-                    const newLeads = data.filter(d => new Date(d.created_at) > oneWeekAgo).length;
-                    const proposals = data.filter(d => d.stage === 'Proposal').length;
+                    const newLeads = data.filter((d: any) => new Date(d.created_at) > oneWeekAgo).length;
+                    const proposals = data.filter((d: any) => d.stage === 'Proposal').length;
 
                     setStats({ leads: newLeads, proposals });
                 }
@@ -104,10 +103,14 @@ export function VAOverview({ userName, userId }: VAOverviewProps) {
                         <p className="text-muted-foreground text-sm">No pending tasks found.</p>
                     ) : (
                         tasks.map(task => (
-                            <div key={task.id} className="flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border/50">
+                            <button
+                                key={task.id}
+                                onClick={() => onViewChange?.('tasks')}
+                                className="w-full flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors text-left group"
+                            >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-2 h-2 rounded-full ${task.priority === 'high' ? 'bg-red-500' : 'bg-blue-500'}`} />
-                                    <span className="font-medium">{task.title}</span>
+                                    <span className="font-medium group-hover:text-primary transition-colors">{task.title}</span>
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     {task.due_date && (
@@ -117,7 +120,7 @@ export function VAOverview({ userName, userId }: VAOverviewProps) {
                                         </span>
                                     )}
                                 </div>
-                            </div>
+                            </button>
                         ))
                     )}
                 </div>

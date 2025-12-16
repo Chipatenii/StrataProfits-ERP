@@ -116,8 +116,12 @@ export function TeamMemberDashboard({
 
   const loadData = useCallback(async () => {
     try {
-      const { data: profileData } = await supabase.from("profiles").select("*").eq("id", userId).single()
-      setProfile(profileData)
+      // Fetch profile via API (bypasses RLS) - Restore Fix
+      const resProfile = await fetch("/api/profile")
+      if (resProfile.ok) {
+        const profileData = await resProfile.json()
+        setProfile(profileData)
+      }
 
       // Get assigned tasks AND self-created tasks
       const { data: tasksData } = await supabase
@@ -476,7 +480,9 @@ export function TeamMemberDashboard({
                   <span className="md:hidden">{APP_NAME}</span>
                   <span className="hidden md:inline">{APP_NAME} Productivity Tracker</span>
                 </h1>
-                <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
+                <p className="text-xs text-muted-foreground hidden md:block">
+                  Welcome, {userName} • {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
               </div>
             </div>
 
@@ -500,7 +506,9 @@ export function TeamMemberDashboard({
         {/* Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
           <div className="md:hidden mb-4">
-            <p className="text-sm text-muted-foreground">{getTimeBasedGreeting(userName)}</p>
+            <p className="text-sm text-muted-foreground">
+              {getTimeBasedGreeting(userName)} • {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
           </div>
 
 
@@ -614,162 +622,140 @@ export function TeamMemberDashboard({
                   </div>
                 </div>
 
-                <div className="grid gap-4">
-                  {filteredTasks.length === 0 ? (
-                    <div className="glass-card rounded-lg p-8 text-center">
-                      <p className="text-muted-foreground">No {activeTab} tasks found</p>
-                    </div>
-                  ) : (
-                    filteredTasks.map((task) => {
-                      const isTaskActive = activeTaskId === task.id
-                      return (
-                        <div
-                          key={task.id}
-                          className={`glass-card rounded-lg p-6 transition-all duration-500 ${animatingTaskId === task.id ? "opacity-0 translate-x-10" : "opacity-100"
-                            }`}
-                        >
-                          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <h3 className="text-lg font-semibold truncate">{task.title}</h3>
-                                {task.status === "completed" && <CheckCircle className="w-5 h-5 text-green-500" />}
-                                {task.approval_status === "pending" && (
-                                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium border border-amber-200">
-                                    <Clock className="w-3 h-3" />
-                                    Pending Approval
-                                  </span>
-                                )}
-                                {task.approval_status === "rejected" && (
-                                  <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium border border-red-200">
-                                    Rejected
-                                  </span>
-                                )}
-                              </div>
-                              {task.description && <p className="text-muted-foreground mb-3 line-clamp-2 md:line-clamp-none">{task.description}</p>}
-                              {task.project_id && (
-                                <div className="mb-2">
-                                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-medium">
-                                    {projects.find((p) => p.id === task.project_id)?.name || "Unknown Project"}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                              <span
-                                className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === "high"
-                                  ? "bg-red-100 text-red-700"
-                                  : task.priority === "medium"
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-green-100 text-green-700"
-                                  }`}
-                              >
-                                {task.priority}
-                              </span>
-                            </div>
-                          </div>
-
-                          {activeTab === "active" && (
-                            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
-                                  <div>
-                                    <p className="text-sm text-muted-foreground mb-1">Time on this task:</p>
-                                    {isTaskActive && (
-                                      <Timer
-                                        isActive={true}
-                                        startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""}
-                                        estimatedHours={task.estimated_hours || undefined}
-                                        onWarning={(remainingMinutes) =>
-                                          handleTimerWarning(task.id, task.title, remainingMinutes)
-                                        }
-                                        onTimeElapsed={() => handleTimeElapsed(task.id, task.title)}
-                                      />
-                                    )}
-                                    {!isTaskActive && (
-                                      <p className="text-lg font-semibold">
-                                        {(calculateTimeSpent(timeLogs, task.id) / 60).toFixed(1)} hrs
+                <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-slate-700">Task Details</th>
+                          <th className="px-4 py-3 font-semibold text-slate-700 w-48">Project</th>
+                          <th className="px-4 py-3 font-semibold text-slate-700 w-32">Priority</th>
+                          <th className="px-4 py-3 font-semibold text-slate-700 w-48">Time Tracking</th>
+                          <th className="px-4 py-3 font-semibold text-slate-700 w-48 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredTasks.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                              No {activeTab} tasks found
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredTasks.map((task) => {
+                            const isTaskActive = activeTaskId === task.id
+                            return (
+                              <tr key={task.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-4 py-3 align-top">
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-slate-900">{task.title}</span>
+                                      {task.status === "completed" && <CheckCircle className="w-4 h-4 text-green-500" />}
+                                      {task.approval_status === "pending" && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                                          <Clock className="w-3 h-3 mr-1" />
+                                          Pending
+                                        </span>
+                                      )}
+                                      {task.approval_status === "rejected" && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                          Rejected
+                                        </span>
+                                      )}
+                                    </div>
+                                    {task.description && (
+                                      <p className="text-slate-500 line-clamp-1 text-xs max-w-md" title={task.description}>
+                                        {task.description}
                                       </p>
                                     )}
+                                    {task.due_date && activeTab === "active" && (
+                                      <p className="text-xs text-blue-600 mt-1">
+                                        Due: {new Date(task.due_date).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                    {activeTab === "completed" && (
+                                      <div className="text-xs text-slate-400 mt-1">
+                                        Completed: {new Date(task.completed_at || "").toLocaleDateString()}
+                                        {task.completion_notes && <span className="italic ml-1"> - "{task.completion_notes}"</span>}
+                                      </div>
+                                    )}
                                   </div>
-                                  {task.estimated_hours && (
-                                    <div className="block w-full sm:w-auto">
-                                      <TimeAllocationIndicator
-                                        spentMinutes={calculateTimeSpent(timeLogs, task.id)}
-                                        estimatedHours={task.estimated_hours}
-                                        size="sm"
-                                      />
+                                </td>
+                                <td className="px-4 py-3 align-top text-slate-600">
+                                  {projects.find((p) => p.id === task.project_id)?.name || "-"}
+                                </td>
+                                <td className="px-4 py-3 align-top">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${task.priority === "high"
+                                        ? "bg-red-100 text-red-800"
+                                        : task.priority === "medium"
+                                          ? "bg-amber-100 text-amber-800"
+                                          : "bg-green-100 text-green-800"
+                                      }`}
+                                  >
+                                    {task.priority}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 align-top">
+                                  <div className="flex flex-col gap-1">
+                                    {isTaskActive ? (
+                                      <div className="text-sm font-medium text-amber-600">
+                                        <Timer
+                                          isActive={true}
+                                          startTime={timeLogs.find((log) => !log.clock_out)?.clock_in || ""}
+                                          estimatedHours={task.estimated_hours || undefined}
+                                          onWarning={(remainingMinutes) =>
+                                            handleTimerWarning(task.id, task.title, remainingMinutes)
+                                          }
+                                          onTimeElapsed={() => handleTimeElapsed(task.id, task.title)}
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="text-sm font-medium text-slate-600">
+                                        {(calculateTimeSpent(timeLogs, task.id) / 60).toFixed(1)} hrs
+                                      </div>
+                                    )}
+                                    {task.estimated_hours && (
+                                      <div className="w-24">
+                                        <TimeAllocationIndicator
+                                          spentMinutes={calculateTimeSpent(timeLogs, task.id)}
+                                          estimatedHours={task.estimated_hours}
+                                          size="sm"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 align-top text-right space-x-2">
+                                  {activeTab === "active" && (
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => handleTaskStartStop(task.id)}
+                                        className={`p-2 rounded-md transition-colors ${isTaskActive
+                                            ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                            : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                                          }`}
+                                        title={isTaskActive ? "Pause Timer" : "Start Timer"}
+                                      >
+                                        {isTaskActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                      </button>
+                                      <button
+                                        onClick={() => handleTaskStatusChange(task.id, "completed")}
+                                        className="p-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                                        title="Mark as Completed"
+                                      >
+                                        <CheckCircle className="w-4 h-4" />
+                                      </button>
                                     </div>
                                   )}
-                                </div>
-                                <button
-                                  onClick={() => handleTaskStartStop(task.id)}
-                                  className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 ${isTaskActive
-                                    ? "bg-amber-500 hover:bg-amber-600"
-                                    : calculateTimeSpent(timeLogs, task.id) > 0
-                                      ? "bg-blue-600 hover:bg-blue-700"
-                                      : "bg-green-600 hover:bg-green-700"
-                                    }`}
-                                >
-                                  {isTaskActive ? (
-                                    <>
-                                      <Pause className="w-4 h-4" />
-                                      Pause
-                                    </>
-                                  ) : calculateTimeSpent(timeLogs, task.id) > 0 ? (
-                                    <>
-                                      <Play className="w-4 h-4" />
-                                      Resume
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play className="w-4 h-4" />
-                                      Start
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                              {task.due_date && (
-                                <div className="mt-3 pt-3 border-t border-blue-200">
-                                  <p className="text-sm text-blue-700 font-medium">
-                                    📅 Deadline:{" "}
-                                    {new Date(task.due_date).toLocaleDateString(undefined, {
-                                      weekday: "short",
-                                      year: "numeric",
-                                      month: "short",
-                                      day: "numeric",
-                                    })}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {activeTab === "active" ? (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleTaskStatusChange(task.id, "completed")}
-                                className="flex-1 btn-secondary flex items-center justify-center gap-2 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                                Mark as Completed
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="text-sm text-muted-foreground">
-                              Completed on {new Date(task.completed_at || "").toLocaleDateString()}
-                              {task.completion_notes && <p className="mt-1 italic">"{task.completion_notes}"</p>}
-                            </div>
-                          )}
-
-                          {task.due_date && activeTab === "active" && (
-                            <p className="text-sm text-muted-foreground mt-3">
-                              Due: {new Date(task.due_date).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                      )
-                    })
-                  )}
+                                </td>
+                              </tr>
+                            )
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </>
@@ -791,6 +777,7 @@ export function TeamMemberDashboard({
           <ProfileSettingsModal
             userId={userId}
             isAdmin={false}
+            initialProfile={profile}
             onClose={() => setShowProfileSettings(false)}
             onSuccess={() => {
               setShowProfileSettings(false)

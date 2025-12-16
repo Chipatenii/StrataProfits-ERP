@@ -10,11 +10,12 @@ import { toast } from "sonner"
 interface ProfileSettingsModalProps {
   userId: string
   isAdmin: boolean
+  initialProfile?: any
   onClose: () => void
   onSuccess: () => void
 }
 
-export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: ProfileSettingsModalProps) {
+export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose, onSuccess }: ProfileSettingsModalProps) {
   const supabase = createClient()
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
@@ -22,10 +23,18 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
   const [hourlyRate, setHourlyRate] = useState("")
 
   const [loading, setLoading] = useState(false)
-  const [fetching, setFetching] = useState(true)
+  const [fetching, setFetching] = useState(!initialProfile)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   useEffect(() => {
+    if (initialProfile) {
+      setFullName(initialProfile.full_name || "")
+      setEmail(initialProfile.email || "")
+      setRole(initialProfile.role || "team_member")
+      setHourlyRate(initialProfile.hourly_rate?.toString() || "")
+      return
+    }
+
     const fetchProfile = async () => {
       try {
         let data, error
@@ -40,10 +49,12 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
           }
           data = await response.json()
         } else {
-          // Standard user viewing self
-          const result = await supabase.from("profiles").select("*").eq("id", userId).single()
-          data = result.data
-          error = result.error
+          // Standard user viewing self - use API to bypass RLS
+          const response = await fetch("/api/profile")
+          if (!response.ok) {
+            throw new Error("Failed to load profile")
+          }
+          data = await response.json()
         }
 
         if (error) throw error
@@ -61,7 +72,7 @@ export function ProfileSettingsModal({ userId, isAdmin, onClose, onSuccess }: Pr
       }
     }
     fetchProfile()
-  }, [userId, supabase])
+  }, [userId, isAdmin, initialProfile, supabase])
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()

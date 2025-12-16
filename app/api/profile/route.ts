@@ -1,6 +1,32 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { updateProfileSchema } from "@/lib/schemas"
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const admin = await createAdminClient()
+    const { data: profile, error } = await admin
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json(profile)
+  } catch (error) {
+    console.error("Error fetching profile:", error)
+    return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 })
+  }
+}
 
 export async function PATCH(request: NextRequest) {
   try {

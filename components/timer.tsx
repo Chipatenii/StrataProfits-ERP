@@ -11,21 +11,33 @@ interface TimerProps {
   onTimeElapsed?: () => void
 }
 
-export function Timer({ isActive, startTime, estimatedHours, onWarning, onTimeElapsed }: TimerProps) {
+export function Timer({ isActive, startTime, initialSeconds = 0, estimatedHours, onWarning, onTimeElapsed }: TimerProps & { initialSeconds?: number }) {
   const [elapsed, setElapsed] = useState({ hours: 0, minutes: 0, seconds: 0 })
   const [timeStatus, setTimeStatus] = useState<"good" | "warning" | "exceeded">("good")
   const warningShownRef = useRef(false)
   const elapsedShownRef = useRef(false)
 
   useEffect(() => {
-    if (!isActive || !startTime) return
+    // If not active, just show initialSeconds
+    if (!isActive) {
+      const totalSeconds = initialSeconds
+      const hours = Math.floor(totalSeconds / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = totalSeconds % 60
+      setElapsed({ hours, minutes, seconds })
+      return
+    }
+
+    if (!startTime) return
 
     const interval = setInterval(() => {
       const start = new Date(startTime)
       const now = new Date()
       const diff = now.getTime() - start.getTime()
 
-      const totalSeconds = Math.floor(diff / 1000)
+      const currentSessionSeconds = Math.floor(diff / 1000)
+      const totalSeconds = initialSeconds + currentSessionSeconds
+
       const hours = Math.floor(totalSeconds / 3600)
       const minutes = Math.floor((totalSeconds % 3600) / 60)
       const seconds = totalSeconds % 60
@@ -34,23 +46,30 @@ export function Timer({ isActive, startTime, estimatedHours, onWarning, onTimeEl
 
       // Check for warnings and elapsed time
       if (estimatedHours) {
-        if (hasTimeElapsed(startTime, estimatedHours) && !elapsedShownRef.current) {
+        // Note: Logic for warning checks might need to consider total accumulated time if that's the intent
+        // For now keeping it based on start time as per original but it might differ slightly if paused/resumed
+        // Better to use totalSeconds for logic if estimatedHours applies to TOTAL time on task
+        const totalMinutes = totalSeconds / 60
+
+        if (totalMinutes >= estimatedHours * 60 && !elapsedShownRef.current) {
           setTimeStatus("exceeded")
           elapsedShownRef.current = true
           onTimeElapsed?.()
-        } else if (shouldShowWarning(startTime, estimatedHours) && !warningShownRef.current) {
+        } else if (estimatedHours * 60 - totalMinutes <= 15 && !warningShownRef.current && totalMinutes < estimatedHours * 60) {
+          // Warning logic: 15 mins remaining
           setTimeStatus("warning")
-          const remaining = getRemainingMinutesFromStart(startTime, estimatedHours)
+          // Calculate remaining properly
+          const remaining = Math.max(0, estimatedHours * 60 - totalMinutes)
           warningShownRef.current = true
           onWarning?.(remaining)
-        } else if (!hasTimeElapsed(startTime, estimatedHours) && !shouldShowWarning(startTime, estimatedHours)) {
+        } else if (totalMinutes < estimatedHours * 60 && estimatedHours * 60 - totalMinutes > 15) {
           setTimeStatus("good")
         }
       }
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isActive, startTime, estimatedHours, onWarning, onTimeElapsed])
+  }, [isActive, startTime, initialSeconds, estimatedHours, onWarning, onTimeElapsed])
 
   // Reset warning flags when timer is restarted
   useEffect(() => {
@@ -72,7 +91,7 @@ export function Timer({ isActive, startTime, estimatedHours, onWarning, onTimeEl
   }
 
   return (
-    <div className={`text-4xl font-bold font-mono ${getTimerColor()} transition-colors duration-300`}>
+    <div className={`font-mono font-medium ${getTimerColor()} transition-colors duration-300`}>
       {String(elapsed.hours).padStart(2, "0")}:{String(elapsed.minutes).padStart(2, "0")}:
       {String(elapsed.seconds).padStart(2, "0")}
     </div>
