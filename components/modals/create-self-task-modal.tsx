@@ -90,6 +90,9 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSel
             <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-primary">Create New Task</DialogTitle>
+                    <div className="text-sm text-muted-foreground mb-4">
+                        Fill out the details below to create a new task.
+                    </div>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
