@@ -525,15 +525,7 @@ export function TeamMemberDashboard({
                       <Pause className="w-4 h-4" />
                       Pause
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => handleTaskStartStop("")}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      Start New Task
-                    </button>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
