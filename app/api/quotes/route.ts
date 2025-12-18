@@ -17,6 +17,7 @@ const createQuoteSchema = z.object({
     discount_rate: z.number().min(0).default(0),
     discount_amount: z.number().min(0).default(0),
     adjustment: z.number().default(0),
+    amount: z.number().optional(),
     items: z.array(z.object({
         description: z.string(),
         quantity: z.number().min(0),
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
         const validation = createQuoteSchema.safeParse(body)
 
         if (!validation.success) {
+            console.error("Quote validation failed:", validation.error.format())
             return NextResponse.json({ error: "Validation failed", details: validation.error.format() }, { status: 400 })
         }
 

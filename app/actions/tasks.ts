@@ -63,10 +63,11 @@ export async function approveTask(taskId: string) {
     // Check admin role
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
     if (profile?.role !== "admin") {
+        console.warn("Non-admin user tried to approve task:", user.id)
         return { error: "Forbidden" }
     }
 
-    // Use admin client to perform the update to ensure permissions (though RLS might allow admin if configured, admin client is safer for system updates)
+    console.log("Approving task:", taskId, "requested by:", user.id)
     const admin = await createAdminClient()
 
     const { error } = await admin
@@ -82,11 +83,12 @@ export async function approveTask(taskId: string) {
         console.error("Error approving task:", error)
         return { error: "Failed to approve task" }
     }
+    console.log("Successfully approved task:", taskId)
 
     // Trigger ensures time_logs are updated, but we can double check or let trigger handle it.
     // The migration trigger 'handle_task_approval_update' should handle it.
 
-    revalidatePath("/admin/dashboard")
+    revalidatePath("/dashboard")
     return { success: true }
 }
 
@@ -117,6 +119,6 @@ export async function rejectTask(taskId: string) {
         return { error: "Failed to reject task" }
     }
 
-    revalidatePath("/admin/dashboard")
+    revalidatePath("/dashboard")
     return { success: true }
 }

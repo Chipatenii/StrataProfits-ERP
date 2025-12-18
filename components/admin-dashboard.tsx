@@ -138,7 +138,7 @@ export function AdminDashboard({
     if (!confirm("Are you sure you want to delete this task?")) return
 
     try {
-      const response = await fetch(`/ api / admin / tasks ? id = ${taskId} `, {
+      const response = await fetch(`/api/admin/tasks?id=${taskId}`, {
         method: "DELETE",
       })
 
@@ -154,7 +154,7 @@ export function AdminDashboard({
     if (!confirm("Are you sure you want to delete this team member? This action cannot be undone.")) return
 
     try {
-      const response = await fetch(`/ api / admin / members / ${memberId} `, {
+      const response = await fetch(`/api/admin/members/${memberId}`, {
         method: "DELETE",
       })
 

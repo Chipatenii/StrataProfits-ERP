@@ -100,7 +100,7 @@ export function TeamMemberDashboard({
     remainingMinutes?: number
   } | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "tasks" | "pipeline">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "tasks" | "meetings">("my-day")
 
   // Filters are now handled inside TeamTasksView for better performance and separation
 
@@ -340,8 +340,8 @@ export function TeamMemberDashboard({
 
           {activeView === "my-day" ? (
             <MyDayView userId={userId} userName={userName} />
-          ) : activeView === "pipeline" ? (
-            <PipelineView />
+          ) : activeView === "meetings" ? (
+            <MeetingsView />
           ) : activeView === "tasks" ? (
             <TeamTasksView
               userId={userId}
