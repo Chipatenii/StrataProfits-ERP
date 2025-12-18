@@ -35,6 +35,7 @@ import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { approveTask, rejectTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
 import Link from "next/link"
+import { getFormattedDate, getFormattedTime } from "@/lib/time-utils"
 
 import { MyDayView } from "@/components/dashboard-views/my-day-view"
 import { OverviewView } from "@/components/dashboard-views/overview-view"
@@ -85,6 +86,14 @@ export function AdminDashboard({
   // Review Modal State
   const [reviewingTask, setReviewingTask] = useState<Task | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const loadData = useCallback(async () => {
     try {
@@ -351,7 +360,9 @@ export function AdminDashboard({
                   <span className="md:hidden">{APP_NAME}</span>
                   <span className="hidden md:inline">{APP_NAME}</span>
                 </h1>
-                <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
+                <p className="text-xs text-muted-foreground hidden md:block">
+                  Welcome, {userName} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
+                </p>
               </div>
             </div>
 

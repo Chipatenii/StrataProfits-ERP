@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2, Loader2, ArrowUp, ArrowDown } from "lucide-react"
 import { Client } from "@/lib/types"
+import { PDFService } from "@/lib/pdf-service"
 
 interface CreateInvoiceModalProps {
     open: boolean
@@ -149,6 +150,12 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
             if (!res.ok) {
                 const errData = await res.json()
                 throw new Error(errData.error || "Failed to create invoice")
+            }
+
+            // Download PDF if requested
+            // @ts-ignore
+            if ((e.nativeEvent as any).submitter?.name === "download") {
+                PDFService.generateInvoicePDF({ ...payload as any, created_at: new Date().toISOString() })
             }
 
             onSuccess()
@@ -387,6 +394,16 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button
+                            type="submit"
+                            name="download"
+                            variant="outline"
+                            disabled={loading || !clientId}
+                            className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                        >
+                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Save & Download PDF
+                        </Button>
                         <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             Save & Send Invoice

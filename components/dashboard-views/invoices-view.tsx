@@ -5,6 +5,7 @@ import { Plus, Search, FileText, Loader2, ArrowUpRight, CheckCircle, Clock, Aler
 import { Invoice } from "@/lib/types"
 import { CreateInvoiceModal } from "@/components/modals/create-invoice-modal"
 import { InvoiceDetailsModal } from "@/components/modals/invoice-details-modal"
+import { PDFService } from "@/lib/pdf-service"
 
 export function InvoicesView() {
     const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -150,6 +151,17 @@ export function InvoicesView() {
                                         {invoice.currency} {invoice.amount.toLocaleString()}
                                     </span>
                                 </div>
+                                <div className="flex justify-end pt-2 border-t border-gray-100">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            PDFService.generateInvoicePDF(invoice)
+                                        }}
+                                        className="text-xs flex items-center gap-1 text-blue-600 font-medium"
+                                    >
+                                        <FileText size={14} /> Download PDF
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -193,11 +205,23 @@ export function InvoicesView() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button
-                                                className="text-blue-600 hover:text-blue-800 font-medium text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                View Details
-                                            </button>
+                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        PDFService.generateInvoicePDF(invoice)
+                                                    }}
+                                                    className="p-2 hover:bg-blue-50 rounded text-blue-600 transition-colors"
+                                                    title="Download PDF"
+                                                >
+                                                    <FileText size={16} />
+                                                </button>
+                                                <button
+                                                    className="text-blue-600 hover:text-blue-800 font-medium text-xs pt-2"
+                                                >
+                                                    View Details
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

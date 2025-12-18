@@ -130,6 +130,7 @@ export interface Quote {
     discount_rate?: number
     discount_amount?: number
     adjustment?: number
+    amount?: number // Added
 }
 
 export interface QuoteItem {

@@ -234,3 +234,27 @@ export function getTimeBasedGreeting(userName: string): string {
 
     return `${greeting}, ${firstName}`
 }
+
+/**
+ * Get formatted current date (e.g., "Thursday, December 18, 2025")
+ */
+export function getFormattedDate(): string {
+    return new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    }).format(new Date())
+}
+
+/**
+ * Get formatted current time (e.g., "15:30:45")
+ */
+export function getFormattedTime(): string {
+    return new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    }).format(new Date())
+}

@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2, Loader2, ArrowUp, ArrowDown } from "lucide-react"
-import { Client } from "@/lib/types"
+import { Client, Quote } from "@/lib/types" // Added Quote type
+import { PDFService } from "@/lib/pdf-service"
 
 interface CreateQuoteModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
+    initialData?: any // Added for editing support
 }
 
 interface LineItem {
@@ -23,7 +25,7 @@ interface LineItem {
     tax_rate: number
 }
 
-export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteModalProps) {
+export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }: CreateQuoteModalProps) {
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<Client[]>([])
     const [loadingClients, setLoadingClients] = useState(true)
@@ -50,8 +52,37 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
     useEffect(() => {
         if (open) {
             fetchClients()
+            if (initialData) {
+                setClientId(initialData.client_id || "")
+                setCurrency(initialData.currency || "ZMW")
+                setQuoteNumber(initialData.quote_number || "")
+                setValidUntil(initialData.valid_until ? initialData.valid_until.split('T')[0] : "")
+                setDiscountRate(initialData.discount_rate || 0)
+                setAdjustment(initialData.adjustment || 0)
+                setNotes(initialData.notes || "")
+                setTerms(initialData.terms || "")
+
+                if (initialData.items && Array.isArray(initialData.items)) {
+                    setItems(initialData.items.map((i: any) => ({
+                        id: i.id || Math.random().toString(),
+                        description: i.description,
+                        quantity: i.quantity,
+                        unit_price: i.unit_price,
+                        tax_rate: i.tax_rate || 0
+                    })))
+                }
+            } else {
+                // Reset form for new quote
+                setClientId("")
+                setQuoteNumber("")
+                setDiscountRate(0)
+                setAdjustment(0)
+                setNotes("")
+                setTerms("")
+                setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+            }
         }
-    }, [open])
+    }, [open, initialData])
 
     const fetchClients = async () => {
         try {
@@ -135,12 +166,18 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
             }
 
             const res = await fetch("/api/quotes", {
-                method: "POST",
+                method: initialData ? "PATCH" : "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(initialData ? { ...payload, id: initialData.id } : payload)
             })
 
             if (!res.ok) throw new Error("Failed to create quote")
+
+            // If we want to download PDF immediately
+            // @ts-ignore
+            if ((e.nativeEvent as any).submitter?.name === "download") {
+                PDFService.generateQuotePDF({ ...payload as any, created_at: new Date().toISOString() })
+            }
 
             onSuccess()
             onOpenChange(false)
@@ -164,7 +201,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto w-full">
                 <DialogHeader>
-                    <DialogTitle>Create Quote / Proposal</DialogTitle>
+                    <DialogTitle>{initialData ? 'Edit Quote / Proposal' : 'Create Quote / Proposal'}</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6 mt-2">
@@ -370,9 +407,19 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess }: CreateQuoteM
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button
+                            type="submit"
+                            name="download"
+                            variant="outline"
+                            disabled={loading || !clientId}
+                            className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                        >
+                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Save & Download PDF
+                        </Button>
                         <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Create Quote
+                            {initialData ? 'Update Quote' : 'Create Quote'}
                         </Button>
                     </DialogFooter>
                 </form>

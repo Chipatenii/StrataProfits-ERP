@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react"
 import { getQuotes } from "@/lib/data/quotes" // We will need to expose this via API or generic fetcher since this is client component
 import { Quote } from "@/lib/types"
-import { Plus, Loader2, FileText } from "lucide-react"
+import { Plus, Loader2, FileText, Edit } from "lucide-react"
 import { CreateQuoteModal } from "@/components/modals/create-quote-modal"
+import { PDFService } from "@/lib/pdf-service"
 
 export function QuotesView() {
     const [quotes, setQuotes] = useState<Quote[]>([])
     const [loading, setLoading] = useState(true)
 
     const [showCreate, setShowCreate] = useState(false)
+    const [editingQuote, setEditingQuote] = useState<Quote | null>(null)
 
     useEffect(() => {
         fetchQuotes()
@@ -67,14 +69,32 @@ export function QuotesView() {
                                     {quote.client?.name} • {new Date(quote.created_at).toLocaleDateString()}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="text-right">
-                                    {/* Need to sum items or get total from backend if added to view */}
-                                    <div className="font-bold">{quote.currency} Total</div>
+                            <div className="flex items-center gap-2">
+                                <div className="text-right mr-2">
+                                    <div className="text-xs text-muted-foreground">Total</div>
+                                    <div className="font-bold text-blue-700">{quote.currency} {quote.amount?.toLocaleString() || '0.00'}</div>
                                 </div>
-                                <button className="p-2 hover:bg-gray-100 rounded text-blue-600">
-                                    <FileText size={18} />
-                                </button>
+                                <div className="flex gap-1">
+                                    {quote.status === 'draft' && (
+                                        <button
+                                            onClick={() => {
+                                                setEditingQuote(quote)
+                                                setShowCreate(true)
+                                            }}
+                                            className="p-2 hover:bg-blue-50 rounded text-blue-600 transition-colors"
+                                            title="Edit Draft"
+                                        >
+                                            <Edit size={16} />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => PDFService.generateQuotePDF(quote)}
+                                        className="p-2 hover:bg-slate-100 rounded text-slate-600 transition-colors"
+                                        title="Download PDF"
+                                    >
+                                        <FileText size={18} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))
@@ -83,8 +103,12 @@ export function QuotesView() {
 
             <CreateQuoteModal
                 open={showCreate}
-                onOpenChange={setShowCreate}
+                onOpenChange={(open) => {
+                    setShowCreate(open)
+                    if (!open) setEditingQuote(null)
+                }}
                 onSuccess={fetchQuotes}
+                initialData={editingQuote}
             />
         </div>
     )

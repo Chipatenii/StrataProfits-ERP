@@ -6,6 +6,7 @@ import { Payment } from "@/lib/types"
 import { CreateReceiptModal } from "@/components/modals/create-receipt-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PDFService } from "@/lib/pdf-service"
 
 export function PaymentsView() {
     const [payments, setPayments] = useState<Payment[]>([])
@@ -92,6 +93,7 @@ export function PaymentsView() {
                                 <th className="px-4 py-3 text-left font-medium">Method</th>
                                 <th className="px-4 py-3 text-left font-medium">Reference</th>
                                 <th className="px-4 py-3 text-right font-medium">Amount</th>
+                                <th className="px-4 py-3 text-right font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -113,6 +115,15 @@ export function PaymentsView() {
                                         </td>
                                         <td className="px-4 py-3 text-right font-mono font-medium text-green-600">
                                             {formatCurrency(payment.amount, payment.currency)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => PDFService.generatePaymentPDF(payment, payment.invoice_id.slice(0, 8), "Customer")}
+                                                className="p-1.5 hover:bg-slate-100 rounded text-slate-600 transition-colors"
+                                                title="Download Receipt"
+                                            >
+                                                <FileText size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))

@@ -2,9 +2,9 @@
 
 import { APP_NAME } from "@/lib/config"
 import { getNavItemsForRole } from "@/lib/navigation"
-import { useState } from "react"
-import { LayoutDashboard, DollarSign, FolderKanban, FileText, Book, LogOut, Menu, X } from "lucide-react"
-import { getTimeBasedGreeting } from "@/lib/time-utils"
+import { useState, useEffect } from "react"
+import { LayoutDashboard, DollarSign, FolderKanban, FileText, Book, LogOut, Menu, X, Clock } from "lucide-react"
+import { getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { VAOverview } from "@/components/dashboard-views/va-overview"
@@ -32,6 +32,14 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -156,7 +164,9 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
                   <span className="md:hidden">{APP_NAME}</span>
                   <span className="hidden md:inline">{APP_NAME}</span>
                 </h1>
-                <p className="text-xs text-muted-foreground hidden md:block">Welcome, {userName}</p>
+                <p className="text-xs text-muted-foreground hidden md:block">
+                  Welcome, {userName} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
+                </p>
               </div>
             </div>
 

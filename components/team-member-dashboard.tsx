@@ -27,10 +27,11 @@ import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
 import { MyDayView } from "@/components/dashboard-views/my-day-view"
 import { PipelineView } from "@/components/dashboard-views/pipeline-view"
+import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
 import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { NotificationBell } from "@/components/notification-bell"
-import { calculateTimeSpent, getTimeBasedGreeting } from "@/lib/time-utils"
+import { calculateTimeSpent, getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
 import { TeamTasksView } from "@/components/dashboard-views/team-tasks-view"
@@ -99,6 +100,14 @@ export function TeamMemberDashboard({
     taskTitle: string
     remainingMinutes?: number
   } | null>(null)
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [activeView, setActiveView] = useState<"my-day" | "tasks" | "meetings">("my-day")
 
@@ -308,7 +317,7 @@ export function TeamMemberDashboard({
                   <span className="hidden md:inline">{APP_NAME} Productivity Tracker</span>
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">
-                  Welcome, {userName} • {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  Welcome, {userName} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
                 </p>
               </div>
             </div>
@@ -334,7 +343,7 @@ export function TeamMemberDashboard({
         <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
           <div className="md:hidden mb-4">
             <p className="text-sm text-muted-foreground">
-              {getTimeBasedGreeting(userName)} • {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {getTimeBasedGreeting(userName)} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
             </p>
           </div>
 

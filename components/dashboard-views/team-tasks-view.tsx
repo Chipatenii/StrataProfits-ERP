@@ -34,15 +34,20 @@ export function TeamTasksView({
     const loadData = useCallback(async (isInitial = false) => {
         if (isInitial) setLoading(true)
         try {
-            // Fetch only user's tasks or self-created tasks
-            const { data: tasksData, error: tasksError } = await supabase
-                .from("tasks")
-                .select("*")
-                .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
-                .order("created_at", { ascending: false })
+            // Fetch tasks: VAs and Admins see all, others see assigned/created
+            let query = supabase.from("tasks").select("*")
+
+            // Check if user is VA/Admin via profile (we need role here)
+            const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single()
+
+            if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+                query = query.or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
+            }
+
+            const { data: tasksData, error: tasksError } = await query.order("created_at", { ascending: false })
 
             if (tasksError) throw tasksError
-            // @ts-ignore - Supabase types can be tricky with generated vs local interfaces
+            // @ts-ignore
             setTasks(tasksData || [])
 
             // Fetch today's time logs

@@ -24,20 +24,30 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
         assigned_to: "",
         due_date: "",
         estimated_hours: "",
+        project_id: "",
     })
+    const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
-        if (task) {
-            setFormData({
-                title: task.title,
-                description: task.description || "",
-                status: task.status,
-                priority: task.priority,
-                assigned_to: task.assigned_to || "",
-                due_date: task.due_date || "",
-                estimated_hours: task.estimated_hours?.toString() || "",
-            })
+        if (open) {
+            fetch("/api/admin/projects")
+                .then(res => res.json())
+                .then(data => setProjects(data || []))
+                .catch(err => console.error("Failed to load projects", err))
+
+            if (task) {
+                setFormData({
+                    title: task.title,
+                    description: task.description || "",
+                    status: task.status,
+                    priority: task.priority,
+                    assigned_to: task.assigned_to || "",
+                    due_date: task.due_date || "",
+                    estimated_hours: task.estimated_hours?.toString() || "",
+                    project_id: task.project_id || "",
+                })
+            }
         }
     }, [task, open])
 
@@ -56,6 +66,7 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                 assigned_to: formData.assigned_to || null,
                 due_date: formData.due_date || null,
                 estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
+                project_id: formData.project_id || null,
             }
 
             const response = await fetch(`/api/admin/tasks?id=${task.id}`, {
@@ -148,6 +159,23 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
+                            <Label htmlFor="project" className="text-foreground font-medium">
+                                Project
+                            </Label>
+                            <select
+                                id="project"
+                                value={formData.project_id}
+                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                            >
+                                <option value="">No Project</option>
+                                {projects.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
                             <Label htmlFor="assignedTo" className="text-foreground font-medium">
                                 Assign To
                             </Label>
@@ -165,7 +193,9 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                                 ))}
                             </select>
                         </div>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="dueDate" className="text-foreground font-medium">
                                 Due Date (Deadline)
@@ -178,22 +208,21 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                                 className="mt-1 bg-card border-border/30"
                             />
                         </div>
-                    </div>
-
-                    <div>
-                        <Label htmlFor="estimatedHours" className="text-foreground font-medium">
-                            Estimated Hours
-                        </Label>
-                        <Input
-                            id="estimatedHours"
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            value={formData.estimated_hours}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_hours: e.target.value })}
-                            className="mt-1 bg-card border-border/30"
-                            placeholder="e.g. 5.5"
-                        />
+                        <div>
+                            <Label htmlFor="estimatedHours" className="text-foreground font-medium">
+                                Estimated Hours
+                            </Label>
+                            <Input
+                                id="estimatedHours"
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                value={formData.estimated_hours}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_hours: e.target.value })}
+                                className="mt-1 bg-card border-border/30"
+                                placeholder="e.g. 5.5"
+                            />
+                        </div>
                     </div>
 
                     <DialogFooter>

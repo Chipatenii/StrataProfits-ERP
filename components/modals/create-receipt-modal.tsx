@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from "lucide-react"
 import { Invoice } from "@/lib/types"
+import { PDFService } from "@/lib/pdf-service"
 
 interface CreateReceiptModalProps {
     open: boolean
@@ -70,6 +71,13 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
             })
 
             if (!res.ok) throw new Error("Failed to create receipt")
+
+            // Download PDF if requested
+            // @ts-ignore
+            if ((e.nativeEvent as any).submitter?.name === "download") {
+                const invoice = invoices.find(i => i.id === invoiceId)
+                PDFService.generatePaymentPDF(payload as any, invoice?.invoice_number || 'N/A', invoice?.client?.name || 'Customer')
+            }
 
             onSuccess()
             onOpenChange(false)
@@ -175,6 +183,16 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
 
                     <DialogFooter>
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button
+                            type="submit"
+                            name="download"
+                            variant="outline"
+                            disabled={loading || !invoiceId}
+                            className="border-green-200 text-green-700 hover:bg-green-50"
+                        >
+                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Save & Download PDF
+                        </Button>
                         <Button type="submit" disabled={loading || !invoiceId} className="bg-green-600 hover:bg-green-700">
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             Generate Receipt

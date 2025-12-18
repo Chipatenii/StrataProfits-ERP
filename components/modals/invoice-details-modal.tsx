@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Invoice, InvoiceItem, Payment } from "@/lib/types"
-import { Loader2, Download, Printer, CreditCard, CheckCircle } from "lucide-react"
+import { Loader2, Download, Printer, CreditCard, CheckCircle, FileText } from "lucide-react"
+import { PDFService } from "@/lib/pdf-service"
 
 interface InvoiceDetailsModalProps {
     invoice: Invoice
@@ -100,12 +101,21 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                 {fullInvoice?.client?.name || invoice.client?.name}
                             </p>
                         </div>
-                        <div className={`px-3 py-1 rounded-full border text-sm capitalize font-medium
-                            ${(fullInvoice?.status || invoice.status) === 'paid' ? 'bg-green-100 text-green-700 border-green-200' :
-                                (fullInvoice?.status || invoice.status) === 'sent' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                    'bg-gray-100 text-gray-700 border-gray-200'}
-                        `}>
-                            {fullInvoice?.status || invoice.status}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => fullInvoice && PDFService.generateInvoicePDF(fullInvoice)}
+                                className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
+                                title="Download PDF"
+                            >
+                                <FileText className="w-5 h-5" />
+                            </button>
+                            <div className={`px-3 py-1 rounded-full border text-sm capitalize font-medium
+                                ${(fullInvoice?.status || invoice.status) === 'paid' ? 'bg-green-100 text-green-700 border-green-200' :
+                                    (fullInvoice?.status || invoice.status) === 'sent' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                        'bg-gray-100 text-gray-700 border-gray-200'}
+                            `}>
+                                {fullInvoice?.status || invoice.status}
+                            </div>
                         </div>
                     </div>
                 </DialogHeader>

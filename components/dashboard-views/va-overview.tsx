@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { AlertCircle, CheckCircle, Clock } from "lucide-react"
-import { Task, Invoice } from "@/lib/types"
-import { getTimeBasedGreeting } from "@/lib/time-utils"
+import { Task, Invoice, Meeting } from "@/lib/types"
+import { getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"
 
 interface VAOverviewProps {
     userName: string
@@ -14,7 +14,14 @@ interface VAOverviewProps {
 export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) {
     const [tasks, setTasks] = useState<Task[]>([])
     const [overdueInvoices, setOverdueInvoices] = useState<Invoice[]>([])
+    const [meetings, setMeetings] = useState<Meeting[]>([])
     const [stats, setStats] = useState({ leads: 0, proposals: 0 })
+    const [currentTime, setCurrentTime] = useState(new Date())
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+        return () => clearInterval(timer)
+    }, [])
 
     useEffect(() => {
         // Fetch tasks
@@ -49,14 +56,25 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                 }
             })
             .catch(console.error)
+
+        // Fetch today's meetings
+        const today = new Date().toISOString().split('T')[0]
+        fetch(`/api/admin/meetings?date=${today}`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setMeetings(data)
+            })
+            .catch(console.error)
     }, [userId])
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">{getTimeBasedGreeting(userName)}</h2>
-                    <p className="text-muted-foreground">Here's what's happening in Operations today.</p>
+                    <p className="text-muted-foreground">
+                        {getFormattedDate()} • <span className="font-mono bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{getFormattedTime()}</span>
+                    </p>
                 </div>
             </div>
 
@@ -96,33 +114,67 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                 </div>
             </div>
 
-            <div className="glass-card p-6 rounded-xl">
-                <h3 className="font-semibold text-lg mb-4">Today's Priorities</h3>
-                <div className="space-y-3">
-                    {tasks.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">No pending tasks found.</p>
-                    ) : (
-                        tasks.map(task => (
-                            <button
-                                key={task.id}
-                                onClick={() => onViewChange?.('tasks')}
-                                className="w-full flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors text-left group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${task.priority === 'high' ? 'bg-red-500' : 'bg-blue-500'}`} />
-                                    <span className="font-medium group-hover:text-primary transition-colors">{task.title}</span>
+            <div className="grid gap-6 md:grid-cols-2">
+                {/* Today's Tasks */}
+                <div className="glass-card p-6 rounded-xl">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-lg">Today's Priorities</h3>
+                        <button onClick={() => onViewChange?.('tasks')} className="text-xs text-blue-600 hover:underline">View All</button>
+                    </div>
+                    <div className="space-y-3">
+                        {tasks.length === 0 ? (
+                            <p className="text-muted-foreground text-sm py-4 text-center border-dashed border-2 rounded-lg">No pending tasks for today.</p>
+                        ) : (
+                            tasks.map(task => (
+                                <button
+                                    key={task.id}
+                                    onClick={() => onViewChange?.('tasks')}
+                                    className="w-full flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors text-left group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-2 h-2 rounded-full ${task.priority === 'high' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                                        <span className="font-medium group-hover:text-primary transition-colors truncate max-w-[150px]">{task.title}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        {task.due_date && (
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                {new Date(task.due_date).toLocaleDateString()}
+                                            </span>
+                                        )}
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Today's Meetings */}
+                <div className="glass-card p-6 rounded-xl">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-lg">Upcoming Meetings</h3>
+                        <button onClick={() => onViewChange?.('meetings')} className="text-xs text-blue-600 hover:underline">Full Schedule</button>
+                    </div>
+                    <div className="space-y-3">
+                        {meetings.length === 0 ? (
+                            <p className="text-muted-foreground text-sm py-4 text-center border-dashed border-2 rounded-lg">No meetings scheduled today.</p>
+                        ) : (
+                            meetings.map(meeting => (
+                                <div
+                                    key={meeting.id}
+                                    className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100"
+                                >
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-sm">{meeting.title}</span>
+                                        <span className="text-xs text-muted-foreground">{meeting.mode} • {meeting.client?.name || 'In-House'}</span>
+                                    </div>
+                                    <div className="text-xs font-mono text-blue-700 bg-white px-2 py-1 rounded shadow-sm">
+                                        {new Date(meeting.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    {task.due_date && (
-                                        <span className="flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {new Date(task.due_date).toLocaleDateString()}
-                                        </span>
-                                    )}
-                                </div>
-                            </button>
-                        ))
-                    )}
+                            ))
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
