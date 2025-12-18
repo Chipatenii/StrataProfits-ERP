@@ -12,7 +12,7 @@ import { VAFinance } from "@/components/dashboard-views/va-finance"
 import { VASOPs } from "@/components/dashboard-views/va-sops"
 import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { ProjectListView } from "@/components/projects/project-list-view"
-import { TasksView } from "@/components/dashboard-views/tasks-view"
+import { TeamTasksView } from "@/components/dashboard-views/team-tasks-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ClientsView } from "@/components/dashboard-views/clients-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
@@ -49,7 +49,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       case "sales":
         return <SalesView />
       case "tasks":
-        return <TasksView userId={userId} userName={userName} />
+        return <TeamTasksView userId={userId} userName={userName} />
       case "meetings":
         return <MeetingsView />
       case "pipeline":

@@ -1,0 +1,309 @@
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { Plus, CheckCircle, Clock, Pause, Play } from "lucide-react"
+import { Task, UserProfile, TimeLog } from "@/lib/types"
+import { createClient } from "@/lib/supabase/client"
+import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
+import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
+import { Timer } from "@/components/timer"
+import { calculateTimeSpent } from "@/lib/time-utils"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+
+interface TeamTasksViewProps {
+    userId: string
+    userName: string
+    onDataChange?: () => void
+}
+
+export function TeamTasksView({
+    userId,
+    userName,
+    onDataChange,
+}: TeamTasksViewProps) {
+    const supabase = createClient()
+    const [tasks, setTasks] = useState<Task[]>([])
+    const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("active")
+    const [loading, setLoading] = useState(true)
+    const [showCreateTask, setShowCreateTask] = useState(false)
+    const [showCompleteModal, setShowCompleteModal] = useState(false)
+    const [completingTask, setCompletingTask] = useState<Task | null>(null)
+    const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
+    const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+
+    const loadData = useCallback(async (isInitial = false) => {
+        if (isInitial) setLoading(true)
+        try {
+            // Fetch only user's tasks or self-created tasks
+            const { data: tasksData, error: tasksError } = await supabase
+                .from("tasks")
+                .select("*")
+                .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
+                .order("created_at", { ascending: false })
+
+            if (tasksError) throw tasksError
+            // @ts-ignore - Supabase types can be tricky with generated vs local interfaces
+            setTasks(tasksData || [])
+
+            // Fetch today's time logs
+            const today = new Date().toISOString().split("T")[0]
+            const { data: logsData, error: logsError } = await supabase
+                .from("time_logs")
+                .select("*")
+                .eq("user_id", userId)
+                .gte("clock_in", today)
+
+            if (logsError) throw logsError
+            if (logsData) {
+                // @ts-ignore
+                setTimeLogs(logsData)
+                const activeLog = logsData.find((log) => !log.clock_out)
+                setActiveTaskId(activeLog?.task_id || null)
+            }
+        } catch (error) {
+            console.error("Failed to load team tasks:", error)
+        } finally {
+            if (isInitial) setLoading(false)
+        }
+    }, [userId, supabase])
+
+    useEffect(() => {
+        loadData(true)
+    }, [loadData])
+
+    const refreshData = useCallback(() => {
+        loadData(false)
+        onDataChange?.()
+    }, [loadData, onDataChange])
+
+    useRealtimeSubscription("tasks", refreshData)
+    useRealtimeSubscription("time_logs", refreshData)
+
+    const normalize = (s?: string) => s?.toLowerCase().trim() || ""
+
+    const filteredTasks = tasks.filter((task) => {
+        const status = normalize(task.status)
+        if (taskFilter === "all") return true
+        if (taskFilter === "active") return status !== "completed"
+        if (taskFilter === "completed") return status === "completed"
+        return true
+    })
+
+    const handleTaskStartStop = async (taskId: string) => {
+        try {
+            const activeLog = timeLogs.find((log) => !log.clock_out)
+
+            if (activeLog?.task_id === taskId) {
+                // Stop tracking
+                const clockOut = new Date().toISOString()
+                const clockIn = new Date(activeLog.clock_in)
+                const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
+
+                // Optimistic update
+                setTimeLogs(prev => prev.map(log =>
+                    log.id === activeLog.id ? { ...log, clock_out: clockOut, duration_minutes: durationMinutes } : log
+                ))
+                setActiveTaskId(null)
+
+                await supabase.from("time_logs").update({ clock_out: clockOut, duration_minutes: durationMinutes }).eq("id", activeLog.id)
+            } else {
+                // Stop previous if exists
+                if (activeLog) {
+                    const clockOut = new Date().toISOString()
+                    const clockIn = new Date(activeLog.clock_in)
+                    const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
+                    await supabase.from("time_logs").update({ clock_out: clockOut, duration_minutes: durationMinutes }).eq("id", activeLog.id)
+                }
+
+                // Start new
+                const now = new Date().toISOString()
+                setActiveTaskId(taskId)
+                await supabase.from("time_logs").insert({
+                    user_id: userId,
+                    task_id: taskId,
+                    clock_in: now,
+                })
+            }
+            refreshData()
+        } catch (e) {
+            console.error("Timer toggle error:", e)
+            loadData(false)
+        }
+    }
+
+    const handleTaskComplete = async (notes: string) => {
+        if (!completingTask) return
+
+        try {
+            if (activeTaskId === completingTask.id) {
+                await handleTaskStartStop(completingTask.id)
+            }
+
+            const response = await fetch("/api/tasks", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: completingTask.id,
+                    status: "completed",
+                    completion_notes: notes,
+                    completed_at: new Date().toISOString()
+                })
+            })
+
+            if (!response.ok) throw new Error("Failed to complete task")
+
+            setShowCompleteModal(false)
+            setCompletingTask(null)
+            refreshData()
+        } catch (e) {
+            console.error("Task completion error:", e)
+            alert("Failed to complete task.")
+        }
+    }
+
+    if (loading) return <div className="p-8 text-center text-muted-foreground">Loading your tasks...</div>
+
+    return (
+        <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-accent">My Day Tasks</h2>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <button
+                        onClick={() => setShowCreateTask(true)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Task
+                    </button>
+                    <div className="flex bg-white rounded-lg p-1 border border-border">
+                        {(["all", "active", "completed"] as const).map((filter) => (
+                            <button
+                                key={filter}
+                                onClick={() => setTaskFilter(filter)}
+                                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === filter ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                            >
+                                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid gap-4">
+                {filteredTasks.length === 0 ? (
+                    <div className="glass-card rounded-lg p-8 text-center border-dashed border-2">
+                        <p className="text-muted-foreground">No {taskFilter} tasks found.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {filteredTasks.map((task) => {
+                            const isTaskActive = activeTaskId === task.id
+                            const isActiveTab = normalize(task.status) !== "completed"
+                            const previousLogs = timeLogs.filter(l => l.task_id === task.id && l.clock_out)
+                            const initialSeconds = previousLogs.reduce((acc, log) => acc + (log.duration_minutes || 0) * 60, 0)
+                            const isPendingApproval = normalize(task.approval_status) === "pending"
+
+                            return (
+                                <div key={task.id} className={`glass-card rounded-xl p-4 transition-all border ${isTaskActive ? 'ring-2 ring-amber-500 border-amber-200 bg-amber-50/30' : 'hover:border-blue-200'}`}>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h3 className="font-bold text-slate-900">{task.title}</h3>
+                                                        {isTaskActive && (
+                                                            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded-full font-bold animate-pulse">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                                TRACKING
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-slate-500 line-clamp-1">{task.description}</p>
+                                                </div>
+
+                                                <div className="flex gap-2 shrink-0">
+                                                    {isActiveTab && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleTaskStartStop(task.id)}
+                                                                className={`p-2.5 rounded-full transition-all ${isTaskActive
+                                                                        ? "bg-amber-500 text-white shadow-lg shadow-amber-200"
+                                                                        : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                                                                    }`}
+                                                            >
+                                                                {isTaskActive ? <Pause size={18} /> : <Play size={18} />}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setCompletingTask(task)
+                                                                    setShowCompleteModal(true)
+                                                                }}
+                                                                className="p-2.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all"
+                                                            >
+                                                                <CheckCircle size={18} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                                                <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                                    <Timer
+                                                        isActive={isTaskActive}
+                                                        startTime={isTaskActive ? timeLogs.find(l => !l.clock_out && l.task_id === task.id)?.clock_in || "" : null}
+                                                        initialSeconds={initialSeconds}
+                                                        estimatedHours={task.estimated_hours || undefined}
+                                                    />
+                                                </div>
+
+                                                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${task.priority === 'high' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                        task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                            'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                    }`}>
+                                                    {task.priority}
+                                                </span>
+
+                                                {task.due_date && isActiveTab && (
+                                                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                        <Clock size={12} className="text-slate-400" />
+                                                        <span>Due {new Date(task.due_date).toLocaleDateString()}</span>
+                                                    </div>
+                                                )}
+
+                                                {isPendingApproval && (
+                                                    <span className="text-[10px] font-bold text-amber-600 border border-amber-200 px-2 py-1 rounded bg-amber-50">
+                                                        PENDING APPROVAL
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+            </div>
+
+            <CreateSelfTaskModal
+                open={showCreateTask}
+                onOpenChange={setShowCreateTask}
+                onSuccess={() => refreshData()}
+            />
+
+            <TaskCompletionModal
+                isOpen={showCompleteModal}
+                onClose={() => {
+                    setShowCompleteModal(false)
+                    setCompletingTask(null)
+                }}
+                onComplete={handleTaskComplete}
+                taskTitle={completingTask?.title || ""}
+                spentMinutes={completingTask ? calculateTimeSpent(timeLogs as any[], completingTask.id) : 0}
+                estimatedHours={completingTask?.estimated_hours || undefined}
+            />
+        </div>
+    )
+}

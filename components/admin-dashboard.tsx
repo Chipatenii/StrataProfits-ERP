@@ -42,7 +42,7 @@ import { ClientsView } from "@/components/dashboard-views/clients-view"
 import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ReportsView } from "@/components/dashboard-views/reports-view"
-import { TasksView } from "@/components/dashboard-views/tasks-view"
+import { AdminTasksView } from "@/components/dashboard-views/admin-tasks-view"
 import { FinanceView } from "@/components/dashboard-views/finance-view"
 import { SalesView } from "@/components/dashboard-views/sales-view" // New Import
 
@@ -425,14 +425,14 @@ export function AdminDashboard({
             <ReportsView />
           )}
 
-          {/* Tasks View for List */}
           {activeView === "tasks" && (
-            <TasksView
+            <AdminTasksView
               tasks={tasks}
               members={members}
               onUpdateTask={setEditingTask}
               onDeleteTask={handleDeleteTask}
               onCreateTask={() => setShowCreateTask(true)}
+              onReviewTask={setReviewingTask}
             />
           )}
 
