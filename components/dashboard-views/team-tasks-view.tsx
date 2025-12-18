@@ -26,6 +26,7 @@ export function TeamTasksView({
     const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("active")
     const [loading, setLoading] = useState(true)
     const [showCreateTask, setShowCreateTask] = useState(false)
+    const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
     const [showCompleteModal, setShowCompleteModal] = useState(false)
     const [completingTask, setCompletingTask] = useState<Task | null>(null)
     const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
@@ -225,6 +226,17 @@ export function TeamTasksView({
                                                         )}
                                                     </div>
                                                     <p className="text-sm text-slate-500 line-clamp-1">{task.description}</p>
+                                                    {task.is_self_created && isPendingApproval && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setTaskToEdit(task)
+                                                                setShowCreateTask(true)
+                                                            }}
+                                                            className="text-[10px] text-blue-600 hover:text-blue-700 font-bold uppercase mt-1"
+                                                        >
+                                                            Edit Details
+                                                        </button>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex gap-2 shrink-0">
@@ -294,8 +306,12 @@ export function TeamTasksView({
 
             <CreateSelfTaskModal
                 open={showCreateTask}
-                onOpenChange={setShowCreateTask}
+                onOpenChange={(open) => {
+                    setShowCreateTask(open)
+                    if (!open) setTaskToEdit(null)
+                }}
                 onSuccess={() => refreshData()}
+                taskToEdit={taskToEdit}
             />
 
             <TaskCompletionModal

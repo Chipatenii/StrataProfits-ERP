@@ -20,10 +20,7 @@ const createInvoiceSchema = z.object({
     is_tax_inclusive: z.boolean().default(false)
 })
 
-const updateInvoiceSchema = z.object({
-    status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']).optional(),
-    invoice_number: z.string().optional()
-})
+const updateInvoiceSchema = createInvoiceSchema.partial()
 
 async function checkPermission(request: NextRequest) {
     const supabase = await createClient()
@@ -178,23 +175,97 @@ export async function PATCH(request: NextRequest) {
         if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
 
         const body = await request.json()
-        const validation = updateInvoiceSchema.safeParse(body)
+
+        // Extended schema for Line Items validation
+        const updateInvoiceWithItems = updateInvoiceSchema.extend({
+            items: z.array(z.object({
+                description: z.string(),
+                quantity: z.number().min(0),
+                unit_price: z.number().min(0),
+                tax_rate: z.number().min(0).default(0),
+                tax_amount: z.number().min(0).default(0)
+            })).optional()
+        })
+
+        const validation = updateInvoiceWithItems.safeParse(body)
         if (!validation.success) {
-            return NextResponse.json({ error: "Validation failed" }, { status: 400 })
+            return NextResponse.json({ error: "Validation failed", details: validation.error.format() }, { status: 400 })
         }
 
+        const { items, ...invoiceData } = validation.data
         const admin = await createAdminClient()
+
+        // 1. Recalculate if items provided
+        if (items && items.length > 0) {
+            const itemSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+            const itemTaxTotal = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0)
+            const discount = invoiceData.discount_amount || 0
+            const adjust = invoiceData.adjustment || 0
+            invoiceData.amount = itemSubtotal - discount + itemTaxTotal + adjust
+        }
+
+        // 2. Update Invoice
         const { data: invoice, error } = await admin
             .from("invoices")
-            .update(validation.data)
+            .update(invoiceData)
             .eq('id', id)
             .select()
             .single()
 
         if (error) throw error
+
+        // 3. Update Items (Replace strategy)
+        if (items && items.length > 0) {
+            // Delete existing
+            await admin.from("invoice_items").delete().eq('invoice_id', id)
+
+            // Insert new
+            const itemsWithId = items.map(item => ({
+                invoice_id: id,
+                description: item.description,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                tax_rate: item.tax_rate,
+                tax_amount: item.tax_amount
+            }))
+
+            const { error: itemsError } = await admin
+                .from("invoice_items")
+                .insert(itemsWithId)
+
+            if (itemsError) throw itemsError
+        }
+
         return NextResponse.json(invoice)
     } catch (error) {
         console.error("Error updating invoice:", error)
         return NextResponse.json({ error: "Failed to update invoice" }, { status: 500 })
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    const perm = await checkPermission(request)
+    if (perm.error) return NextResponse.json({ error: perm.error }, { status: perm.status })
+
+    try {
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
+
+        const admin = await createAdminClient()
+
+        // Delete items first (though FK should handle it, explicit is safer)
+        await admin.from("invoice_items").delete().eq('invoice_id', id)
+
+        const { error } = await admin
+            .from("invoices")
+            .delete()
+            .eq('id', id)
+
+        if (error) throw error
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Error deleting invoice:", error)
+        return NextResponse.json({ error: "Failed to delete invoice" }, { status: 500 })
     }
 }

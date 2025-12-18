@@ -83,3 +83,68 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Failed to create expense" }, { status: 500 })
     }
 }
+
+export async function PATCH(request: NextRequest) {
+    try {
+        const supabase = await createClient()
+        const admin = await createAdminClient()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
+
+        const body = await request.json()
+        const validation = createExpenseSchema.partial().safeParse(body)
+        if (!validation.success) {
+            return NextResponse.json({ error: "Validation failed" }, { status: 400 })
+        }
+
+        const { data: expense, error } = await admin
+            .from("expenses")
+            .update(validation.data)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+
+        return NextResponse.json(expense)
+    } catch (error) {
+        console.error("Error updating expense:", error)
+        return NextResponse.json({ error: "Failed to update expense" }, { status: 500 })
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const supabase = await createClient()
+        const admin = await createAdminClient()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
+
+        // Role Check: Only Admin or the Person who submitted it can delete
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+        const { data: existing } = await admin.from("expenses").select("submitted_by_user_id").eq("id", id).single()
+
+        if (profile?.role !== 'admin' && existing?.submitted_by_user_id !== user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+
+        const { error } = await admin.from("expenses").delete().eq("id", id)
+
+        if (error) throw error
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Error deleting expense:", error)
+        return NextResponse.json({ error: "Failed to delete expense" }, { status: 500 })
+    }
+}

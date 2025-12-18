@@ -176,3 +176,32 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Failed to update quote" }, { status: 500 })
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (profile?.role !== 'admin') {
+        return NextResponse.json({ error: "Forbidden: Admin Only" }, { status: 403 })
+    }
+
+    try {
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
+
+        await admin.from("quote_items").delete().eq("quote_id", id)
+
+        const { error } = await admin.from("quotes").delete().eq("id", id)
+        if (error) throw error
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Error deleting quote:", error)
+        return NextResponse.json({ error: "Failed to delete quote" }, { status: 500 })
+    }
+}

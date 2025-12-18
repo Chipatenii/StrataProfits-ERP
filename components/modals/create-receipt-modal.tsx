@@ -14,9 +14,10 @@ interface CreateReceiptModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
+    initialData?: any
 }
 
-export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateReceiptModalProps) {
+export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData }: CreateReceiptModalProps) {
     const [loading, setLoading] = useState(false)
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [loadingInvoices, setLoadingInvoices] = useState(true)
@@ -32,13 +33,26 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
     useEffect(() => {
         if (open) {
             fetchInvoices()
+            if (initialData) {
+                setInvoiceId(initialData.invoice_id)
+                setAmount(initialData.amount)
+                setReceiptNumber(initialData.receipt_number || "")
+                setPaymentMethod(initialData.method || "bank_transfer")
+                setReference(initialData.reference || "")
+            } else {
+                setInvoiceId("")
+                setAmount(0)
+                setReceiptNumber("")
+                setPaymentMethod("bank_transfer")
+                setReference("")
+            }
         }
-    }, [open])
+    }, [open, initialData])
 
     const fetchInvoices = async () => {
         try {
-            // Fetch only unpaid or partially paid invoices
-            const res = await fetch("/api/invoices?status=sent")
+            // Fetch all sent/overdue invoices for selection, or the one currently being edited
+            const res = await fetch("/api/invoices")
             if (res.ok) {
                 setInvoices(await res.json())
             }
@@ -64,13 +78,16 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
                 // notes: notes // API doesn't support notes yet, but maybe needed later
             }
 
-            const res = await fetch("/api/payments", {
-                method: "POST",
+            const url = initialData?.id ? `/api/payments?id=${initialData.id}` : "/api/payments"
+            const method = initialData?.id ? "PATCH" : "POST"
+
+            const res = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
 
-            if (!res.ok) throw new Error("Failed to create receipt")
+            if (!res.ok) throw new Error(`Failed to ${initialData ? 'update' : 'create'} receipt`)
 
             // Download PDF if requested
             // @ts-ignore
@@ -88,7 +105,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
             setReference("")
         } catch (error) {
             console.error(error)
-            alert("Failed to create receipt")
+            alert(`Failed to ${initialData ? 'update' : 'create'} receipt`)
         } finally {
             setLoading(false)
         }
@@ -106,7 +123,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md glass-card">
                 <DialogHeader>
-                    <DialogTitle>Create Receipt</DialogTitle>
+                    <DialogTitle>{initialData ? 'Edit Receipt' : 'Create Receipt'}</DialogTitle>
                     <DialogDescription>
                         Record a payment and generate a receipt for an invoice.
                     </DialogDescription>
@@ -181,22 +198,50 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess }: CreateRece
                         </div>
                     </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button
-                            type="submit"
-                            name="download"
-                            variant="outline"
-                            disabled={loading || !invoiceId}
-                            className="border-green-200 text-green-700 hover:bg-green-50"
-                        >
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Save & Download PDF
-                        </Button>
-                        <Button type="submit" disabled={loading || !invoiceId} className="bg-green-600 hover:bg-green-700">
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Generate Receipt
-                        </Button>
+                    <DialogFooter className="flex flex-row justify-between items-center w-full">
+                        <div>
+                            {initialData && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (confirm("Are you sure you want to delete this receipt?")) {
+                                            setLoading(true)
+                                            try {
+                                                const res = await fetch(`/api/payments?id=${initialData.id}`, { method: "DELETE" })
+                                                if (res.ok) {
+                                                    onSuccess()
+                                                    onOpenChange(false)
+                                                } else {
+                                                    alert("Failed to delete receipt")
+                                                }
+                                            } catch (e) { console.error(e) }
+                                            finally { setLoading(false) }
+                                        }
+                                    }}
+                                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                >
+                                    Delete
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button
+                                type="submit"
+                                name="download"
+                                variant="outline"
+                                disabled={loading || !invoiceId}
+                                className="border-green-200 text-green-700 hover:bg-green-50"
+                            >
+                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Save & Download PDF
+                            </Button>
+                            <Button type="submit" disabled={loading || !invoiceId} className="bg-green-600 hover:bg-green-700">
+                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                {initialData ? "Update Receipt" : "Generate Receipt"}
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </form>
             </DialogContent>

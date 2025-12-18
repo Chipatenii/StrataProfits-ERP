@@ -169,4 +169,78 @@ export class PDFService {
 
         doc.save(`Receipt_${payment.receipt_number || 'Payment'}.pdf`)
     }
+
+    /**
+     * Generate PDF for Workforce Report
+     */
+    static async generateWorkforceReportPDF(data: {
+        month: string,
+        totalHours: number,
+        teamCount: number,
+        reports: any[]
+    }) {
+        const doc = new jsPDF()
+        doc.text(`OSTENTO MEDIA AGENCY - MONTHLY REPORT`, 10, 10)
+        doc.text(`Month: ${data.month}`, 10, 20)
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 10, 30)
+
+        doc.text(`SUMMARY`, 10, 40)
+        doc.text(`================`, 10, 50)
+        doc.text(`Total Company Hours: ${data.totalHours.toFixed(2)} hours`, 10, 60)
+        doc.text(`Active Team Members: ${data.teamCount}`, 10, 70)
+        doc.text(
+            `Average Hours per Person: ${data.reports.length > 0 ? (data.totalHours / data.reports.length).toFixed(2) : "0"} hours`,
+            10,
+            80,
+        )
+
+        doc.text(`TEAM MEMBER DETAILS`, 10, 90)
+        doc.text(`================`, 10, 100)
+
+        let y = 110
+        data.reports.forEach((r) => {
+            if (y > 250) {
+                doc.addPage()
+                y = 20
+            }
+
+            doc.setFontSize(12)
+            doc.setFont("helvetica", "bold")
+            doc.text(`Name: ${r.full_name}`, 10, y)
+            doc.setFontSize(10)
+            doc.setFont("helvetica", "normal")
+            doc.text(`Email: ${r.email}`, 10, y + 5)
+            doc.text(`Total Hours: ${r.total_hours.toFixed(2)}`, 10, y + 10)
+            doc.text(`Days Worked: ${r.days_worked}`, 10, y + 15)
+            doc.text(`Average Hours/Day: ${r.average_hours_per_day.toFixed(2)}`, 10, y + 20)
+
+            y += 30
+
+            if (r.tasks && r.tasks.length > 0) {
+                doc.setFontSize(9)
+                doc.setFont("helvetica", "bold")
+                doc.text("Task Breakdown:", 15, y)
+                y += 5
+                doc.setFont("helvetica", "normal")
+
+                r.tasks.forEach((task: any) => {
+                    if (y > 270) {
+                        doc.addPage()
+                        y = 20
+                    }
+                    const estimatedText = task.estimated ? `/ ${task.estimated}h est.` : ""
+                    doc.text(`- ${task.title}: ${task.hours.toFixed(2)}h ${estimatedText} (${task.status})`, 20, y)
+                    y += 5
+                })
+                y += 10
+            } else {
+                y += 5
+            }
+
+            doc.line(10, y, 200, y)
+            y += 10
+        })
+
+        doc.save(`ostento-report-${data.month}.pdf`)
+    }
 }

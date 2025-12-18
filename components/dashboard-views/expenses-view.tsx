@@ -5,11 +5,14 @@ import { Plus, Search, Loader2, ArrowDownRight, FileText } from "lucide-react"
 import { Expense } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { CreateExpenseModal } from "@/components/modals/create-expense-modal"
 
 export function ExpensesView() {
     const [expenses, setExpenses] = useState<Expense[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
+    const [showCreateModal, setShowCreateModal] = useState(false)
+    const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
 
     useEffect(() => {
         fetchExpenses()
@@ -67,9 +70,9 @@ export function ExpensesView() {
                     <h2 className="text-2xl font-bold tracking-tight">Expenses</h2>
                     <p className="text-muted-foreground">Track company expenses and outgoing payments</p>
                 </div>
-                <Button className="w-full sm:w-auto gap-2" disabled>
+                <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto gap-2">
                     <Plus className="w-4 h-4" />
-                    Record Expense (Soon)
+                    Record Expense
                 </Button>
             </div>
 
@@ -97,6 +100,7 @@ export function ExpensesView() {
                                 <th className="px-4 py-3 text-left font-medium">Date</th>
                                 <th className="px-4 py-3 text-left font-medium">Status</th>
                                 <th className="px-4 py-3 text-right font-medium">Amount</th>
+                                <th className="px-4 py-3 text-right font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -122,6 +126,18 @@ export function ExpensesView() {
                                         <td className="px-4 py-3 text-right font-mono font-medium text-red-600">
                                             {formatCurrency(expense.amount, expense.currency)}
                                         </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => {
+                                                    setExpenseToEdit(expense)
+                                                    setShowCreateModal(true)
+                                                }}
+                                                className="p-1.5 hover:bg-slate-100 rounded text-blue-600 transition-colors"
+                                                title="Edit Expense"
+                                            >
+                                                <Plus size={16} className="rotate-45" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
@@ -135,6 +151,16 @@ export function ExpensesView() {
                     </table>
                 </div>
             </div>
+
+            <CreateExpenseModal
+                open={showCreateModal}
+                onOpenChange={(open) => {
+                    setShowCreateModal(open)
+                    if (!open) setExpenseToEdit(null)
+                }}
+                onSuccess={fetchExpenses}
+                initialData={expenseToEdit}
+            />
         </div>
     )
 }

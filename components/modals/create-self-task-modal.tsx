@@ -13,9 +13,10 @@ interface CreateSelfTaskModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
+    taskToEdit?: any
 }
 
-export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSelfTaskModalProps) {
+export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit }: CreateSelfTaskModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -34,17 +35,26 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSel
             const loadProjects = async () => {
                 try {
                     const response = await fetch("/api/projects")
-                    if (response.ok) {
-                        const data = await response.json()
-                        setProjects(data)
-                    }
-                } catch (error) {
-                    console.error("Failed to load projects", error)
-                }
+                    if (response.ok) setProjects(await response.json())
+                } catch (e) { }
             }
             loadProjects()
+
+            if (taskToEdit) {
+                setFormData({
+                    title: taskToEdit.title || "",
+                    description: taskToEdit.description || "",
+                    priority: taskToEdit.priority || "medium",
+                    due_date: taskToEdit.due_date ? new Date(taskToEdit.due_date).toISOString().split('T')[0] : "",
+                    estimated_hours: taskToEdit.estimated_hours?.toString() || "",
+                    is_project_related: !!taskToEdit.project_id,
+                    project_id: taskToEdit.project_id || "",
+                })
+            } else {
+                resetForm()
+            }
         }
-    }, [open])
+    }, [open, taskToEdit])
 
     const resetForm = () => {
         setFormData({
@@ -65,7 +75,7 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSel
         setIsLoading(true)
 
         try {
-            const result = await createSelfCreatedTask({
+            const data = {
                 title: formData.title,
                 description: formData.description,
                 priority: formData.priority as "low" | "medium" | "high",
@@ -73,12 +83,18 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSel
                 estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
                 is_project_related: formData.is_project_related,
                 project_id: formData.is_project_related && formData.project_id ? formData.project_id : null,
-            })
+            }
+
+            const { updateSelfCreatedTask } = await import("@/app/actions/tasks")
+
+            const result = taskToEdit
+                ? await updateSelfCreatedTask(taskToEdit.id, data)
+                : await createSelfCreatedTask(data)
 
             if (result.error) {
                 toast.error(result.error)
             } else {
-                toast.success("Task created and submitted for approval")
+                toast.success(taskToEdit ? "Task updated" : "Task created and submitted for approval")
                 resetForm()
                 onSuccess()
                 onOpenChange(false)
@@ -95,7 +111,7 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSel
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">Create New Task</DialogTitle>
+                    <DialogTitle className="text-primary">{taskToEdit ? 'Edit Task' : 'Create New Task'}</DialogTitle>
                     <div className="text-sm text-muted-foreground mb-4">
                         Fill out the details below to create a new task.
                     </div>
@@ -209,25 +225,55 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess }: CreateSel
                         />
                     </div>
 
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                resetForm()
-                                onOpenChange(false)
-                            }}
-                            disabled={isLoading}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={isLoading}
-                            className="px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                            {isLoading ? "Creating..." : "Create Task"}
-                        </Button>
+                    <DialogFooter className="flex flex-row justify-between items-center w-full">
+                        <div>
+                            {taskToEdit && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-0"
+                                    onClick={async () => {
+                                        if (confirm("Are you sure you want to delete this task?")) {
+                                            setIsLoading(true)
+                                            try {
+                                                const { deleteSelfCreatedTask } = await import("@/app/actions/tasks")
+                                                const result = await deleteSelfCreatedTask(taskToEdit.id)
+                                                if (result.success) {
+                                                    toast.success("Task deleted")
+                                                    onSuccess()
+                                                    onOpenChange(false)
+                                                } else {
+                                                    toast.error(result.error || "Failed to delete task")
+                                                }
+                                            } catch (e) { console.error(e) }
+                                            finally { setIsLoading(false) }
+                                        }
+                                    }}
+                                >
+                                    Delete Task
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    resetForm()
+                                    onOpenChange(false)
+                                }}
+                                disabled={isLoading}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isLoading}
+                                className="px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
+                            >
+                                {isLoading ? "Saving..." : taskToEdit ? "Update Task" : "Create Task"}
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </form>
             </DialogContent>

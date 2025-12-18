@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2, Loader2, ArrowUp, ArrowDown } from "lucide-react"
-import { Client } from "@/lib/types"
+import { Client, Invoice } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
 
 interface CreateInvoiceModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
+    invoiceToEdit?: Invoice | null
 }
 
 interface LineItem {
@@ -24,7 +25,7 @@ interface LineItem {
     tax_rate: number
 }
 
-export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvoiceModalProps) {
+export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdit }: CreateInvoiceModalProps) {
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<Client[]>([])
     const [loadingClients, setLoadingClients] = useState(true)
@@ -52,8 +53,42 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
     useEffect(() => {
         if (open) {
             fetchClients()
+            if (invoiceToEdit) {
+                setClientId(invoiceToEdit.client_id)
+                setCurrency(invoiceToEdit.currency || "ZMW")
+                setInvoiceNumber(invoiceToEdit.invoice_number || "")
+                setOrderNumber(invoiceToEdit.order_number || "")
+                setInvoiceDate(new Date(invoiceToEdit.created_at).toISOString().split('T')[0])
+                setDueDate(invoiceToEdit.due_date ? new Date(invoiceToEdit.due_date).toISOString().split('T')[0] : "")
+                setDiscountRate(invoiceToEdit.discount_rate || 0)
+                setAdjustment(invoiceToEdit.adjustment || 0)
+                setCustomerNotes(invoiceToEdit.customer_notes || "")
+                setTerms(invoiceToEdit.terms || "")
+                if (invoiceToEdit.items && invoiceToEdit.items.length > 0) {
+                    setItems(invoiceToEdit.items.map(item => ({
+                        id: item.id || Math.random().toString(),
+                        description: item.description,
+                        quantity: item.quantity,
+                        unit_price: item.unit_price,
+                        tax_rate: item.tax_rate || 0
+                    })))
+                }
+            } else {
+                // Reset for create
+                setClientId("")
+                setCurrency("ZMW")
+                setInvoiceNumber("")
+                setOrderNumber("")
+                setInvoiceDate(new Date().toISOString().split('T')[0])
+                setDueDate("")
+                setDiscountRate(0)
+                setAdjustment(0)
+                setCustomerNotes("")
+                setTerms("")
+                setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+            }
         }
-    }, [open])
+    }, [open, invoiceToEdit])
 
     const fetchClients = async () => {
         try {
@@ -141,15 +176,18 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                 }))
             }
 
-            const res = await fetch("/api/invoices", {
-                method: "POST",
+            const url = invoiceToEdit ? `/api/invoices?id=${invoiceToEdit.id}` : "/api/invoices"
+            const method = invoiceToEdit ? "PATCH" : "POST"
+
+            const res = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
 
             if (!res.ok) {
                 const errData = await res.json()
-                throw new Error(errData.error || "Failed to create invoice")
+                throw new Error(errData.error || `Failed to ${invoiceToEdit ? 'update' : 'create'} invoice`)
             }
 
             // Download PDF if requested
@@ -180,7 +218,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto w-full">
                 <DialogHeader>
-                    <DialogTitle>Create Invoice</DialogTitle>
+                    <DialogTitle>{invoiceToEdit ? `Edit Invoice ${invoiceToEdit.invoice_number || ''}` : "Create Invoice"}</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6 mt-2">
@@ -392,22 +430,54 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess }: CreateInvo
                         </div>
                     </div>
 
-                    <DialogFooter className="pt-4">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button
-                            type="submit"
-                            name="download"
-                            variant="outline"
-                            disabled={loading || !clientId}
-                            className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                        >
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Save & Download PDF
-                        </Button>
-                        <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Save & Send Invoice
-                        </Button>
+                    <DialogFooter className="pt-4 flex items-center justify-between sm:justify-between w-full">
+                        <div>
+                            {invoiceToEdit && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (confirm("Are you sure you want to delete this invoice?")) {
+                                            setLoading(true)
+                                            try {
+                                                const res = await fetch(`/api/invoices?id=${invoiceToEdit.id}`, { method: "DELETE" })
+                                                if (res.ok) {
+                                                    onSuccess()
+                                                    onOpenChange(false)
+                                                } else {
+                                                    alert("Failed to delete invoice")
+                                                }
+                                            } catch (e) {
+                                                console.error(e)
+                                            } finally {
+                                                setLoading(false)
+                                            }
+                                        }
+                                    }}
+                                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                >
+                                    {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                                    Delete Invoice
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button
+                                type="submit"
+                                name="download"
+                                variant="outline"
+                                disabled={loading || !clientId}
+                                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                            >
+                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Save & Download PDF
+                            </Button>
+                            <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
+                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                {invoiceToEdit ? "Update Invoice" : "Save & Send Invoice"}
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </form>
             </DialogContent>

@@ -15,6 +15,7 @@ export function InvoicesView() {
 
     // Modal states
     const [showCreateModal, setShowCreateModal] = useState(false)
+    const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null)
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
 
     useEffect(() => {
@@ -209,17 +210,34 @@ export function InvoicesView() {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
-                                                        PDFService.generateInvoicePDF(invoice)
+                                                        setInvoiceToEdit(invoice)
+                                                        setShowCreateModal(true)
                                                     }}
                                                     className="p-2 hover:bg-blue-50 rounded text-blue-600 transition-colors"
-                                                    title="Download PDF"
+                                                    title="Edit Invoice"
                                                 >
                                                     <FileText size={16} />
                                                 </button>
                                                 <button
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation()
+                                                        if (confirm("Are you sure you want to delete this invoice?")) {
+                                                            try {
+                                                                const res = await fetch(`/api/invoices?id=${invoice.id}`, { method: "DELETE" })
+                                                                if (res.ok) fetchInvoices()
+                                                                else alert("Failed to delete invoice")
+                                                            } catch (err) { console.error(err) }
+                                                        }
+                                                    }}
+                                                    className="p-2 hover:bg-red-50 rounded text-red-600 transition-colors"
+                                                    title="Delete Invoice"
+                                                >
+                                                    <Plus className="w-4 h-4 rotate-45" />
+                                                </button>
+                                                <button
                                                     className="text-blue-600 hover:text-blue-800 font-medium text-xs pt-2"
                                                 >
-                                                    View Details
+                                                    View
                                                 </button>
                                             </div>
                                         </td>
@@ -235,8 +253,12 @@ export function InvoicesView() {
             {showCreateModal && (
                 <CreateInvoiceModal
                     open={showCreateModal}
-                    onOpenChange={setShowCreateModal}
+                    onOpenChange={(open) => {
+                        setShowCreateModal(open)
+                        if (!open) setInvoiceToEdit(null)
+                    }}
                     onSuccess={fetchInvoices}
+                    invoiceToEdit={invoiceToEdit}
                 />
             )}
 

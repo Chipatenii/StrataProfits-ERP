@@ -405,22 +405,54 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
                         </div>
                     </div>
 
-                    <DialogFooter className="pt-4">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button
-                            type="submit"
-                            name="download"
-                            variant="outline"
-                            disabled={loading || !clientId}
-                            className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                        >
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Save & Download PDF
-                        </Button>
-                        <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            {initialData ? 'Update Quote' : 'Create Quote'}
-                        </Button>
+                    <DialogFooter className="pt-4 flex items-center justify-between sm:justify-between w-full">
+                        <div>
+                            {initialData?.id && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (confirm("Are you sure you want to delete this quote?")) {
+                                            setLoading(true)
+                                            try {
+                                                const res = await fetch(`/api/quotes?id=${initialData.id}`, { method: "DELETE" })
+                                                if (res.ok) {
+                                                    onSuccess()
+                                                    onOpenChange(false)
+                                                } else {
+                                                    alert("Failed to delete quote")
+                                                }
+                                            } catch (e) {
+                                                console.error(e)
+                                            } finally {
+                                                setLoading(false)
+                                            }
+                                        }
+                                    }}
+                                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Quote
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button
+                                type="submit"
+                                name="download"
+                                variant="outline"
+                                disabled={loading || !clientId}
+                                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                            >
+                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Save & Download PDF
+                            </Button>
+                            <Button type="submit" disabled={loading || !clientId} className="bg-blue-600 hover:bg-blue-700">
+                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                {initialData ? 'Update Quote' : 'Create Quote'}
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </form>
             </DialogContent>

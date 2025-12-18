@@ -11,9 +11,10 @@ interface CreateDealModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
+    initialData?: any
 }
 
-export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealModalProps) {
+export function CreateDealModal({ open, onOpenChange, onSuccess, initialData }: CreateDealModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         client_id: "",
@@ -29,8 +30,29 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
     useEffect(() => {
         if (open) {
             fetchClients() // Reuse client fetch
+            if (initialData) {
+                setFormData({
+                    title: initialData.title || "",
+                    client_id: initialData.client_id || "",
+                    stage: initialData.stage || "NewLead",
+                    estimated_value: initialData.estimated_value?.toString() || "0",
+                    currency: initialData.currency || "ZMW",
+                    probability: initialData.probability?.toString() || "20",
+                    expected_close_date: initialData.expected_close_date || "",
+                })
+            } else {
+                setFormData({
+                    title: "",
+                    client_id: "",
+                    stage: "NewLead",
+                    estimated_value: "0",
+                    currency: "ZMW",
+                    probability: "20",
+                    expected_close_date: "",
+                })
+            }
         }
-    }, [open])
+    }, [open, initialData])
 
     const fetchClients = async () => {
         try { const res = await fetch("/api/admin/clients"); if (res.ok) setClients(await res.json()); } catch (e) { }
@@ -51,15 +73,18 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
                 expected_close_date: formData.expected_close_date || null
             }
 
-            const response = await fetch("/api/admin/deals", {
-                method: "POST",
+            const url = initialData?.id ? `/api/admin/deals?id=${initialData.id}` : "/api/admin/deals"
+            const method = initialData?.id ? "PATCH" : "POST"
+
+            const response = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             })
 
             if (!response.ok) {
                 const err = await response.json()
-                throw new Error(err.error || "Failed to create deal")
+                throw new Error(err.error || `Failed to ${initialData?.id ? 'update' : 'create'} deal`)
             }
 
             setFormData({
@@ -68,8 +93,8 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
             onSuccess()
             onOpenChange(false)
         } catch (error) {
-            console.error("Error creating deal:", error)
-            alert("Failed to create deal")
+            console.error(`Error ${initialData?.id ? 'updating' : 'creating'} deal:`, error)
+            alert(`Failed to ${initialData?.id ? 'update' : 'create'} deal`)
         } finally {
             setIsLoading(false)
         }
@@ -79,7 +104,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="glass-card border-border/30 max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">New Deal</DialogTitle>
+                    <DialogTitle className="text-primary">{initialData?.id ? 'Edit Deal' : 'New Deal'}</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -165,13 +190,41 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
                         />
                     </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading ? "Saving..." : "Create Deal"}
-                        </Button>
+                    <DialogFooter className="flex flex-row justify-between items-center w-full">
+                        <div>
+                            {initialData?.id && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-0"
+                                    onClick={async () => {
+                                        if (confirm("Are you sure you want to delete this deal?")) {
+                                            setIsLoading(true)
+                                            try {
+                                                const res = await fetch(`/api/admin/deals?id=${initialData.id}`, { method: "DELETE" })
+                                                if (res.ok) {
+                                                    onSuccess()
+                                                    onOpenChange(false)
+                                                } else {
+                                                    alert("Failed to delete deal")
+                                                }
+                                            } catch (e) { console.error(e) }
+                                            finally { setIsLoading(false) }
+                                        }
+                                    }}
+                                >
+                                    Delete
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isLoading}>
+                                {isLoading ? "Saving..." : initialData?.id ? "Update Deal" : "Create Deal"}
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </form>
             </DialogContent>

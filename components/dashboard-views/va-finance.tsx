@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import type { Invoice } from "@/lib/types"
-import { InvoiceTemplate } from "@/components/invoice-template"
+import { CreateInvoiceModal } from "@/components/modals/create-invoice-modal"
+import { PDFService } from "@/lib/pdf-service"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 interface FinanceSummary {
@@ -35,30 +36,13 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
   const [payments, setPayments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [printingInvoice, setPrintingInvoice] = useState<Invoice | null>(null)
   const [fiscalYear, setFiscalYear] = useState("this-month")
-
-  // Form state
-  const [formData, setFormData] = useState({
-    client_id: "",
-    amount: "",
-    status: "draft",
-    due_date: new Date().toISOString().split("T")[0],
-  })
   const [clients, setClients] = useState<any[]>([])
+  const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null)
 
   useEffect(() => {
     fetchAllData()
   }, [])
-
-  useEffect(() => {
-    if (printingInvoice) {
-      setTimeout(() => {
-        window.print()
-        setPrintingInvoice(null)
-      }, 100)
-    }
-  }, [printingInvoice])
 
   const fetchAllData = async () => {
     setLoading(true)
@@ -73,7 +57,7 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
       if (invoicesRes.ok) setInvoices(await invoicesRes.json())
       if (clientsRes.ok) setClients(await clientsRes.json())
       if (expensesRes.ok) setExpenses(await expensesRes.json())
-      if (paymentsRes.ok) {
+      if (paymentsRes && 'json' in paymentsRes && paymentsRes.ok) {
         const paymentsData = await paymentsRes.json()
         setPayments(Array.isArray(paymentsData) ? paymentsData : [])
       }
@@ -158,25 +142,6 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
     }
   }, [invoices, expenses, payments])
 
-  const handleCreate = async () => {
-    try {
-      const res = await fetch("/api/invoices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          amount: Number.parseFloat(formData.amount),
-        }),
-      })
-      if (res.ok) {
-        setIsCreateOpen(false)
-        fetchAllData()
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
   const formatCurrency = (amount: number) => {
     return `K${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
@@ -191,7 +156,6 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
 
   return (
     <div className="space-y-6 bg-gray-50 min-h-full -m-4 md:-m-6 p-4 md:p-6">
-      {printingInvoice && <InvoiceTemplate invoice={printingInvoice} />}
 
       {/* Header with greeting */}
       <div className="flex items-center gap-4">
@@ -211,55 +175,9 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Total Receivables</h3>
-              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 gap-1">
-                    <Plus className="w-4 h-4" /> New
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create Invoice</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Client</label>
-                      <Select onValueChange={(v) => setFormData({ ...formData, client_id: v })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Client" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clients.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Amount</label>
-                      <Input
-                        type="number"
-                        value={formData.amount}
-                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Due Date</label>
-                      <Input
-                        type="date"
-                        value={formData.due_date}
-                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                      />
-                    </div>
-                    <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
-                      Create Invoice
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button onClick={() => setIsCreateOpen(true)} variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 gap-1">
+                <Plus className="w-4 h-4" /> New
+              </Button>
             </div>
             <div className="p-4">
               <p className="text-sm text-blue-600 mb-2">
@@ -528,8 +446,17 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
               <div key={inv.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-medium text-blue-600 text-sm">
+                    <p className="font-medium text-blue-600 text-sm flex items-center gap-2">
                       {inv.invoice_number || "Draft"}
+                      <button
+                        onClick={() => {
+                          setInvoiceToEdit(inv)
+                          setIsCreateOpen(true)
+                        }}
+                        className="text-[10px] bg-blue-50 px-1 rounded hover:bg-blue-100"
+                      >
+                        Edit
+                      </button>
                     </p>
                     <p className="text-sm text-gray-700 mt-0.5">{inv.client?.name || "Unknown"}</p>
                   </div>
@@ -563,6 +490,16 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
               </div>
             )}
           </div>
+
+          <CreateInvoiceModal
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open)
+              if (!open) setInvoiceToEdit(null)
+            }}
+            onSuccess={fetchAllData}
+            invoiceToEdit={invoiceToEdit}
+          />
 
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
@@ -601,6 +538,17 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
                       >
                         {inv.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => {
+                          setInvoiceToEdit(inv)
+                          setIsCreateOpen(true)
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}

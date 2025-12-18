@@ -10,6 +10,7 @@ export function PipelineView() {
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [dealToEdit, setDealToEdit] = useState<Deal | null>(null)
 
   // Mobile: Active stage state for accordion-like behavior or tabs? 
   // For "Stacked Cards", we usually mean stacking the columns.
@@ -111,6 +112,10 @@ export function PipelineView() {
                   <div
                     key={deal.id}
                     className="glass-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-border/40"
+                    onClick={() => {
+                      setDealToEdit(deal)
+                      setShowCreateModal(true)
+                    }}
                   >
                     <h4 className="font-medium mb-1 truncate">{deal.title}</h4>
                     <div className="flex justify-between items-center text-sm text-muted-foreground mb-2">
@@ -143,7 +148,15 @@ export function PipelineView() {
         })}
       </div>
 
-      <CreateDealModal open={showCreateModal} onOpenChange={setShowCreateModal} onSuccess={fetchDeals} />
+      <CreateDealModal
+        open={showCreateModal}
+        onOpenChange={(open) => {
+          setShowCreateModal(open)
+          if (!open) setDealToEdit(null)
+        }}
+        onSuccess={fetchDeals}
+        initialData={dealToEdit}
+      />
     </div>
   )
 }

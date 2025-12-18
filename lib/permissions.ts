@@ -45,6 +45,7 @@ const ROLE_PERMISSIONS: Record<UserProfile["role"], Permission[]> = {
         "reports:read", "reports:finance",
     ],
     virtual_assistant: [
+        "reports:read",
         "clients:read", "clients:write",
         "deals:read", "deals:write",
         "quotes:read", "quotes:write", "quotes:send",

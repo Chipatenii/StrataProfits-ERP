@@ -72,32 +72,103 @@ export async function POST(request: NextRequest) {
         if (error) throw error
 
         // 2. Update Invoice Status
-        // Calculate total payments vs total invoice amount
-        const { data: invoice } = await admin.from("invoices").select("amount, items:invoice_items(quantity, unit_price)").eq("id", invoice_id).single()
-        const { data: payments } = await admin.from("payments").select("amount").eq("invoice_id", invoice_id)
-
-        if (invoice && payments) {
-            // Calculate Total Due
-            let totalDue = invoice.amount;
-            if (invoice.items && invoice.items.length > 0) {
-                totalDue = invoice.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unit_price), 0)
-            }
-
-            // Calculate Total Paid
-            const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
-
-            let newStatus = 'sent' // Default if balance remains
-            if (totalPaid >= totalDue) {
-                newStatus = 'paid'
-            }
-
-            await admin.from("invoices").update({ status: newStatus }).eq("id", invoice_id)
-        }
+        await reevaluateInvoiceStatus(admin, invoice_id)
 
         return NextResponse.json(payment)
 
     } catch (error) {
         console.error("Error creating payment:", error)
         return NextResponse.json({ error: "Failed to record payment" }, { status: 500 })
+    }
+}
+
+export async function PATCH(request: NextRequest) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (!['admin', 'book_keeper'].includes(profile?.role)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    try {
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
+
+        const body = await request.json()
+        const validation = createPaymentSchema.partial().safeParse(body)
+        if (!validation.success) {
+            return NextResponse.json({ error: "Validation failed" }, { status: 400 })
+        }
+
+        const { data: payment, error } = await admin
+            .from("payments")
+            .update(validation.data)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+
+        if (payment.invoice_id) {
+            await reevaluateInvoiceStatus(admin, payment.invoice_id)
+        }
+
+        return NextResponse.json(payment)
+    } catch (error) {
+        console.error("Error updating payment:", error)
+        return NextResponse.json({ error: "Failed to update payment" }, { status: 500 })
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (profile?.role !== 'admin') {
+        return NextResponse.json({ error: "Forbidden: Admin Only" }, { status: 403 })
+    }
+
+    try {
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
+
+        const { data: payment } = await admin.from("payments").select("invoice_id").eq("id", id).single()
+
+        const { error } = await admin.from("payments").delete().eq("id", id)
+        if (error) throw error
+
+        if (payment?.invoice_id) {
+            await reevaluateInvoiceStatus(admin, payment.invoice_id)
+        }
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Error deleting payment:", error)
+        return NextResponse.json({ error: "Failed to delete payment" }, { status: 500 })
+    }
+}
+
+async function reevaluateInvoiceStatus(admin: any, invoiceId: string) {
+    const { data: invoice } = await admin.from("invoices").select("amount, items:invoice_items(quantity, unit_price)").eq("id", invoiceId).single()
+    const { data: payments } = await admin.from("payments").select("amount").eq("invoice_id", invoiceId)
+
+    if (invoice && payments) {
+        let totalDue = invoice.amount;
+        if (invoice.items && invoice.items.length > 0) {
+            totalDue = invoice.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unit_price), 0)
+        }
+        const totalPaid = payments.reduce((sum: number, p: any) => sum + p.amount, 0)
+        let newStatus = totalPaid >= totalDue ? 'paid' : totalPaid > 0 ? 'sent' : 'sent'
+        await admin.from("invoices").update({ status: newStatus }).eq("id", invoiceId)
     }
 }

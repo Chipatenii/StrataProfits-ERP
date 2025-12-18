@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, Fragment } from "react"
 import { Download, Loader2 } from "lucide-react"
-import jsPDF from "jspdf"
+import { PDFService } from "@/lib/pdf-service"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -153,71 +153,12 @@ function WorkforceReports() {
     useRealtimeSubscription("time_logs", loadReports)
 
     const handleExportPDF = () => {
-        const doc = new jsPDF()
-        doc.text(`OSTENTO MEDIA AGENCY - MONTHLY REPORT`, 10, 10)
-        doc.text(`Month: ${selectedMonth}`, 10, 20)
-        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 10, 30)
-
-        doc.text(`SUMMARY`, 10, 40)
-        doc.text(`================`, 10, 50)
-        doc.text(`Total Company Hours: ${totalCompanyHours} hours`, 10, 60)
-        doc.text(`Active Team Members: ${reports.filter((r) => r.days_worked > 0).length}`, 10, 70)
-        doc.text(
-            `Average Hours per Person: ${reports.length > 0 ? (Math.round((reports.reduce((acc, r) => acc + r.total_hours, 0) / reports.length) * 100) / 100).toFixed(2) : "0"} hours`,
-            10,
-            80,
-        )
-
-        doc.text(`TEAM MEMBER DETAILS`, 10, 90)
-        doc.text(`================`, 10, 100)
-
-        let y = 110
-        reports.forEach((r) => {
-            // Check for page break
-            if (y > 250) {
-                doc.addPage()
-                y = 20
-            }
-
-            doc.setFontSize(12)
-            doc.setFont("helvetica", "bold")
-            doc.text(`Name: ${r.full_name}`, 10, y)
-            doc.setFontSize(10)
-            doc.setFont("helvetica", "normal")
-            doc.text(`Email: ${r.email}`, 10, y + 5)
-            doc.text(`Total Hours: ${r.total_hours.toFixed(2)}`, 10, y + 10)
-            doc.text(`Days Worked: ${r.days_worked}`, 10, y + 15)
-            doc.text(`Average Hours/Day: ${r.average_hours_per_day.toFixed(2)}`, 10, y + 20)
-
-            y += 30
-
-            // Task Breakdown
-            if (r.tasks && r.tasks.length > 0) {
-                doc.setFontSize(9)
-                doc.setFont("helvetica", "bold")
-                doc.text("Task Breakdown:", 15, y)
-                y += 5
-                doc.setFont("helvetica", "normal")
-
-                r.tasks.forEach((task) => {
-                    if (y > 270) {
-                        doc.addPage()
-                        y = 20
-                    }
-                    const estimatedText = task.estimated ? `/ ${task.estimated}h est.` : ""
-                    doc.text(`- ${task.title}: ${task.hours.toFixed(2)}h ${estimatedText} (${task.status})`, 20, y)
-                    y += 5
-                })
-                y += 10
-            } else {
-                y += 5
-            }
-
-            doc.line(10, y, 200, y) // Separator line
-            y += 10
+        PDFService.generateWorkforceReportPDF({
+            month: selectedMonth,
+            totalHours: totalCompanyHours,
+            teamCount: reports.filter((r) => r.days_worked > 0).length,
+            reports: reports
         })
-
-        doc.save(`ostento-report-${selectedMonth}.pdf`)
     }
 
     if (loading) {

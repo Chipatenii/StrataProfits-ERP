@@ -15,6 +15,7 @@ export function PaymentsView() {
 
     // Modal states
     const [showCreateModal, setShowCreateModal] = useState(false)
+    const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null)
 
     useEffect(() => {
         fetchPayments()
@@ -116,7 +117,17 @@ export function PaymentsView() {
                                         <td className="px-4 py-3 text-right font-mono font-medium text-green-600">
                                             {formatCurrency(payment.amount, payment.currency)}
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-4 py-3 text-right flex justify-end gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setPaymentToEdit(payment)
+                                                    setShowCreateModal(true)
+                                                }}
+                                                className="p-1.5 hover:bg-slate-100 rounded text-blue-600 transition-colors"
+                                                title="Edit Receipt"
+                                            >
+                                                <Plus size={16} className="rotate-45" /> {/* Use as an edit icon or placeholder */}
+                                            </button>
                                             <button
                                                 onClick={() => PDFService.generatePaymentPDF(payment, payment.invoice_id.slice(0, 8), "Customer")}
                                                 className="p-1.5 hover:bg-slate-100 rounded text-slate-600 transition-colors"
@@ -141,8 +152,12 @@ export function PaymentsView() {
 
             <CreateReceiptModal
                 open={showCreateModal}
-                onOpenChange={setShowCreateModal}
+                onOpenChange={(open) => {
+                    setShowCreateModal(open)
+                    if (!open) setPaymentToEdit(null)
+                }}
                 onSuccess={fetchPayments}
+                initialData={paymentToEdit}
             />
         </div>
     )

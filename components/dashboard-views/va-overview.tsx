@@ -24,47 +24,48 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     }, [])
 
     useEffect(() => {
-        // Fetch tasks
-        fetch(`/api/tasks?assignee_id=${userId}&status=pending`)
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setTasks(data.slice(0, 5)) // Top 5
-            })
-            .catch(console.error)
-
-        // Fetch overdue invoices
-        fetch('/api/invoices?status=overdue')
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setOverdueInvoices(data)
-            })
-            .catch(console.error)
-
-        // Fetch pipeline stats
-        fetch('/api/admin/deals')
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) {
-                    // Calculate stats
-                    const now = new Date();
-                    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-                    const newLeads = data.filter((d: any) => new Date(d.created_at) > oneWeekAgo).length;
-                    const proposals = data.filter((d: any) => d.stage === 'Proposal').length;
-
-                    setStats({ leads: newLeads, proposals });
+        const fetchData = async () => {
+            try {
+                // Fetch tasks
+                const tasksRes = await fetch(`/api/tasks?assignee_id=${userId}&status=pending`)
+                if (tasksRes.ok) {
+                    const data = await tasksRes.json()
+                    if (Array.isArray(data)) setTasks(data.slice(0, 5))
                 }
-            })
-            .catch(console.error)
 
-        // Fetch today's meetings
-        const today = new Date().toISOString().split('T')[0]
-        fetch(`/api/admin/meetings?date=${today}`)
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setMeetings(data)
-            })
-            .catch(console.error)
+                // Fetch overdue invoices
+                const invoicesRes = await fetch('/api/invoices?status=overdue')
+                if (invoicesRes.ok) {
+                    const data = await invoicesRes.json()
+                    if (Array.isArray(data)) setOverdueInvoices(data)
+                }
+
+                // Fetch pipeline stats
+                const dealsRes = await fetch('/api/admin/deals')
+                if (dealsRes.ok) {
+                    const data = await dealsRes.json()
+                    if (Array.isArray(data)) {
+                        const now = new Date();
+                        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        const newLeads = data.filter((d: any) => new Date(d.created_at) > oneWeekAgo).length;
+                        const proposals = data.filter((d: any) => d.stage === 'Proposal').length;
+                        setStats({ leads: newLeads, proposals });
+                    }
+                }
+
+                // Fetch today's meetings
+                const today = new Date().toISOString().split('T')[0]
+                const meetingsRes = await fetch(`/api/meetings?date=${today}`)
+                if (meetingsRes.ok) {
+                    const data = await meetingsRes.json()
+                    if (Array.isArray(data)) setMeetings(data)
+                }
+            } catch (error) {
+                console.error("Error fetching VA overview data:", error)
+            }
+        }
+
+        fetchData()
     }, [userId])
 
     return (
