@@ -34,7 +34,7 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
                     const overdue = data.filter(inv => inv.status === 'overdue')
                     const outstanding = data.filter(inv => inv.status === 'sent' || inv.status === 'overdue')
 
-                    const outstandingAmount = outstanding.reduce((acc, inv) => acc + (inv.total || 0), 0)
+                    const outstandingAmount = outstanding.reduce((acc, inv) => acc + (inv.amount || 0), 0)
 
                     setOverdueInvoices(overdue)
                     setFinanceStats(prev => ({
@@ -73,11 +73,15 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
             .catch(console.error)
 
         // Fetch Active Projects Count
-        const fetchProjects = async () => {
-            const { count } = await supabase.from('projects').select('*', { count: 'exact', head: true }).eq('status', 'active')
-            setActiveProjectsCount(count || 0)
-        }
-        fetchProjects()
+        fetch('/api/admin/projects')
+            .then(res => res.json())
+            .then((data: Project[]) => {
+                if (Array.isArray(data)) {
+                    const activeCount = data.filter(p => p.status === 'active').length
+                    setActiveProjectsCount(activeCount)
+                }
+            })
+            .catch(console.error)
 
     }, [])
 
