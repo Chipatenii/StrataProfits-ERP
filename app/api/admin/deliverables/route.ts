@@ -28,15 +28,54 @@ export async function POST(request: NextRequest) {
         const admin = await createAdminClient()
         const body = await request.json()
 
-        const { data, error } = await admin
+        // Extract and ensure fields match expectation
+        const { total_price, billing_type, template_id, ...rest } = body
+
+        // 1. Create Deliverable
+        const { data: deliverable, error: createError } = await admin
             .from("deliverables")
-            .insert(body)
+            .insert({
+                ...rest,
+                total_price: total_price || 0,
+                billing_type: billing_type || 'fixed'
+            })
             .select()
             .single()
 
-        if (error) throw error
+        if (createError) throw createError
 
-        return NextResponse.json(data)
+        // 2. If template_id provided, create tasks
+        if (template_id && deliverable) {
+            const { data: templateItems, error: itemsError } = await admin
+                .from("task_template_items")
+                .select("*")
+                .eq("template_id", template_id)
+                .order("order_index", { ascending: true })
+
+            if (itemsError) {
+                console.error("Error fetching template items:", itemsError)
+            } else if (templateItems && templateItems.length > 0) {
+                const tasksToCreate = templateItems.map(item => ({
+                    project_id: deliverable.project_id,
+                    deliverable_id: deliverable.id,
+                    title: item.name,
+                    description: item.description,
+                    estimated_hours: item.default_estimated_hours || 0,
+                    status: 'pending',
+                    priority: 'medium'
+                }))
+
+                const { error: tasksError } = await admin
+                    .from("tasks")
+                    .insert(tasksToCreate)
+
+                if (tasksError) {
+                    console.error("Error creating tasks from template:", tasksError)
+                }
+            }
+        }
+
+        return NextResponse.json(deliverable)
     } catch (error) {
         console.error("Error creating deliverable:", error)
         return NextResponse.json({ error: "Failed to create deliverable" }, { status: 500 })

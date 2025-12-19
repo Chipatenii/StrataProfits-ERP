@@ -29,6 +29,9 @@ export interface Deliverable {
     is_default: boolean
     is_shared: boolean // Stage 4
     approval_status: 'pending' | 'under_review' | 'approved' | 'rejected' // Stage 4
+    total_price: number // Stage 5
+    billing_type: 'fixed' | 'hourly' // Stage 5
+    invoice_id?: string | null // Stage 5
     created_at: string
     updated_at: string
 }

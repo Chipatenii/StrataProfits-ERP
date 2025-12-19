@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createDeliverableSchema } from "@/lib/schemas"
@@ -22,6 +22,16 @@ interface CreateDeliverableModalProps {
 
 export function CreateDeliverableModal({ projectId, open, onOpenChange, onSuccess }: CreateDeliverableModalProps) {
     const [submitting, setSubmitting] = useState(false)
+    const [templates, setTemplates] = useState<any[]>([])
+
+    useEffect(() => {
+        if (open) {
+            fetch("/api/admin/task-templates")
+                .then(res => res.json())
+                .then(data => setTemplates(data))
+                .catch(err => console.error("Error loading templates:", err))
+        }
+    }, [open])
 
     const form = useForm<CreateDeliverableForm>({
         resolver: zodResolver(createDeliverableSchema),
@@ -33,6 +43,9 @@ export function CreateDeliverableModal({ projectId, open, onOpenChange, onSucces
             due_date: null,
             phase: null,
             sort_order: 0,
+            billing_type: "fixed",
+            total_price: 0,
+            template_id: null,
         },
     })
 
@@ -47,7 +60,7 @@ export function CreateDeliverableModal({ projectId, open, onOpenChange, onSucces
 
             if (!response.ok) throw new Error("Failed to create deliverable")
 
-            form.reset({ project_id: projectId, name: "", description: "", status: "pending", sort_order: 0 })
+            form.reset({ project_id: projectId, name: "", description: "", status: "pending", sort_order: 0, billing_type: "fixed", total_price: 0 })
             onSuccess()
             onOpenChange(false)
         } catch (error) {
@@ -102,6 +115,46 @@ export function CreateDeliverableModal({ projectId, open, onOpenChange, onSucces
                             <Label htmlFor="due_date">Due Date (Optional)</Label>
                             <Input id="due_date" type="date" {...form.register("due_date")} />
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="template_id">Apply Task Template (Optional)</Label>
+                        <select
+                            id="template_id"
+                            {...form.register("template_id")}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                            <option value="">No Template (Empty Deliverable)</option>
+                            {templates.map(t => (
+                                <option key={t.id} value={t.id}>{t.name} ({t.items?.length || 0} tasks)</option>
+                            ))}
+                        </select>
+                        <p className="text-[10px] text-muted-foreground">Selecting a template will automatically populate this deliverable with predefined tasks.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                        <div className="space-y-2">
+                            <Label htmlFor="billing_type">Billing Type</Label>
+                            <select
+                                id="billing_type"
+                                {...form.register("billing_type")}
+                                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
+                            >
+                                <option value="fixed">Fixed Price</option>
+                                <option value="hourly">Hourly Billing</option>
+                            </select>
+                        </div>
+                        {form.watch("billing_type") === "fixed" && (
+                            <div className="space-y-2">
+                                <Label htmlFor="total_price">Total Price (ZMW)</Label>
+                                <Input
+                                    id="total_price"
+                                    type="number"
+                                    step="0.01"
+                                    {...form.register("total_price", { valueAsNumber: true })}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-2 mt-4">

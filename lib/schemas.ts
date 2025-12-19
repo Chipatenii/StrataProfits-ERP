@@ -108,4 +108,7 @@ export const createDeliverableSchema = z.object({
   due_date: z.string().optional().nullable(),
   phase: z.string().optional().nullable(),
   sort_order: z.number().int(),
+  total_price: z.number().min(0),
+  billing_type: z.enum(["fixed", "hourly"]),
+  template_id: z.string().uuid().or(z.literal("")).optional().nullable(),
 })

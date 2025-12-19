@@ -146,6 +146,31 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
         }
     }
 
+    const handleBillDeliverable = async (deliverable: Deliverable) => {
+        if (!confirm(`Generate an invoice for "${deliverable.name}"? (Price: ZMW ${deliverable.total_price})`)) return
+
+        try {
+            const response = await fetch(`/api/admin/deliverables/bill`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ deliverable_id: deliverable.id })
+            })
+
+            if (!response.ok) {
+                const data = await response.json()
+                alert(data.error || "Failed to generate invoice")
+                return
+            }
+
+            const data = await response.json()
+            alert(`Invoice ${data.invoiceId} generated successfully!`)
+            loadProject()
+        } catch (error) {
+            console.error("Error billing deliverable:", error)
+            alert("An error occurred while generating the invoice.")
+        }
+    }
+
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>
     if (!project) return <div className="p-12 text-center">Project not found</div>
 
@@ -306,8 +331,20 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
                                             <div className="flex items-center gap-2">
-                                                {deliverable.approval_status === "approved" ? (
-                                                    <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">Approved</span>
+                                                {deliverable.invoice_id ? (
+                                                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold uppercase">Billed</span>
+                                                ) : deliverable.approval_status === "approved" ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">Approved</span>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-6 text-[10px] border-blue-600 text-blue-600 hover:bg-blue-50 p-1 font-bold uppercase"
+                                                            onClick={() => handleBillDeliverable(deliverable)}
+                                                        >
+                                                            Bill Now
+                                                        </Button>
+                                                    </div>
                                                 ) : deliverable.approval_status === "under_review" ? (
                                                     <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold uppercase">In Review</span>
                                                 ) : (
@@ -441,6 +478,12 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
+                                            <div className="hidden sm:flex flex-col items-end">
+                                                <div className="text-[10px] text-gray-400 font-bold uppercase">Value</div>
+                                                <div className="text-xs font-bold text-gray-700">
+                                                    {deliverable.billing_type === 'fixed' ? `ZMW ${deliverable.total_price}` : 'Hourly'}
+                                                </div>
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase">Shared</span>
                                                 <button
