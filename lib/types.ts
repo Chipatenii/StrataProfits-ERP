@@ -17,6 +17,22 @@ export interface ProjectMember {
     joined_at: string
 }
 
+export interface Deliverable {
+    id: string
+    project_id: string
+    name: string
+    description?: string | null
+    status: string
+    phase?: string | null
+    sort_order: number
+    due_date?: string | null
+    is_default: boolean
+    is_shared: boolean // Stage 4
+    approval_status: 'pending' | 'under_review' | 'approved' | 'rejected' // Stage 4
+    created_at: string
+    updated_at: string
+}
+
 export interface Task {
     id: string
     title: string
@@ -35,6 +51,7 @@ export interface Task {
     approval_status?: "auto_approved" | "pending" | "approved" | "rejected"
     approved_by?: string | null
     approved_at?: string | null
+    deliverable_id?: string | null // Stage 1
 }
 
 export interface TimeLog {

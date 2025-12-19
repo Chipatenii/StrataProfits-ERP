@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { type NextRequest, NextResponse } from "next/server"
+import { APP_CONFIG } from "@/lib/config"
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,6 +32,38 @@ export async function POST(request: NextRequest) {
         { error: "Validation failed", details: validation.error.format() },
         { status: 400 }
       )
+    }
+
+    // If project_id is present but no deliverable_id, and flag is on
+    if (APP_CONFIG.features.ff_deliverables_enabled && validation.data.project_id && !validation.data.deliverable_id) {
+      let { data: defaultDeliverable } = await admin
+        .from("deliverables")
+        .select("id")
+        .eq("project_id", validation.data.project_id)
+        .eq("is_default", true)
+        .single()
+
+      // If for some reason a default doesn't exist (e.g. migration failed for this project), create it on the fly
+      if (!defaultDeliverable) {
+        const { data: newDefault, error: createError } = await admin
+          .from("deliverables")
+          .insert({
+            project_id: validation.data.project_id,
+            name: "General Implementation",
+            status: "in_progress",
+            is_default: true
+          })
+          .select("id")
+          .single()
+
+        if (!createError && newDefault) {
+          defaultDeliverable = newDefault
+        }
+      }
+
+      if (defaultDeliverable) {
+        validation.data.deliverable_id = defaultDeliverable.id
+      }
     }
 
     const { data: task, error } = await admin

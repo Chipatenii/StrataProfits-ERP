@@ -9,6 +9,7 @@ export const createTaskSchema = z.object({
   due_date: z.string().nullable().optional(),
   estimated_hours: z.number().min(0).nullable().optional(),
   project_id: z.string().uuid("Invalid project ID").nullable().optional(),
+  deliverable_id: z.string().uuid("Invalid deliverable ID").nullable().optional(), // Stage 1
   created_by: z.string().uuid("Invalid creator ID").optional(),
 })
 
@@ -97,4 +98,14 @@ export const createExpenseSchema = z.object({
   client_id: z.string().uuid().optional().nullable(),
   project_id: z.string().uuid().optional().nullable(),
   meeting_id: z.string().uuid().optional().nullable(),
+})
+
+export const createDeliverableSchema = z.object({
+  project_id: z.string().uuid("Invalid project ID"),
+  name: z.string().min(1, "Deliverable name is required"),
+  description: z.string().optional(),
+  status: z.enum(["pending", "in_progress", "completed", "archived"]),
+  due_date: z.string().optional().nullable(),
+  phase: z.string().optional().nullable(),
+  sort_order: z.number().int(),
 })

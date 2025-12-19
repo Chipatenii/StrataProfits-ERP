@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 
 const createApprovalSchema = z.object({
-    entity_type: z.enum(['task', 'time_log', 'expense', 'invoice', 'quote', 'meeting']),
+    entity_type: z.enum(['task', 'time_log', 'expense', 'invoice', 'quote', 'meeting', 'deliverable']),
     entity_id: z.string().uuid(),
     assigned_to_user_id: z.string().uuid().optional(),
     assigned_role: z.string().optional() // e.g. 'admin'
@@ -125,6 +125,8 @@ export async function PATCH(request: NextRequest) {
                 updatePayload.status = status === 'approved' ? 'Approved' : 'Rejected'
             } else if (requestRecord.entity_type === 'time_log') {
                 updatePayload.is_approved = status === 'approved'
+            } else if (requestRecord.entity_type === 'deliverable') {
+                updatePayload.approval_status = status
             }
 
             if (Object.keys(updatePayload).length > 0) {
@@ -143,6 +145,7 @@ function getTableForEntity(type: string) {
         case 'task': return 'tasks'
         case 'time_log': return 'time_logs'
         case 'expense': return 'expenses'
+        case 'deliverable': return 'deliverables'
         // Others might default or handled manually
         default: return null
     }

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createProjectSchema } from "@/lib/schemas"
 import { type NextRequest, NextResponse } from "next/server"
+import { APP_CONFIG } from "@/lib/config"
 
 export async function GET(
     request: NextRequest,
@@ -10,19 +11,36 @@ export async function GET(
         const admin = await createAdminClient()
         const { id } = await params
 
+        let selectQuery = `
+          *,
+          members:project_members(
+              id,
+              user_id,
+              role,
+              joined_at,
+              profile:profiles(full_name, email, role, avatar_url)
+          ),
+          tasks(*)
+        `
+
+        if (APP_CONFIG.features.ff_deliverables_enabled) {
+            selectQuery = `
+              *,
+              members:project_members(
+                  id,
+                  user_id,
+                  role,
+                  joined_at,
+                  profile:profiles(full_name, email, role, avatar_url)
+              ),
+              deliverables(*, tasks(*)),
+              tasks(*)
+            `
+        }
+
         const { data: project, error } = await admin
             .from("projects")
-            .select(`
-        *,
-        members:project_members(
-            id,
-            user_id,
-            role,
-            joined_at,
-            profile:profiles(full_name, email, role, avatar_url)
-        ),
-        tasks(*)
-      `)
+            .select(selectQuery)
             .eq("id", id)
             .single()
 
