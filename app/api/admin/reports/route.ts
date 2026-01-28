@@ -1,15 +1,29 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { startDate, endDate } = await request.json()
-    const supabase = await createAdminClient()
+    const admin = await createAdminClient()
+
+    // Role Check
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+    if (profile?.role !== 'admin' && profile?.role !== 'book_keeper') {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     // Get all team members with hourly rates
-    const { data: members, error: membersError } = await supabase
+    const { data: members, error: membersError } = await admin
       .from("profiles")
-      .select("id, full_name, email, hourly_rate")
+      .select("id, full_name, email, role, hourly_rate")
       .neq("role", "admin")
 
     if (membersError) throw membersError
@@ -24,7 +38,7 @@ export async function POST(request: NextRequest) {
     if (logsError) throw logsError
 
     // Get all tasks referenced in time logs
-    const taskIds = Array.from(new Set(timeLogs?.map((log) => log.task_id).filter(Boolean) || []))
+    const taskIds = Array.from(new Set(timeLogs?.map((log: any) => log.task_id).filter(Boolean) || []))
     const { data: tasks, error: tasksError } = await supabase
       .from("tasks")
       .select("id, title, estimated_hours, status")
@@ -32,12 +46,12 @@ export async function POST(request: NextRequest) {
 
     if (tasksError) throw tasksError
 
-    const taskMap = new Map(tasks?.map((t) => [t.id, t]))
+    const taskMap = new Map<string, any>(tasks?.map((t: any) => [t.id, t]) || [])
 
     // Calculate reports for each team member
     const reportMap = new Map<string, any>()
 
-    members?.forEach((member) => {
+    members?.forEach((member: any) => {
       reportMap.set(member.id, {
         user_id: member.id,
         full_name: member.full_name,
@@ -59,7 +73,7 @@ export async function POST(request: NextRequest) {
     const daysWorked = new Set<string>()
     let totalMinutes = 0
 
-    timeLogs?.forEach((log) => {
+    timeLogs?.forEach((log: any) => {
       const report = reportMap.get(log.user_id)
       if (report) {
         report.total_minutes = (report.total_minutes || 0) + (log.duration_minutes || 0)

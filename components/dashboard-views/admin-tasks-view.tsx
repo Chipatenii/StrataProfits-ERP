@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Plus, Edit, Trash2, ClipboardCheck, Clock } from "lucide-react"
 import { Task, UserProfile } from "@/lib/types"
+import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 
 interface AdminTasksViewProps {
     tasks: Task[]
@@ -22,6 +23,13 @@ export function AdminTasksView({
     onReviewTask,
 }: AdminTasksViewProps) {
     const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
+    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+    const handleCardClick = (task: Task) => {
+        setSelectedTaskDetail(task)
+        setIsDetailModalOpen(true)
+    }
 
     const normalize = (s?: string) => s?.toLowerCase().trim() || ""
 
@@ -78,7 +86,11 @@ export function AdminTasksView({
                             const isCompleted = normalize(task.status) === "completed"
 
                             return (
-                                <div key={task.id} className="glass-card rounded-lg p-4 hover:shadow-md transition-all duration-200 border border-transparent hover:border-blue-100">
+                                <div
+                                    key={task.id}
+                                    onClick={() => handleCardClick(task)}
+                                    className="glass-card rounded-lg p-4 hover:shadow-md transition-all duration-200 border border-transparent hover:border-blue-100 cursor-pointer"
+                                >
                                     <div className="flex flex-col gap-3">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-2">
@@ -101,7 +113,10 @@ export function AdminTasksView({
                                                 <div className="flex gap-1 shrink-0 items-center">
                                                     {isPendingApproval && (
                                                         <button
-                                                            onClick={() => onReviewTask(task)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                onReviewTask(task)
+                                                            }}
                                                             className="p-2 rounded-lg hover:bg-amber-100 text-amber-600 transition-colors"
                                                             title="Review Task"
                                                         >
@@ -109,14 +124,20 @@ export function AdminTasksView({
                                                         </button>
                                                     )}
                                                     <button
-                                                        onClick={() => onUpdateTask(task)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onUpdateTask(task)
+                                                        }}
                                                         className="p-2 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
                                                         title="Edit Task"
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => onDeleteTask(task.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onDeleteTask(task.id)
+                                                        }}
                                                         className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
                                                         title="Delete task"
                                                     >
@@ -128,20 +149,20 @@ export function AdminTasksView({
                                             <div className="mt-4 flex flex-wrap gap-2 items-center">
                                                 <span
                                                     className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${isCompleted
-                                                            ? "bg-green-100 text-green-700 border border-green-200"
-                                                            : normalize(task.status) === "in_progress"
-                                                                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                                                                : "bg-slate-100 text-slate-700 border border-slate-200"
+                                                        ? "bg-green-100 text-green-700 border border-green-200"
+                                                        : normalize(task.status) === "in_progress"
+                                                            ? "bg-blue-100 text-blue-700 border border-blue-200"
+                                                            : "bg-slate-100 text-slate-700 border border-slate-200"
                                                         }`}
                                                 >
                                                     {task.status?.replace("_", " ")}
                                                 </span>
                                                 <span
                                                     className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${task.priority === "high"
-                                                            ? "bg-red-100 text-red-700 border border-red-200"
-                                                            : task.priority === "medium"
-                                                                ? "bg-amber-100 text-amber-700 border border-amber-200"
-                                                                : "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                                        ? "bg-red-100 text-red-700 border border-red-200"
+                                                        : task.priority === "medium"
+                                                            ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                                            : "bg-emerald-100 text-emerald-700 border border-emerald-200"
                                                         }`}
                                                 >
                                                     {task.priority}
@@ -172,6 +193,12 @@ export function AdminTasksView({
                     </div>
                 )}
             </div>
+            <TaskDetailModal
+                open={isDetailModalOpen}
+                task={selectedTaskDetail}
+                members={members}
+                onOpenChange={setIsDetailModalOpen}
+            />
         </div>
     )
 }

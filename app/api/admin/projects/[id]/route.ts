@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 import { createProjectSchema } from "@/lib/schemas"
 import { type NextRequest, NextResponse } from "next/server"
 import { APP_CONFIG } from "@/lib/config"
@@ -8,7 +9,20 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
         const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+
         const { id } = await params
 
         let selectQuery = `
@@ -58,7 +72,20 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
         const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+
         const { id } = await params
         const body = await request.json()
 
@@ -92,7 +119,20 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
         const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden (Admin only)" }, { status: 403 })
+        }
+
         const { id } = await params
 
         const { error } = await admin.from("projects").delete().eq("id", id)

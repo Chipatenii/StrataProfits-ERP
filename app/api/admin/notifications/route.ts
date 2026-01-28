@@ -1,8 +1,23 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden (Admin only)" }, { status: 403 })
+        }
+
         const { searchParams } = new URL(request.url)
         const adminId = searchParams.get("adminId")
 
@@ -10,10 +25,8 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Admin ID required" }, { status: 400 })
         }
 
-        const supabase = await createAdminClient()
-
         // Get unread notifications
-        const { data: notifications, error } = await supabase
+        const { data: notifications, error } = await admin
             .from("notifications")
             .select("*")
             .eq("admin_id", adminId)
@@ -35,14 +48,26 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden (Admin only)" }, { status: 403 })
+        }
+
         const body = await request.json()
         const { notificationId, adminId, markAllRead } = body
 
-        const supabase = await createAdminClient()
-
         if (markAllRead && adminId) {
             // Mark all notifications as read for this admin
-            const { error } = await supabase
+            const { error } = await admin
                 .from("notifications")
                 .update({ is_read: true })
                 .eq("admin_id", adminId)
@@ -58,7 +83,7 @@ export async function PATCH(request: Request) {
 
         if (notificationId) {
             // Mark single notification as read
-            const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId)
+            const { error } = await admin.from("notifications").update({ is_read: true }).eq("id", notificationId)
 
             if (error) {
                 console.error("Error marking notification as read:", error)
@@ -77,6 +102,20 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden (Admin only)" }, { status: 403 })
+        }
+
         const { searchParams } = new URL(request.url)
         const adminId = searchParams.get("adminId")
 
@@ -84,13 +123,11 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: "Admin ID required" }, { status: 400 })
         }
 
-        const supabase = await createAdminClient()
-
         // Delete old read notifications (older than 30 days)
         const thirtyDaysAgo = new Date()
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-        const { error } = await supabase
+        const { error } = await admin
             .from("notifications")
             .delete()
             .eq("admin_id", adminId)

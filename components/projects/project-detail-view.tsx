@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { AddMemberModal } from "./add-member-modal"
 import { CreateDeliverableModal } from "./create-deliverable-modal"
+import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { useRouter } from "next/navigation"
 
 import { APP_CONFIG } from "@/lib/config"
@@ -24,6 +25,13 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
     const [showAddMember, setShowAddMember] = useState(false)
     const [showAddDeliverable, setShowAddDeliverable] = useState(false)
     const [activeTab, setActiveTab] = useState<"tasks" | "members" | "deliverables">("tasks")
+    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+    const handleCardClick = (task: Task) => {
+        setSelectedTaskDetail(task)
+        setIsDetailModalOpen(true)
+    }
 
     const deliverablesEnabled = APP_CONFIG.features.ff_deliverables_enabled
 
@@ -284,7 +292,11 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                         ) : (
                             <div className="flex flex-col gap-0 md:block divide-y divide-gray-100 p-2 md:p-0">
                                 {project.tasks.map(task => (
-                                    <div key={task.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white">
+                                    <div
+                                        key={task.id}
+                                        onClick={() => handleCardClick(task)}
+                                        className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white cursor-pointer hover:border-blue-200 transition-colors"
+                                    >
                                         <div>
                                             <p className="font-medium text-base">{task.title}</p>
                                             <div className="flex gap-2 mt-2 md:mt-1">
@@ -368,7 +380,11 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                         <div className="p-4 text-center text-gray-400 text-sm">No tasks assigned to this deliverable.</div>
                                     ) : (
                                         deliverable.tasks?.map(task => (
-                                            <div key={task.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white">
+                                            <div
+                                                key={task.id}
+                                                onClick={() => handleCardClick(task)}
+                                                className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white cursor-pointer hover:border-blue-200 transition-colors"
+                                            >
                                                 <div>
                                                     <p className="font-medium text-base">{task.title}</p>
                                                     <div className="flex gap-2 mt-2 md:mt-1">
@@ -381,6 +397,7 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                                 <div className="flex items-center gap-2">
                                                     <select
                                                         value={deliverable.id}
+                                                        onClick={(e) => e.stopPropagation()}
                                                         onChange={(e) => handleMoveTask(task.id, e.target.value)}
                                                         className="text-xs border rounded px-2 py-1 bg-white text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                                     >
@@ -411,7 +428,11 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                 </div>
                                 <div className="flex flex-col gap-0 md:block divide-y divide-gray-100 p-2 md:p-0">
                                     {project.tasks.filter(t => !t.deliverable_id).map(task => (
-                                        <div key={task.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white">
+                                        <div
+                                            key={task.id}
+                                            onClick={() => handleCardClick(task)}
+                                            className="p-4 flex flex-col md:flex-row md:items-center justify-between hover:bg-gray-50 gap-3 border rounded-lg md:border-0 md:rounded-none mb-2 md:mb-0 shadow-sm md:shadow-none bg-white cursor-pointer hover:border-blue-200 transition-colors"
+                                        >
                                             <div>
                                                 <p className="font-medium text-base text-gray-600">{task.title}</p>
                                                 <div className="flex gap-2 mt-2 md:mt-1">
@@ -424,6 +445,7 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                             <div className="flex items-center gap-2">
                                                 <select
                                                     defaultValue=""
+                                                    onClick={(e) => e.stopPropagation()}
                                                     onChange={(e) => handleMoveTask(task.id, e.target.value)}
                                                     className="text-xs border rounded px-2 py-1 bg-white text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                                 >
@@ -566,6 +588,13 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                 open={showAddDeliverable}
                 onOpenChange={setShowAddDeliverable}
                 onSuccess={loadProject}
+            />
+
+            <TaskDetailModal
+                open={isDetailModalOpen}
+                task={selectedTaskDetail}
+                members={project.members.map(m => m.profile)}
+                onOpenChange={setIsDetailModalOpen}
             />
         </div>
     )

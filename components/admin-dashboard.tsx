@@ -218,12 +218,12 @@ export function AdminDashboard({
 
   const getMemberName = (memberId: string | null) => {
     if (!memberId) return "Unassigned"
-    const member = members.find((m) => m.id === memberId)
+    const member = members.find((m: UserProfile) => m.id === memberId)
     return member?.full_name || "Unknown"
   }
 
-  const pendingTasks = tasks.filter(t => t.approval_status === "pending")
-  const filteredTasks = tasks.filter((task) => {
+  const pendingTasks = tasks.filter((t: Task) => t.approval_status === "pending")
+  const filteredTasks = tasks.filter((task: Task) => {
     if (taskFilter === "all") return true
     if (taskFilter === "active") return task.status !== "completed"
     if (taskFilter === "completed") return task.status === "completed"
@@ -233,8 +233,8 @@ export function AdminDashboard({
   // Safe access to length properties
   const taskStats = {
     total: tasks.length,
-    active: tasks.filter((t) => t.status !== "completed").length,
-    completed: tasks.filter((t) => t.status === "completed").length,
+    active: tasks.filter((t: Task) => t.status !== "completed").length,
+    completed: tasks.filter((t: Task) => t.status === "completed").length,
     pending: pendingTasks.length,
   }
 
@@ -270,7 +270,7 @@ export function AdminDashboard({
         ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
       `}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
-          <h2 className={`font - bold text - accent truncate text - lg ${!isSidebarOpen && "md:hidden lg:block"} `}>
+          <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
             Admin Panel
           </h2>
           <button
@@ -357,8 +357,7 @@ export function AdminDashboard({
 
               <div className="flex flex-col">
                 <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
-                  <span className="md:hidden">{APP_NAME}</span>
-                  <span className="hidden md:inline">{APP_NAME}</span>
+                  {APP_NAME}
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">
                   Welcome, {userName} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>

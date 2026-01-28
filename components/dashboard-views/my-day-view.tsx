@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon } from "lucide-react"
-import { Task, Meeting } from "@/lib/types"
+import { Task, Meeting, UserProfile } from "@/lib/types"
+import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { getTimeBasedGreeting } from "@/lib/time-utils"
 
 
@@ -15,15 +16,24 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
     const [tasks, setTasks] = useState<Task[]>([])
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [loading, setLoading] = useState(true)
+    const [members, setMembers] = useState<UserProfile[]>([])
+    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+    const handleCardClick = (task: Task) => {
+        setSelectedTaskDetail(task)
+        setIsDetailModalOpen(true)
+    }
 
     useEffect(() => {
         async function loadData() {
             try {
                 setLoading(true)
                 // Parallel fetch
-                const [tasksRes, meetingsRes] = await Promise.all([
-                    fetch(`/api/admin/tasks`), // Admin sees all, we filter client side for now or use specific endpoint
-                    fetch(`/api/meetings`)
+                const [tasksRes, meetingsRes, membersRes] = await Promise.all([
+                    fetch(`/api/admin/tasks`),
+                    fetch(`/api/meetings`),
+                    fetch(`/api/admin/members`)
                 ])
 
                 if (tasksRes.ok) {
@@ -36,6 +46,11 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 if (meetingsRes.ok) {
                     const allMeetings: Meeting[] = await meetingsRes.json()
                     setMeetings(allMeetings)
+                }
+
+                if (membersRes.ok) {
+                    const allMembers: UserProfile[] = await membersRes.json()
+                    setMembers(allMembers)
                 }
 
             } catch (err) {
@@ -90,7 +105,11 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                             </h3>
                             <div className="space-y-2">
                                 {overdue.map(t => (
-                                    <div key={t.id} className="bg-white p-3 rounded-lg border border-red-100 flex justify-between items-center shadow-sm">
+                                    <div
+                                        key={t.id}
+                                        onClick={() => handleCardClick(t)}
+                                        className="bg-white p-3 rounded-lg border border-red-100 flex justify-between items-center shadow-sm cursor-pointer hover:border-red-300 transition-colors"
+                                    >
                                         <span className="font-medium text-gray-800 truncate mr-2">{t.title}</span>
                                         <span className="text-xs text-red-600 font-semibold whitespace-nowrap">{t.due_date}</span>
                                     </div>
@@ -111,7 +130,11 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                         ) : (
                             <div className="space-y-3">
                                 {dueToday.map(t => (
-                                    <div key={t.id} className="glass-card p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group hover:border-blue-300 transition-colors">
+                                    <div
+                                        key={t.id}
+                                        onClick={() => handleCardClick(t)}
+                                        className="glass-card p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group hover:border-blue-300 transition-colors cursor-pointer"
+                                    >
                                         <div className="min-w-0">
                                             <h4 className="font-semibold text-lg truncate">{t.title}</h4>
                                             <p className="text-sm text-gray-500">{t.project_id ? "Project Task" : "General Task"}</p>
@@ -138,7 +161,11 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                             </h3>
                             <div className="space-y-3">
                                 {highPriority.map(t => (
-                                    <div key={t.id} className="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
+                                    <div
+                                        key={t.id}
+                                        onClick={() => handleCardClick(t)}
+                                        className="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:border-blue-200"
+                                    >
                                         <span className="font-medium text-gray-800 truncate mr-2">{t.title}</span>
                                         <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded uppercase font-bold whitespace-nowrap">High</span>
                                     </div>
@@ -181,6 +208,12 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                     </div>
                 </div>
             </div>
+            <TaskDetailModal
+                open={isDetailModalOpen}
+                task={selectedTaskDetail}
+                members={members}
+                onOpenChange={setIsDetailModalOpen}
+            />
         </div>
     )
 }

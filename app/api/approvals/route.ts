@@ -87,15 +87,20 @@ export async function PATCH(request: NextRequest) {
     const admin = await createAdminClient()
 
     // Verify permission (can this user approve this?)
-    // Simplified: If they can access the PATCH endpoint via the UI which filters lists, assume yes, 
-    // but typically would verify the request is assigned to them.
-    // Let's verify assignment or role capability.
     const { data: requestRecord } = await admin.from("approval_requests").select("*").eq("id", id).single()
 
     if (!requestRecord) return NextResponse.json({ error: "Request not found" }, { status: 404 })
 
-    // Here we skip strict server-check of assignment logic for brevity to ensure basic admin can approve anything
-    // If strict is needed: check requestRecord.assigned_to_user_id === user.id OR hasRole(requestRecord.assigned_role)
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+    const userRole = profile?.role || 'team_member'
+
+    const isAssignee = requestRecord.assigned_to_user_id === user.id
+    const hasAssignedRole = requestRecord.assigned_role === userRole
+    const isAdmin = userRole === 'admin'
+
+    if (!isAssignee && !hasAssignedRole && !isAdmin) {
+        return NextResponse.json({ error: "Forbidden: Not assigned to you" }, { status: 403 })
+    }
 
     const { data, error } = await admin
         .from("approval_requests")

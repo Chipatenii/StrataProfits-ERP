@@ -1,0 +1,20 @@
+components/modals/create-self-task-modal.tsx(88,21): error TS2339: Property 'updateSelfCreatedTask' does not exist on type 'typeof import("C:/Users/Innocent Manda/Documents/StrataProfits-ERP/app/actions/tasks")'.
+components/modals/create-self-task-modal.tsx(239,57): error TS2339: Property 'deleteSelfCreatedTask' does not exist on type 'typeof import("C:/Users/Innocent Manda/Documents/StrataProfits-ERP/app/actions/tasks")'.
+components/projects/add-member-modal.tsx(28,9): error TS2322: Type 'Resolver<{ userId: string; role?: "manager" | "member" | "viewer" | undefined; }, any, { role: "manager" | "member" | "viewer"; userId: string; }>' is not assignable to type 'Resolver<{ role: "manager" | "member" | "viewer"; userId: string; }, any, { role: "manager" | "member" | "viewer"; userId: string; }>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<{ role: "manager" | "member" | "viewer"; userId: string; }>' is not assignable to type 'ResolverOptions<{ userId: string; role?: "manager" | "member" | "viewer" | undefined; }>'.
+      Type '"manager" | "member" | "viewer" | undefined' is not assignable to type '"manager" | "member" | "viewer"'.
+        Type 'undefined' is not assignable to type '"manager" | "member" | "viewer"'.
+components/projects/add-member-modal.tsx(76,51): error TS2345: Argument of type '(data: AddMemberForm) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ role: "manager" | "member" | "viewer"; userId: string; }'.
+      Type 'FieldValues' is missing the following properties from type '{ role: "manager" | "member" | "viewer"; userId: string; }': role, userId
+components/projects/create-project-modal.tsx(26,9): error TS2322: Type 'Resolver<{ name: string; description?: string | undefined; status?: "active" | "archived" | "completed" | undefined; }, any, { name: string; status: "active" | "archived" | "completed"; description?: string | undefined; }>' is not assignable to type 'Resolver<{ name: string; status: "active" | "archived" | "completed"; description?: string | undefined; }, any, { name: string; status: "active" | "archived" | "completed"; description?: string | undefined; }>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<{ name: string; status: "active" | "archived" | "completed"; description?: string | undefined; }>' is not assignable to type 'ResolverOptions<{ name: string; description?: string | undefined; status?: "active" | "archived" | "completed" | undefined; }>'.
+      Type '"active" | "archived" | "completed" | undefined' is not assignable to type '"active" | "archived" | "completed"'.
+        Type 'undefined' is not assignable to type '"active" | "archived" | "completed"'.
+components/projects/create-project-modal.tsx(64,51): error TS2345: Argument of type '(data: CreateProjectForm) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ name: string; status: "active" | "archived" | "completed"; description?: string | undefined; }'.
+      Type 'FieldValues' is missing the following properties from type '{ name: string; status: "active" | "archived" | "completed"; description?: string | undefined; }': name, status

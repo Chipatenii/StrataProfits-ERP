@@ -9,11 +9,12 @@ export async function GET(request: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-        // Optional: Check if user is admin or VA if we want to restrict visibility
-        // For now, assuming all authenticated team members can see clients list is standard,
-        // but strictly abiding by "reuse permissions", admins/VAs definitely can.
-
         const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (!['admin', 'virtual_assistant', 'book_keeper'].includes(profile?.role)) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
 
         const { data: clients, error } = await admin
             .from("clients")

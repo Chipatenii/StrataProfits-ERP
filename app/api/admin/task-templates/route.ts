@@ -1,9 +1,22 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
         const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
 
         // Fetch all active task templates
         const { data: templates, error } = await admin

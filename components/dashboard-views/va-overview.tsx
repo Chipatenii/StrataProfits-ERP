@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { AlertCircle, CheckCircle, Clock } from "lucide-react"
-import { Task, Invoice, Meeting } from "@/lib/types"
+import { Task, Invoice, Meeting, UserProfile } from "@/lib/types"
+import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"
 
 interface VAOverviewProps {
@@ -17,6 +18,14 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [stats, setStats] = useState({ leads: 0, proposals: 0 })
     const [currentTime, setCurrentTime] = useState(new Date())
+    const [members, setMembers] = useState<UserProfile[]>([])
+    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+    const handleCardClick = (task: Task) => {
+        setSelectedTaskDetail(task)
+        setIsDetailModalOpen(true)
+    }
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
@@ -59,6 +68,13 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                 if (meetingsRes.ok) {
                     const data = await meetingsRes.json()
                     if (Array.isArray(data)) setMeetings(data)
+                }
+
+                // Fetch members for detail modal
+                const membersRes = await fetch('/api/admin/members')
+                if (membersRes.ok) {
+                    const data = await membersRes.json()
+                    if (Array.isArray(data)) setMembers(data)
                 }
             } catch (error) {
                 console.error("Error fetching VA overview data:", error)
@@ -129,7 +145,7 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                             tasks.map(task => (
                                 <button
                                     key={task.id}
-                                    onClick={() => onViewChange?.('tasks')}
+                                    onClick={() => handleCardClick(task)}
                                     className="w-full flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors text-left group"
                                 >
                                     <div className="flex items-center gap-3">
@@ -178,6 +194,12 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                     </div>
                 </div>
             </div>
+            <TaskDetailModal
+                open={isDetailModalOpen}
+                task={selectedTaskDetail}
+                members={members}
+                onOpenChange={setIsDetailModalOpen}
+            />
         </div>
     )
 }

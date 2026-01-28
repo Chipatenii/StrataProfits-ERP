@@ -1,10 +1,24 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { APP_CONFIG } from "@/lib/config"
+import { createTaskSchema } from "@/lib/schemas"
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     // Fetch all tasks with admin client to bypass RLS
     const { data: tasks, error } = await admin.from("tasks").select("*").order("created_at", { ascending: false })
@@ -18,11 +32,22 @@ export async function GET(request: NextRequest) {
   }
 }
 
-import { createTaskSchema } from "@/lib/schemas"
-
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const body = await request.json()
 
     // Validate request body
@@ -82,7 +107,20 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 
@@ -109,7 +147,20 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: "Forbidden (Admin only)" }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
     const allCompleted = searchParams.get("all_completed")

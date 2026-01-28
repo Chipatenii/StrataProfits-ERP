@@ -213,6 +213,7 @@ export interface Client {
     value_tier: "Standard" | "Premium" | "HighValue"
     status: "Lead" | "Active" | "Dormant" | "Past"
     notes: string | null
+    address?: string | null
     social_links: {
         facebook?: string
         instagram?: string

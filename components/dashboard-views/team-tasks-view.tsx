@@ -5,6 +5,7 @@ import { Plus, CheckCircle, Clock, Pause, Play } from "lucide-react"
 import { Task, UserProfile, TimeLog } from "@/lib/types"
 import { createClient } from "@/lib/supabase/client"
 import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
+import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { Timer } from "@/components/timer"
 import { calculateTimeSpent } from "@/lib/time-utils"
@@ -31,6 +32,14 @@ export function TeamTasksView({
     const [completingTask, setCompletingTask] = useState<Task | null>(null)
     const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+    const [members, setMembers] = useState<UserProfile[]>([])
+    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+    const handleCardClick = (task: Task) => {
+        setSelectedTaskDetail(task)
+        setIsDetailModalOpen(true)
+    }
 
     const loadData = useCallback(async (isInitial = false) => {
         if (isInitial) setLoading(true)
@@ -66,6 +75,10 @@ export function TeamTasksView({
                 const activeLog = logsData.find((log) => !log.clock_out)
                 setActiveTaskId(activeLog?.task_id || null)
             }
+
+            // Fetch members for detail modal
+            const { data: membersData } = await supabase.from("profiles").select("*")
+            if (membersData) setMembers(membersData as UserProfile[])
         } catch (error: any) {
             console.error("Failed to load team tasks:", error.message || error)
         } finally {
@@ -211,7 +224,11 @@ export function TeamTasksView({
                             const isPendingApproval = normalize(task.approval_status) === "pending"
 
                             return (
-                                <div key={task.id} className={`glass-card rounded-xl p-4 transition-all border ${isTaskActive ? 'ring-2 ring-amber-500 border-amber-200 bg-amber-50/30' : 'hover:border-blue-200'}`}>
+                                <div
+                                    key={task.id}
+                                    onClick={() => handleCardClick(task)}
+                                    className={`glass-card rounded-xl p-4 transition-all border cursor-pointer ${isTaskActive ? 'ring-2 ring-amber-500 border-amber-200 bg-amber-50/30' : 'hover:border-blue-200'}`}
+                                >
                                     <div className="flex flex-col gap-3">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-4">
@@ -228,7 +245,8 @@ export function TeamTasksView({
                                                     <p className="text-sm text-slate-500 line-clamp-1">{task.description}</p>
                                                     {task.is_self_created && isPendingApproval && (
                                                         <button
-                                                            onClick={() => {
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
                                                                 setTaskToEdit(task)
                                                                 setShowCreateTask(true)
                                                             }}
@@ -243,7 +261,10 @@ export function TeamTasksView({
                                                     {isActiveTab && (
                                                         <>
                                                             <button
-                                                                onClick={() => handleTaskStartStop(task.id)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    handleTaskStartStop(task.id)
+                                                                }}
                                                                 className={`p-2.5 rounded-full transition-all ${isTaskActive
                                                                     ? "bg-amber-500 text-white shadow-lg shadow-amber-200"
                                                                     : "bg-blue-50 text-blue-600 hover:bg-blue-100"
@@ -252,7 +273,8 @@ export function TeamTasksView({
                                                                 {isTaskActive ? <Pause size={18} /> : <Play size={18} />}
                                                             </button>
                                                             <button
-                                                                onClick={() => {
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
                                                                     setCompletingTask(task)
                                                                     setShowCompleteModal(true)
                                                                 }}
@@ -324,6 +346,12 @@ export function TeamTasksView({
                 taskTitle={completingTask?.title || ""}
                 spentMinutes={completingTask ? calculateTimeSpent(timeLogs as any[], completingTask.id) : 0}
                 estimatedHours={completingTask?.estimated_hours || undefined}
+            />
+            <TaskDetailModal
+                open={isDetailModalOpen}
+                task={selectedTaskDetail}
+                members={members}
+                onOpenChange={setIsDetailModalOpen}
             />
         </div>
     )
