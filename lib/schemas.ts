@@ -36,12 +36,12 @@ export const updateProfileSchema = z.object({
 export const createProjectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   description: z.string().optional(),
-  status: z.enum(["active", "archived", "completed"]).default("active"),
+  status: z.enum(["active", "archived", "completed"]),
 })
 
 export const addProjectMemberSchema = z.object({
   userId: z.string().uuid("Invalid user ID"),
-  role: z.enum(["manager", "member", "viewer"]).default("member"),
+  role: z.enum(["manager", "member", "viewer"]),
 })
 
 export const createClientSchema = z.object({

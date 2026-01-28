@@ -122,3 +122,67 @@ export async function rejectTask(taskId: string) {
     revalidatePath("/dashboard")
     return { success: true }
 }
+
+export async function updateSelfCreatedTask(taskId: string, data: any) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: "Unauthorized" }
+
+    // Ensure user owns the task
+    const { data: task } = await supabase.from("tasks").select("created_by, is_self_created").eq("id", taskId).single()
+    if (!task || task.created_by !== user.id || !task.is_self_created) {
+        return { error: "Permission denied" }
+    }
+
+    const { title, description, project_id, due_date, estimated_hours, priority } = data
+
+    const admin = await createAdminClient()
+    const { error } = await admin
+        .from("tasks")
+        .update({
+            title,
+            description,
+            project_id,
+            due_date,
+            estimated_hours,
+            priority,
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", taskId)
+
+    if (error) {
+        console.error("Error updating self task:", error)
+        return { error: "Failed to update task" }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+}
+
+export async function deleteSelfCreatedTask(taskId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: "Unauthorized" }
+
+    // Ensure user owns the task and it's self-created
+    const { data: task } = await supabase.from("tasks").select("created_by, is_self_created").eq("id", taskId).single()
+    if (!task || task.created_by !== user.id || !task.is_self_created) {
+        return { error: "Permission denied" }
+    }
+
+    const admin = await createAdminClient()
+    const { error } = await admin
+        .from("tasks")
+        .delete()
+        .eq("id", taskId)
+
+    if (error) {
+        console.error("Error deleting self task:", error)
+        return { error: "Failed to delete task" }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+}
