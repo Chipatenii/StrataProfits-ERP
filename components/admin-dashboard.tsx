@@ -266,7 +266,7 @@ export function AdminDashboard({
       <div className={`
         fixed md:relative z-50 h-full
         transition-all duration-300 ease-in-out
-        bg-white border-r border-slate-200 shadow-xl md:shadow-none
+        bg-white border-r border-slate-200 shadow-xl md:shadow-none flex flex-col
         ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
       `}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
@@ -322,7 +322,7 @@ export function AdminDashboard({
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-card border-t border-border/10 space-y-1 hidden sm:block">
+        <div className="p-4 bg-card border-t border-border/10 space-y-1">
           <button
             onClick={() => setShowProfileSettings(true)}
             className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200"

@@ -87,7 +87,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       <div className={`
         fixed md:relative z-50 h-full
         transition-all duration-300 ease-in-out
-        bg-white border-r border-slate-200 shadow-xl md:shadow-none
+        bg-white border-r border-slate-200 shadow-xl md:shadow-none flex flex-col
         ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
       `}>
         <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
@@ -103,7 +103,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
           </button>
         </div>
 
-        <nav className="space-y-1 p-3 mt-4 overflow-y-auto h-[calc(100vh-8rem)]">
+        <nav className="space-y-1 p-3 mt-4 overflow-y-auto flex-1">
           {menuItems.map((item) => {
             const Icon = item.icon
             return (
@@ -133,7 +133,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
           })}
         </nav>
 
-        <div className="absolute bottom-4 left-0 right-0 px-3">
+        <div className="p-3 border-t border-border/10">
           <button
             onClick={handleSignOut}
             className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
