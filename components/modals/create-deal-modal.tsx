@@ -55,7 +55,12 @@ export function CreateDealModal({ open, onOpenChange, onSuccess, initialData }: 
     }, [open, initialData])
 
     const fetchClients = async () => {
-        try { const res = await fetch("/api/admin/clients"); if (res.ok) setClients(await res.json()); } catch (e) { }
+        try {
+            const res = await fetch("/api/admin/clients")
+            if (res.ok) setClients(await res.json())
+        } catch (error) {
+            console.warn("Failed to load clients for deal modal:", error)
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {

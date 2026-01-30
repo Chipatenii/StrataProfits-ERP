@@ -58,10 +58,20 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
     }, [open, meetingToEdit])
 
     const fetchClients = async () => {
-        try { const res = await fetch("/api/admin/clients"); if (res.ok) setClients(await res.json()); } catch (e) { }
+        try {
+            const res = await fetch("/api/admin/clients")
+            if (res.ok) setClients(await res.json())
+        } catch (error) {
+            console.warn("Failed to load clients for meeting modal:", error)
+        }
     }
     const fetchProjects = async () => {
-        try { const res = await fetch("/api/admin/projects"); if (res.ok) setProjects(await res.json()); } catch (e) { }
+        try {
+            const res = await fetch("/api/admin/projects")
+            if (res.ok) setProjects(await res.json())
+        } catch (error) {
+            console.warn("Failed to load projects for meeting modal:", error)
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {

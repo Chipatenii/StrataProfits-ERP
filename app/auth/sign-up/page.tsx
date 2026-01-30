@@ -123,6 +123,8 @@ export default function SignUpPage() {
                 <option value="social_media_manager">Social Media Manager</option>
                 <option value="virtual_assistant">Virtual Assistant</option>
                 <option value="bookkeeper">Bookkeeper</option>
+                <option value="marketing">Marketing</option>
+                <option value="sales">Sales</option>
               </select>
             </div>
 

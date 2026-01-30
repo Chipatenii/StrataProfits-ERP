@@ -77,6 +77,27 @@ const ROLE_PERMISSIONS: Record<UserProfile["role"], Permission[]> = {
         "sops:read",
         "dashboard:my_day",
     ],
+    marketing: [
+        "clients:read",
+        "deals:read",
+        "projects:read",
+        "tasks:read", "tasks:write",
+        "time_logs:read", "time_logs:write",
+        "meetings:read",
+        "sops:read",
+        "dashboard:my_day",
+    ],
+    sales: [
+        "clients:read", "clients:write",
+        "deals:read", "deals:write",
+        "projects:read",
+        "tasks:read", "tasks:write",
+        "time_logs:read", "time_logs:write",
+        "meetings:read", "meetings:write",
+        "quotes:read",
+        "sops:read",
+        "dashboard:my_day",
+    ],
 }
 
 export function hasPermission(role: UserProfile["role"], permission: Permission): boolean {

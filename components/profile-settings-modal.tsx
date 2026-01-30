@@ -223,6 +223,8 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
                       <option value="social_media_manager">Social Media Manager</option>
                       <option value="developer">Developer</option>
                       <option value="book_keeper">Book Keeper</option>
+                      <option value="marketing">Marketing</option>
+                      <option value="sales">Sales</option>
                       <option value="admin">Admin</option>
                     </select>
                   </div>

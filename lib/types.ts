@@ -73,7 +73,7 @@ export interface UserProfile {
     id: string
     full_name: string
     email: string
-    role: "admin" | "team_member" | "virtual_assistant" | "developer" | "social_media_manager" | "book_keeper"
+    role: "admin" | "team_member" | "virtual_assistant" | "developer" | "social_media_manager" | "book_keeper" | "marketing" | "sales"
     user_id?: string // For backward compatibility if needed, though id usually equals auth.uid
     hourly_rate?: number | null
     avatar_url?: string | null
@@ -185,7 +185,7 @@ export interface ActivityLog {
     action: string
     entity_type: string
     entity_id?: string | null
-    metadata?: any
+    metadata?: Record<string, unknown>
     created_at: string
 }
 

@@ -123,7 +123,14 @@ export async function rejectTask(taskId: string) {
     return { success: true }
 }
 
-export async function updateSelfCreatedTask(taskId: string, data: any) {
+export async function updateSelfCreatedTask(taskId: string, data: {
+    title?: string
+    description?: string | null
+    project_id?: string | null
+    due_date?: string | null
+    estimated_hours?: number | null
+    priority?: "low" | "medium" | "high"
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 

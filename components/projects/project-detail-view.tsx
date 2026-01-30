@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { Deliverable, Project, ProjectMember, Task, UserProfile } from "@/lib/types"
-import { Loader2, ArrowLeft, Users, Calendar, CheckCircle, Trash2, Plus } from "lucide-react"
+import { Loader2, ArrowLeft, Users, Calendar, CheckCircle, Trash2, Plus, ClipboardList } from "lucide-react"
+import { getRoleBadgeStyles, formatRoleName } from "@/lib/utils/role-styles"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { AddMemberModal } from "./add-member-modal"
@@ -559,11 +560,13 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                             </div>
                                             <div>
                                                 <p className="font-medium">{member.profile.full_name}</p>
-                                                <p className="text-sm text-gray-500">{member.profile.role}</p>
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getRoleBadgeStyles(member.profile.role).badge}`}>
+                                                    {formatRoleName(member.profile.role)}
+                                                </span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 mt-2 md:mt-0">
-                                            <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded text-gray-600 uppercase">{member.role}</span>
+                                            <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded-md border border-blue-100 uppercase">{member.role}</span>
                                             <Button variant="ghost" size="sm" onClick={() => handleDeleteMember(member.user_id)} className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50">
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>

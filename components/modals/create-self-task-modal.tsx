@@ -13,7 +13,15 @@ interface CreateSelfTaskModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
-    taskToEdit?: any
+    taskToEdit?: {
+        id: string
+        title: string
+        description?: string | null
+        priority: "low" | "medium" | "high"
+        due_date?: string | null
+        estimated_hours?: number | null
+        project_id?: string | null
+    } | null
 }
 
 export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit }: CreateSelfTaskModalProps) {
@@ -36,7 +44,9 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                 try {
                     const response = await fetch("/api/projects")
                     if (response.ok) setProjects(await response.json())
-                } catch (e) { }
+                } catch (error) {
+                    console.warn("Failed to load projects for task modal:", error)
+                }
             }
             loadProjects()
 

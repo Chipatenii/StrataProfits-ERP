@@ -5,6 +5,7 @@ import { ProjectDetailView } from "@/components/projects/project-detail-view"
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = await createClient()
+    const { id } = await params
 
     const {
         data: { user },
@@ -16,15 +17,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
 
-    // Ideally allow members to view if they are in the project
-    // But for now, stick to Admin access for this "management" view as per plan
-    if (profile?.role !== "admin" && profile?.role !== "virtual_assistant" && profile?.role !== "book_keeper") {
-        // TODO: Check if member is in project_members, if so allow?
-        // For now allowing core roles
-        redirect("/dashboard")
-    }
+    // Allow admin, virtual_assistant, and book_keeper roles full access
+    const isPrivilegedRole = profile?.role === "admin" || profile?.role === "virtual_assistant" || profile?.role === "book_keeper"
 
-    const { id } = await params
+    if (!isPrivilegedRole) {
+        // Check if user is a member of this specific project
+        const { data: projectMember } = await supabase
+            .from("project_members")
+            .select("id")
+            .eq("project_id", id)
+            .eq("user_id", user.id)
+            .single()
+
+        if (!projectMember) {
+            redirect("/dashboard")
+        }
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">

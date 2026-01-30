@@ -3,8 +3,17 @@ import { cookies } from "next/headers"
 
 export async function createClient() {
   const cookieStore = await cookies()
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  if (!url || !anonKey) {
+    console.error(
+      "[Server] Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+    )
+    throw new Error("Supabase environment variables not configured")
+  }
+
+  return createServerClient(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -13,9 +22,10 @@ export async function createClient() {
         try {
           cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
         } catch {
-          // Ignored
+          // Ignored - cookies() sometimes throws for static generation
         }
       },
     },
   })
 }
+
