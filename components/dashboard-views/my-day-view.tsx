@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon } from "lucide-react"
+import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon, Sparkles, Zap, ArrowUpRight, Star } from "lucide-react"
 import { Task, Meeting, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { getTimeBasedGreeting } from "@/lib/time-utils"
@@ -29,7 +29,6 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
         async function loadData() {
             try {
                 setLoading(true)
-                // Parallel fetch
                 const [tasksRes, meetingsRes, membersRes] = await Promise.all([
                     fetch(`/api/admin/tasks`),
                     fetch(`/api/meetings`),
@@ -38,7 +37,6 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                 if (tasksRes.ok) {
                     const allTasks: Task[] = await tasksRes.json()
-                    // Filter for "Me"
                     const myTasks = allTasks.filter(t => t.assigned_to === userId && t.status !== 'completed')
                     setTasks(myTasks)
                 }
@@ -63,86 +61,122 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
         loadData()
     }, [userId])
 
-    // Logic: Due Today or Overdue
-    const todayStr = new Date().toISOString().split('T')[0] // YYYY-MM-DD
-
+    const todayStr = new Date().toISOString().split('T')[0]
     const dueToday = tasks.filter(t => t.due_date && t.due_date.startsWith(todayStr))
     const overdue = tasks.filter(t => t.due_date && t.due_date < todayStr)
     const highPriority = tasks.filter(t => t.priority === 'high' && !dueToday.includes(t) && !overdue.includes(t))
-
     const todaysMeetings = meetings.filter(m => m.date_time_start.startsWith(todayStr))
 
     if (loading) return (
-        <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center justify-center p-12 gap-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Loading your day...</p>
         </div>
     )
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl text-white shadow-lg shadow-emerald-500/25 shrink-0">
-                    <Sun className="w-6 h-6 md:w-7 md:h-7" />
+        <div className="space-y-8 animate-fade-in">
+            {/* Premium Hero Header */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 p-8 md:p-10 text-white shadow-2xl shadow-violet-500/30">
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+                <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-indigo-300/10 rounded-full blur-xl" />
+
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Sun className="w-5 h-5 text-amber-300" />
+                        <span className="text-sm font-medium text-violet-200 uppercase tracking-wider">My Day</span>
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-2">{getTimeBasedGreeting(userName)}</h1>
+                    <p className="text-violet-100/80 text-lg">Here's your focus for today. Let's make it count!</p>
                 </div>
-                <div>
-                    <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent leading-tight">
-                        {getTimeBasedGreeting(userName)}
-                    </h2>
-                    <p className="text-sm md:text-base text-muted-foreground">Here's your focus for today.</p>
+
+                {/* Quick Stats in Hero */}
+                <div className="relative z-10 grid grid-cols-3 gap-4 mt-8">
+                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
+                        <p className="text-3xl font-bold">{dueToday.length}</p>
+                        <p className="text-sm text-violet-100/80">Due Today</p>
+                    </div>
+                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
+                        <p className="text-3xl font-bold">{todaysMeetings.length}</p>
+                        <p className="text-sm text-violet-100/80">Meetings</p>
+                    </div>
+                    <div className={`backdrop-blur-lg rounded-2xl p-4 border text-center ${overdue.length > 0 ? 'bg-red-500/30 border-red-400/40' : 'bg-white/15 border-white/20'}`}>
+                        <p className="text-3xl font-bold">{overdue.length}</p>
+                        <p className="text-sm text-violet-100/80">Overdue</p>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* LEFT COLUMN: TASKS */}
                 <div className="lg:col-span-2 space-y-6">
 
                     {/* OVERDUE WARNING */}
                     {overdue.length > 0 && (
-                        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-2xl p-5">
-                            <h3 className="flex items-center gap-2 text-red-700 dark:text-red-400 font-bold mb-4">
-                                <AlertCircle className="w-5 h-5" /> Overdue Tasks ({overdue.length})
-                            </h3>
-                            <div className="space-y-2">
-                                {overdue.map(t => (
-                                    <div
-                                        key={t.id}
-                                        onClick={() => handleCardClick(t)}
-                                        className="bg-white dark:bg-card p-4 rounded-xl border border-red-100 dark:border-red-900 flex justify-between items-center shadow-sm cursor-pointer hover:border-red-300 dark:hover:border-red-700 transition-all active:scale-[0.99] min-h-[52px]"
-                                    >
-                                        <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
-                                        <span className="text-xs text-red-600 dark:text-red-400 font-semibold whitespace-nowrap">{t.due_date}</span>
+                        <div className="relative overflow-hidden bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 border border-red-200 dark:border-red-800/50 rounded-3xl p-6 shadow-xl shadow-red-500/10">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl" />
+                            <div className="relative">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-3 bg-red-500 rounded-2xl text-white shadow-lg shadow-red-500/30">
+                                        <AlertCircle className="w-6 h-6" />
                                     </div>
-                                ))}
+                                    <div>
+                                        <h3 className="font-bold text-lg text-red-900 dark:text-red-100">Overdue Tasks</h3>
+                                        <p className="text-sm text-red-700 dark:text-red-300">{overdue.length} task{overdue.length !== 1 && 's'} need attention</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    {overdue.map(t => (
+                                        <div
+                                            key={t.id}
+                                            onClick={() => handleCardClick(t)}
+                                            className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-red-100 dark:border-red-900/50 flex justify-between items-center shadow-md cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px]"
+                                        >
+                                            <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
+                                            <span className="text-xs text-red-600 dark:text-red-400 font-semibold whitespace-nowrap bg-red-100 dark:bg-red-900/50 px-3 py-1 rounded-full">{t.due_date}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {/* DUE TODAY */}
-                    <div>
-                        <h3 className="flex items-center gap-2 text-lg font-bold mb-4 text-foreground">
-                            <CheckCircle className="w-5 h-5 text-primary" /> Due Today
-                        </h3>
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-xl">
+                                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground">Due Today</h3>
+                        </div>
+
                         {dueToday.length === 0 ? (
-                            <div className="p-8 text-center glass-card rounded-2xl border border-dashed border-border text-muted-foreground">
-                                No tasks specifically due today. Great job! 🎉
+                            <div className="p-8 text-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                                <Star className="w-10 h-10 text-amber-400 mx-auto mb-3" />
+                                <p className="text-muted-foreground font-medium">No tasks specifically due today.</p>
+                                <p className="text-sm text-muted-foreground mt-1">Great job staying on top of things! 🎉</p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {dueToday.map(t => (
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="glass-card-hover p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer"
+                                        className="group relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/50 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800"
                                     >
                                         <div className="min-w-0">
-                                            <h4 className="font-semibold text-lg text-foreground truncate">{t.title}</h4>
+                                            <h4 className="font-bold text-lg text-foreground truncate">{t.title}</h4>
                                             <p className="text-sm text-muted-foreground">{t.project_id ? "Project Task" : "General Task"}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`badge ${t.priority === 'high' ? 'badge-warning' : 'badge-neutral'}`}>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${t.priority === 'high'
+                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+                                                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
                                                 {t.priority}
                                             </span>
-                                            <span className="badge badge-info">
+                                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
                                                 {t.estimated_hours ? `${t.estimated_hours}h` : 'No est.'}
                                             </span>
                                         </div>
@@ -154,19 +188,24 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                     {/* HIGH PRIORITY */}
                     {highPriority.length > 0 && (
-                        <div>
-                            <h3 className="flex items-center gap-2 text-lg font-bold mb-4 text-foreground mt-6">
-                                <AlertCircle className="w-5 h-5 text-amber-500" /> High Priority Backlog
-                            </h3>
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl">
+                                    <Zap className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-foreground">High Priority Backlog</h3>
+                            </div>
                             <div className="space-y-3">
                                 {highPriority.map(t => (
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="glass-card-hover p-4 rounded-xl flex justify-between items-center cursor-pointer min-h-[52px]"
+                                        className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px] border border-amber-100 dark:border-amber-900/50"
                                     >
                                         <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
-                                        <span className="badge badge-warning">High</span>
+                                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white shadow-lg shadow-amber-500/25">
+                                            High
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -176,37 +215,55 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                 {/* RIGHT COLUMN: SCHEDULE */}
                 <div className="space-y-6">
-                    <div className="glass-card p-6 rounded-2xl">
-                        <h3 className="flex items-center gap-2 font-bold text-foreground mb-4">
-                            <CalendarIcon className="w-5 h-5 text-violet-500" /> Today's Schedule
-                        </h3>
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-violet-100 dark:bg-violet-900/50 rounded-xl">
+                                <CalendarIcon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground">Today's Schedule</h3>
+                        </div>
+
                         {todaysMeetings.length === 0 ? (
-                            <p className="text-sm text-muted-foreground italic">No meetings scheduled for today.</p>
+                            <div className="p-6 text-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/50 rounded-2xl">
+                                <CalendarIcon className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                                <p className="text-sm text-muted-foreground">No meetings scheduled for today.</p>
+                            </div>
                         ) : (
-                            <div className="relative border-l-2 border-violet-200 dark:border-violet-800 ml-2 space-y-6 pl-6 py-2">
+                            <div className="relative border-l-2 border-violet-200 dark:border-violet-800 ml-3 space-y-6 pl-6 py-2">
                                 {todaysMeetings.map(m => (
-                                    <div key={m.id} className="relative">
-                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-violet-500 ring-4 ring-card"></div>
-                                        <p className="text-xs font-bold text-violet-600 dark:text-violet-400 mb-1">
-                                            {new Date(m.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                        <h4 className="font-bold text-sm leading-tight text-foreground">{m.title}</h4>
-                                        <p className="text-xs text-muted-foreground mt-0.5">{m.mode}</p>
+                                    <div key={m.id} className="relative group">
+                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 ring-4 ring-white dark:ring-slate-900 shadow-lg"></div>
+                                        <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 rounded-2xl p-4 border border-violet-100 dark:border-violet-900/50 group-hover:shadow-md transition-shadow">
+                                            <p className="text-xs font-bold text-violet-600 dark:text-violet-400 mb-1">
+                                                {new Date(m.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                            <h4 className="font-bold text-foreground leading-tight">{m.title}</h4>
+                                            <p className="text-xs text-muted-foreground mt-1 capitalize">{m.mode}</p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Time Tracking Widget Summary */}
-                    <div className="glass-card p-6 rounded-2xl hidden lg:block">
-                        <h3 className="flex items-center gap-2 font-bold text-foreground mb-2">
-                            <Clock className="w-5 h-5 text-emerald-500" /> Time Tracked
-                        </h3>
-                        <p className="text-sm text-muted-foreground">See dashboard for details</p>
+                    {/* Time Tracking Widget */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/25">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Clock className="w-5 h-5" />
+                                <h3 className="font-bold">Time Tracking</h3>
+                            </div>
+                            <p className="text-emerald-100/80 text-sm">Track your time to stay productive and earn more.</p>
+                            <button className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl font-medium hover:bg-white/30 transition-all border border-white/20">
+                                Start Timer
+                                <ArrowUpRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+
             <TaskDetailModal
                 open={isDetailModalOpen}
                 task={selectedTaskDetail}

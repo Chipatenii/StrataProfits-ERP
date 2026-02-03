@@ -55,6 +55,7 @@ import { VAFinance } from "@/components/dashboard-views/va-finance"
 
 import { ProjectListView } from "@/components/projects/project-list-view"
 import { ProjectDetailView } from "@/components/projects/project-detail-view"
+import { TeamView } from "@/components/dashboard-views/team-view"
 import { VASOPs } from "@/components/dashboard-views/va-sops"
 
 import { Receipt, Boxes } from "lucide-react"
@@ -76,7 +77,7 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales">("overview")
 
   const [stats, setStats] = useState<any>(null) // Stats type in lib/types might differ from local usage, safe with any for now or check
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
@@ -276,19 +277,30 @@ export function AdminDashboard({
       <div className={`
         fixed md:relative z-50 h-full
         transition-all duration-300 ease-out
-        bg-card/95 dark:bg-card/90 backdrop-blur-xl border-r border-border shadow-2xl md:shadow-lg flex flex-col
+        bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl md:shadow-xl flex flex-col
         ${isSidebarOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-72"}
       `}>
-        <div className="p-4 flex items-center justify-between h-16 border-b border-border">
-          <h2 className={`font-bold text-primary truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
-            Admin Panel
-          </h2>
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="p-2.5 hover:bg-muted rounded-xl md:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-          >
-            <X size={20} />
-          </button>
+        {/* Premium Branded Header */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_50%)]" />
+          <div className="relative p-4 flex items-center justify-between h-20">
+            <div className={`flex items-center gap-3 ${!isSidebarOpen && "md:hidden lg:flex"}`}>
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 shadow-lg">
+                S
+              </div>
+              <div className="text-white">
+                <h2 className="font-bold text-lg leading-tight">Admin Panel</h2>
+                <p className="text-xs text-emerald-100/80">StrataProfits ERP</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2.5 hover:bg-white/20 rounded-xl md:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
@@ -353,14 +365,14 @@ export function AdminDashboard({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-50 via-slate-50 to-emerald-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20">
-        {/* Header - Premium Mobile First */}
-        <header className="bg-card/80 dark:bg-card/60 backdrop-blur-xl border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
-          <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30">
+        {/* Header - Premium */}
+        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg shadow-black/5 dark:shadow-black/20 h-18 flex-shrink-0 z-30">
+          <div className="h-full px-4 md:px-6 py-3 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2.5 -ml-2 hover:bg-muted rounded-xl md:hidden text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2.5 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl md:hidden text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <Menu size={22} />
               </button>
@@ -370,12 +382,12 @@ export function AdminDashboard({
                   {APP_NAME}
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">
-                  Welcome back, <span className="font-medium text-foreground">{userName}</span> • <span className="text-primary font-medium">{getFormattedDate()}</span>
+                  Welcome back, <span className="font-medium text-foreground">{userName}</span> • <span className="text-emerald-600 dark:text-emerald-400 font-medium">{getFormattedDate()}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:gap-3">
               <ThemeToggle />
               <NotificationBell userId={userId} isAdmin={true} />
               <div className="flex-shrink-0 hidden sm:block">
@@ -459,70 +471,12 @@ export function AdminDashboard({
 
           {/* Team View */}
           {activeView === "team" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Team Members</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {members.length === 0 ? (
-                  <div className="glass-card rounded-lg p-8 text-center col-span-full">
-                    <p className="text-muted-foreground">No team members found</p>
-                  </div>
-                ) : (
-                  members.map((member) => {
-                    const memberTasks = tasks.filter((t) => t.assigned_to === member.id)
-                    return (
-                      <div key={member.id} className="glass-card rounded-lg p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold">{member.full_name}</h3>
-                            <p className="text-sm text-muted-foreground">{member.email}</p>
-                            <div className="mt-2 space-y-1">
-                              <p className="text-sm">
-                                <span className="font-medium">Role:</span>{" "}
-                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                                  {member.role}
-                                </span>
-                              </p>
-                              {member.hourly_rate && (
-                                <p className="text-sm">
-                                  <span className="font-medium">Rate:</span> ZMW {member.hourly_rate}/hr
-                                </p>
-                              )}
-                              <p className="text-sm">
-                                <span className="font-medium">Tasks Assigned:</span> {memberTasks.length}
-                              </p>
-                              <p className="text-sm">
-                                <span className="font-medium">Tasks Completed:</span> {memberTasks.filter(t => t.status === "completed").length}
-                              </p>
-                            </div>
-                          </div>
-                          {member.role !== "admin" && (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => setEditingMember(member)}
-                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                                title="Edit member"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteMember(member.id)}
-                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                                title="Delete member"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
+            <TeamView
+              members={members}
+              tasks={tasks}
+              onEditMember={setEditingMember}
+              onDeleteMember={handleDeleteMember}
+            />
           )}
 
           {/* Edit Member Modal */}

@@ -81,19 +81,30 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       <div className={`
         fixed md:relative z-50 h-full
         transition-all duration-300 ease-out
-        bg-card/95 dark:bg-card/90 backdrop-blur-xl border-r border-border shadow-2xl md:shadow-lg flex flex-col
+        bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl md:shadow-xl flex flex-col
         ${isSidebarOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-72"}
       `}>
-        <div className="p-4 flex items-center justify-between h-16 border-b border-border">
-          <h2 className={`font-bold text-primary truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
-            Virtual Assistant
-          </h2>
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="p-2.5 hover:bg-muted rounded-xl md:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-          >
-            <X size={20} />
-          </button>
+        {/* Premium Branded Header */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-500" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_50%)]" />
+          <div className="relative p-4 flex items-center justify-between h-20">
+            <div className={`flex items-center gap-3 ${!isSidebarOpen && "md:hidden lg:flex"}`}>
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 shadow-lg">
+                VA
+              </div>
+              <div className="text-white">
+                <h2 className="font-bold text-lg leading-tight">Virtual Assistant</h2>
+                <p className="text-xs text-blue-100/80">StrataProfits ERP</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2.5 hover:bg-white/20 rounded-xl md:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
@@ -140,14 +151,14 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-50 via-slate-50 to-emerald-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20">
-        {/* Header */}
-        <header className="bg-card/80 dark:bg-card/60 backdrop-blur-xl border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
-          <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-100 via-slate-50 to-cyan-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/30">
+        {/* Header - Premium */}
+        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg shadow-black/5 dark:shadow-black/20 h-18 flex-shrink-0 z-30">
+          <div className="h-full px-4 md:px-6 py-3 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2.5 -ml-2 hover:bg-muted rounded-xl md:hidden text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2.5 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl md:hidden text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <Menu size={22} />
               </button>
@@ -157,12 +168,12 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
                   {APP_NAME}
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">
-                  Welcome back, <span className="font-medium text-foreground">{userName}</span> • <span className="text-primary font-medium">{getFormattedDate()}</span>
+                  Welcome back, <span className="font-medium text-foreground">{userName}</span> • <span className="text-cyan-600 dark:text-cyan-400 font-medium">{getFormattedDate()}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:gap-3">
               <ThemeToggle />
               <NotificationBell userId={userId} isAdmin={false} />
               <div className="flex-shrink-0 hidden sm:block">

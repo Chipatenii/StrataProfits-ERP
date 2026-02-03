@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Users, Search, Folder, Globe, Facebook, Instagram, Phone, Mail, MapPin } from "lucide-react"
+import { Plus, Users, Search, Folder, Globe, Facebook, Instagram, Phone, Mail, MapPin, Sparkles, Building2, UserPlus } from "lucide-react"
 import { Client } from "@/lib/types"
 import { AdminCreateClientModal } from "@/components/modals/admin-create-client-modal"
-
 import { Edit } from "lucide-react"
 
 export function ClientsView() {
@@ -47,122 +46,163 @@ export function ClientsView() {
         if (!open) setEditingClient(null)
     }
 
+    const activeClients = clients.filter(c => c.status === 'Active').length
+    const premiumClients = clients.filter(c => c.value_tier === 'Premium').length
+
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold">Clients</h2>
-                    <p className="text-muted-foreground">Manage your agency clients and their projects</p>
+        <div className="space-y-8 animate-fade-in">
+            {/* Premium Hero Header */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-8 md:p-10 text-white shadow-2xl shadow-blue-500/30">
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Building2 className="w-5 h-5 text-blue-200" />
+                            <span className="text-sm font-medium text-blue-100 uppercase tracking-wider">Client Management</span>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-bold mb-2">Clients</h1>
+                        <p className="text-blue-100/80 text-lg">Manage your agency clients and their projects</p>
+                    </div>
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 rounded-xl hover:shadow-lg hover:bg-blue-50 active:scale-[0.98] transition-all duration-200 font-bold shadow-lg"
+                    >
+                        <UserPlus className="w-5 h-5" />
+                        Add Client
+                    </button>
                 </div>
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 hover:brightness-110 active:scale-[0.98] transition-all duration-200 font-semibold w-full sm:w-auto justify-center min-h-[48px]"
-                >
-                    <Plus className="w-4 h-4" />
-                    Add Client
-                </button>
+
+                {/* Quick Stats in Hero */}
+                <div className="relative z-10 grid grid-cols-3 gap-4 mt-8">
+                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
+                        <p className="text-3xl font-bold">{clients.length}</p>
+                        <p className="text-sm text-blue-100/80">Total Clients</p>
+                    </div>
+                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
+                        <p className="text-3xl font-bold">{activeClients}</p>
+                        <p className="text-sm text-blue-100/80">Active</p>
+                    </div>
+                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
+                        <p className="text-3xl font-bold">{premiumClients}</p>
+                        <p className="text-sm text-blue-100/80">Premium</p>
+                    </div>
+                </div>
             </div>
 
+            {/* Search Bar */}
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                     type="text"
-                    placeholder="Search clients..."
+                    placeholder="Search clients by name or business..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none transition-all min-h-[48px]"
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-lg shadow-lg shadow-black/5"
                 />
             </div>
 
+            {/* Clients Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
-                    <div className="col-span-full flex justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 gap-4">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                        <p className="text-muted-foreground">Loading clients...</p>
                     </div>
                 ) : filteredClients.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-muted-foreground">
-                        No clients found.
+                    <div className="col-span-full text-center py-16">
+                        <Users className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-foreground mb-2">No clients found</h3>
+                        <p className="text-muted-foreground">Add your first client to get started</p>
                     </div>
                 ) : (
                     filteredClients.map(client => (
-                        <div key={client.id} className="glass-card p-6 rounded-xl hover:shadow-lg transition-all group border border-border/50 relative">
+                        <div
+                            key={client.id}
+                            className="group relative bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                        >
+                            {/* Edit Button */}
                             <button
                                 onClick={() => handleEditClick(client)}
-                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                className="absolute top-4 right-4 p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-colors"
                             >
                                 <Edit className="w-4 h-4" />
                             </button>
-                            <div className="flex justify-between items-start mb-4 gap-2 pr-8">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0
-                                ${client.type === 'dev' ? 'bg-blue-500' :
-                                            client.type === 'design' ? 'bg-purple-500' :
-                                                client.type === 'marketing' ? 'bg-pink-500' : 'bg-gray-500'}`}>
-                                        <Users className="w-5 h-5" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <h3 className="font-bold text-lg truncate">{client.name}</h3>
-                                        {client.business_name && <p className="text-sm text-muted-foreground truncate">{client.business_name}</p>}
-                                    </div>
+
+                            {/* Client Header */}
+                            <div className="flex items-start gap-4 mb-4 pr-8">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg
+                                    ${client.type === 'dev' ? 'bg-gradient-to-br from-blue-500 to-cyan-500 shadow-blue-500/30' :
+                                        client.type === 'design' ? 'bg-gradient-to-br from-purple-500 to-pink-500 shadow-purple-500/30' :
+                                            client.type === 'marketing' ? 'bg-gradient-to-br from-pink-500 to-rose-500 shadow-pink-500/30' :
+                                                'bg-gradient-to-br from-slate-500 to-slate-600 shadow-slate-500/30'}`}
+                                >
+                                    <Users className="w-6 h-6" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="font-bold text-lg text-foreground truncate">{client.name}</h3>
+                                    {client.business_name && <p className="text-sm text-muted-foreground truncate">{client.business_name}</p>}
                                 </div>
                             </div>
 
+                            {/* Status Badge */}
                             <div className="mb-4">
-                                <span className={`px-2.5 py-1 text-xs rounded-full font-medium whitespace-nowrap
-                        ${client.status === 'Active' ? 'badge-success' :
-                                        client.status === 'Lead' ? 'badge-warning' :
-                                            'badge-neutral'}`}>
+                                <span className={`inline-flex px-3 py-1 text-xs rounded-full font-semibold
+                                    ${client.status === 'Active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                                        client.status === 'Lead' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' :
+                                            'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
                                     {client.status}
                                 </span>
                             </div>
 
+                            {/* Contact Info */}
                             <div className="space-y-2 text-sm text-muted-foreground mb-4">
                                 {client.email && (
                                     <div className="flex items-center gap-2 truncate">
-                                        <Mail className="w-4 h-4 shrink-0" /> <span className="truncate">{client.email}</span>
+                                        <Mail className="w-4 h-4 shrink-0 text-blue-500" />
+                                        <span className="truncate">{client.email}</span>
                                     </div>
                                 )}
                                 {client.phone && (
                                     <div className="flex items-center gap-2 truncate">
-                                        <Phone className="w-4 h-4 shrink-0" /> <span className="truncate">{client.phone}</span>
+                                        <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
+                                        <span className="truncate">{client.phone}</span>
                                     </div>
                                 )}
                                 {client.location && (
                                     <div className="flex items-center gap-2 truncate">
-                                        <MapPin className="w-4 h-4 shrink-0" /> <span className="truncate">{client.location}</span>
+                                        <MapPin className="w-4 h-4 shrink-0 text-rose-500" />
+                                        <span className="truncate">{client.location}</span>
                                     </div>
                                 )}
-                                {client.contact_person && (
-                                    <div className="flex items-center gap-2 truncate text-xs">
-                                        <span className="font-semibold text-gray-500">Contact:</span> <span className="truncate">{client.contact_person}</span>
-                                    </div>
-                                )}
-                                {client.tpin && (
-                                    <div className="flex items-center gap-2 truncate text-xs">
-                                        <span className="font-semibold text-gray-500">TPIN:</span> <span className="font-mono bg-gray-100 px-1 rounded">{client.tpin}</span>
-                                    </div>
-                                )}
-                                <div className="flex gap-3 mt-2 pt-2 border-t border-border/50">
+                            </div>
+
+                            {/* Social Links & Premium Badge */}
+                            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex gap-3">
                                     {client.social_links?.website && (
-                                        <a href={client.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
+                                        <a href={client.social_links.website} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-500 transition-colors">
                                             <Globe className="w-4 h-4" />
                                         </a>
                                     )}
                                     {client.social_links?.facebook && (
-                                        <a href={client.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors">
+                                        <a href={client.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-600 transition-colors">
                                             <Facebook className="w-4 h-4" />
                                         </a>
                                     )}
                                     {client.social_links?.instagram && (
-                                        <a href={client.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors">
+                                        <a href={client.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-pink-600 transition-colors">
                                             <Instagram className="w-4 h-4" />
                                         </a>
                                     )}
                                 </div>
 
                                 {client.value_tier === 'Premium' && (
-                                    <div className="inline-block px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded text-xs mt-2">
-                                        💎 Premium Client
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-semibold">
+                                        <Sparkles className="w-3 h-3" />
+                                        Premium
                                     </div>
                                 )}
                             </div>

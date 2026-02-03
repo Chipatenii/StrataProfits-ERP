@@ -24,24 +24,48 @@ interface TeamMemberReport {
     }>
 }
 
+import { BarChart3 } from "lucide-react"
+
 export function ReportsView() {
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
-                <p className="text-muted-foreground">Comprehensive business intelligence and reporting.</p>
+        <div className="space-y-8 animate-fade-in">
+            {/* Premium Hero Header */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-600 p-8 md:p-10 text-white shadow-2xl shadow-violet-500/30">
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <BarChart3 className="w-5 h-5 text-purple-200" />
+                        <span className="text-sm font-medium text-purple-100 uppercase tracking-wider">Analytics</span>
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Reports</h1>
+                    <p className="text-purple-100/80 text-lg">Comprehensive business intelligence and reporting</p>
+                </div>
             </div>
 
-            <Tabs defaultValue="workforce" className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="workforce">Workforce & Payroll</TabsTrigger>
-                    <TabsTrigger value="financial">Financial Statements</TabsTrigger>
+            {/* Premium Tabs */}
+            <Tabs defaultValue="workforce" className="space-y-6">
+                <TabsList className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 h-auto">
+                    <TabsTrigger
+                        value="workforce"
+                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
+                    >
+                        Workforce & Payroll
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="financial"
+                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
+                    >
+                        Financial Statements
+                    </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="workforce" className="space-y-4">
+                <TabsContent value="workforce" className="space-y-6">
                     <WorkforceReports />
                 </TabsContent>
-                <TabsContent value="financial" className="space-y-4">
+                <TabsContent value="financial" className="space-y-6">
                     <FinancialPlaceholder />
                 </TabsContent>
             </Tabs>
