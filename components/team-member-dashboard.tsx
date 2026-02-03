@@ -8,30 +8,22 @@ import { useRouter } from "next/navigation"
 import {
   LogOut,
   Settings,
-  CheckCircle,
   Menu,
   X,
   Loader2,
-  Pause,
-  Play,
-  Plus,
   Clock,
-  Sun,
-  List,
-  DollarSign,
-  Briefcase
+  Home,
+  CheckSquare,
+  Calendar
 } from "lucide-react"
-import { Timer } from "./timer"
-import { TimerNotification } from "./timer-notification"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
 import { MyDayView } from "@/components/dashboard-views/my-day-view"
-import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
-import { TimeAllocationIndicator } from "@/components/time-allocation-indicator"
-import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { NotificationBell } from "@/components/notification-bell"
-import { calculateTimeSpent, getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"
+import { ThemeToggle } from "./theme-toggle"
+import { MobileBottomNav } from "./mobile-bottom-nav"
+import { getTimeBasedGreeting, getFormattedDate } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
 import { TeamTasksView } from "@/components/dashboard-views/team-tasks-view"
@@ -86,53 +78,26 @@ export function TeamMemberDashboard({
   const [currentClockInTime, setCurrentClockInTime] = useState<string | null>(null)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
-  const [completingTask, setCompletingTask] = useState<Task | null>(null)
-  const [animatingTaskId, setAnimatingTaskId] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<"active" | "completed">("active")
-  const [projectFilter, setProjectFilter] = useState<string>("all")
-  const [stats, setStats] = useState<{
-    leaderboard: any[]
-    bestPerformer: any
-  } | null>(null)
-  const [timerNotification, setTimerNotification] = useState<{
-    type: "warning" | "elapsed"
-    taskTitle: string
-    remainingMinutes?: number
-  } | null>(null)
-  const [currentTime, setCurrentTime] = useState(new Date())
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
   const [showCreateTask, setShowCreateTask] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "tasks" | "meetings">("my-day")
-
-  // Filters are now handled inside TeamTasksView for better performance and separation
-
+  const [activeView, setActiveView] = useState<"my-day" | "tasks" | "meetings" | "profile">("my-day")
 
   const loadData = useCallback(async () => {
     try {
-      // Fetch profile via API (bypasses RLS) - Restore Fix
       const resProfile = await fetch("/api/profile")
       if (resProfile.ok) {
         const profileData = await resProfile.json()
         setProfile(profileData)
       }
 
-      // Get assigned tasks AND self-created tasks
       const { data: tasksData } = await supabase
         .from("tasks")
         .select("*")
-        .or(`assigned_to.eq.${userId},created_by.eq.${userId}`) // Modified to include self-created
+        .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
         .order("created_at", { ascending: false })
 
       setTasks(tasksData || [])
 
-      // Get projects user is part of (RLS handles filtering)
       const { data: projectsData } = await supabase
         .from("projects")
         .select("id, name")
@@ -140,7 +105,6 @@ export function TeamMemberDashboard({
 
       setProjects(projectsData || [])
 
-      // Get today's time logs
       const today = new Date().toISOString().split("T")[0]
       const { data: logsData } = await supabase
         .from("time_logs")
@@ -150,13 +114,11 @@ export function TeamMemberDashboard({
 
       setTimeLogs(logsData || [])
 
-      // Calculate today's hours
       const hours = (logsData || []).reduce((acc, log) => {
         return acc + (log.duration_minutes || 0)
       }, 0)
       setTodayHours(Math.round((hours / 60) * 100) / 100)
 
-      // Check if currently clocked in
       const activeLog = (logsData || []).find((log) => !log.clock_out)
       setIsClockedIn(!!activeLog)
       setCurrentClockInTime(activeLog?.clock_in || null)
@@ -166,13 +128,6 @@ export function TeamMemberDashboard({
       }
 
       setLoading(false)
-
-      // Load stats
-      const statsResponse = await fetch("/api/team/stats")
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setStats(statsData)
-      }
     } catch (error) {
       console.error("Error loading data:", error)
       setLoading(false)
@@ -183,7 +138,6 @@ export function TeamMemberDashboard({
     loadData()
   }, [])
 
-  // Real-time subscriptions
   useRealtimeSubscription("tasks", loadData)
   useRealtimeSubscription("time_logs", loadData)
 
@@ -195,53 +149,62 @@ export function TeamMemberDashboard({
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     )
   }
 
   const menuItems = getNavItemsForRole(profile?.role as any)
 
+  const mobileNavItems = [
+    { id: "my-day", label: "My Day", icon: Home },
+    { id: "tasks", label: "Tasks", icon: CheckSquare },
+    { id: "meetings", label: "Meetings", icon: Calendar },
+  ]
+
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Desktop only */}
       <div className={`
-          fixed md:relative z-50 h-full
-          transition-all duration-300 ease-in-out
-          bg-white border-r border-slate-200 shadow-xl md:shadow-none flex flex-col
-          ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
-        `}>
-        <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
-          <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
+        fixed md:relative z-50 h-full
+        transition-all duration-300 ease-out
+        bg-card/95 dark:bg-card/90 backdrop-blur-xl border-r border-border shadow-2xl md:shadow-lg flex flex-col
+        ${isSidebarOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-72"}
+      `}>
+        <div className="p-4 flex items-center justify-between h-16 border-b border-border">
+          <h2 className={`font-bold text-primary truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
             {APP_NAME}
           </h2>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="p-2 hover:bg-accent/10 rounded-lg md:hidden"
+            className="p-2.5 hover:bg-muted rounded-xl md:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X size={20} />
           </button>
         </div>
 
-        <nav className="space-y-1 p-3 mt-4 overflow-y-auto flex-1">
-          {/* Timer Widget in Sidebar */}
-          <div className={`mb-6 p-3 bg-accent/5 rounded-lg border border-accent/10 ${!isSidebarOpen && "md:hidden lg:block"}`}>
-            <div className="flex items-center gap-2 mb-2 text-accent">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+          {/* Timer Widget */}
+          <div className={`mb-6 p-4 glass-card rounded-2xl ${!isSidebarOpen && "md:hidden lg:block"}`}>
+            <div className="flex items-center gap-2 mb-2 text-primary">
               <Clock size={16} />
-              <span className="text-xs font-semibold uppercase tracking-wider">Time Tracking</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Time Today</span>
             </div>
-            <div className="text-2xl font-bold">{todayHours} <span className="text-sm font-normal text-muted-foreground">hrs</span></div>
+            <div className="text-2xl font-bold text-foreground">{todayHours} <span className="text-sm font-normal text-muted-foreground">hrs</span></div>
             {isClockedIn ? (
-              <div className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 Clocked In
               </div>
             ) : (
@@ -251,6 +214,7 @@ export function TeamMemberDashboard({
 
           {menuItems.map((item) => {
             const Icon = item.icon
+            const isActive = activeView === item.id
             return (
               <button
                 key={item.id}
@@ -258,17 +222,17 @@ export function TeamMemberDashboard({
                   setActiveView(item.id as any)
                   if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 
-                    ${activeView === item.id
-                    ? "bg-slate-100 text-slate-900 font-semibold shadow-sm ring-1 ring-slate-200"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                className={`group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-h-[48px]
+                  ${isActive
+                    ? "bg-primary/10 text-primary font-semibold shadow-sm dark:bg-primary/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 title={item.label}
               >
                 <Icon
                   size={20}
-                  strokeWidth={activeView === item.id ? 2.5 : 2}
-                  className={`shrink-0 transition-colors ${activeView === item.id ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={`shrink-0 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`}
                 />
                 <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left text-sm`}>
                   {item.label}
@@ -278,18 +242,18 @@ export function TeamMemberDashboard({
           })}
         </nav>
 
-        <div className="p-3 space-y-1">
+        <div className="p-4 border-t border-border space-y-1">
           <button
             onClick={() => setShowProfileSettings(true)}
-            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200"
+            className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200 min-h-[48px]"
             title="Settings"
           >
-            <Settings size={20} className="shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            <Settings size={20} className="shrink-0 transition-colors" />
             <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} text-sm font-medium`}>Settings</span>
           </button>
           <button
             onClick={handleLogout}
-            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+            className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 transition-all duration-200 min-h-[48px]"
             title="Sign Out"
           >
             <LogOut size={20} className="shrink-0 transition-colors" />
@@ -299,32 +263,32 @@ export function TeamMemberDashboard({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-50 via-slate-50 to-emerald-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20">
         {/* Header */}
-        <header className="bg-white border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
+        <header className="bg-card/80 dark:bg-card/60 backdrop-blur-xl border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
           <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 -ml-2 hover:bg-accent/10 rounded-lg md:hidden text-foreground"
+                className="p-2.5 -ml-2 hover:bg-muted rounded-xl md:hidden text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
-                <Menu size={24} />
+                <Menu size={22} />
               </button>
 
               <div className="flex flex-col">
                 <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
-                  <span className="md:hidden">{APP_NAME}</span>
-                  <span className="hidden md:inline">{APP_NAME} Productivity Tracker</span>
+                  {APP_NAME}
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">
-                  Welcome, {userName} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
+                  Welcome back, <span className="font-medium text-foreground">{userName}</span> • <span className="text-primary font-medium">{getFormattedDate()}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <NotificationBell userId={userId} isAdmin={false} />
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 hidden sm:block">
                 {profile && (
                   <UserProfileCard
                     fullName={profile.full_name}
@@ -340,10 +304,10 @@ export function TeamMemberDashboard({
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
+        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative pb-24 md:pb-6">
           <div className="md:hidden mb-4">
             <p className="text-sm text-muted-foreground">
-              {getTimeBasedGreeting(userName)} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
+              {getTimeBasedGreeting(userName)}
             </p>
           </div>
 
@@ -359,6 +323,13 @@ export function TeamMemberDashboard({
             />
           ) : null}
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav
+          activeView={activeView}
+          onViewChange={(view) => setActiveView(view as any)}
+          items={mobileNavItems}
+        />
 
         {/* Profile Settings Modal */}
         {showProfileSettings && (

@@ -3,8 +3,8 @@
 import { APP_NAME } from "@/lib/config"
 import { getNavItemsForRole } from "@/lib/navigation"
 import { useState, useEffect } from "react"
-import { LayoutDashboard, DollarSign, FolderKanban, FileText, Book, LogOut, Menu, X, Clock } from "lucide-react"
-import { getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"
+import { LogOut, Menu, X, Settings } from "lucide-react"
+import { getTimeBasedGreeting, getFormattedDate } from "@/lib/time-utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { VAOverview } from "@/components/dashboard-views/va-overview"
@@ -17,6 +17,8 @@ import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ClientsView } from "@/components/dashboard-views/clients-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
 import { UserProfileCard } from "./user-profile-card"
+import { ThemeToggle } from "./theme-toggle"
+import { NotificationBell } from "./notification-bell"
 
 interface VADashboardProps {
   userId: string
@@ -32,14 +34,6 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
-  const [currentTime, setCurrentTime] = useState(new Date())
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -78,7 +72,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       {/* Mobile Overlay Backdrop */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -86,26 +80,26 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       {/* Sidebar */}
       <div className={`
         fixed md:relative z-50 h-full
-        transition-all duration-300 ease-in-out
-        bg-white border-r border-slate-200 shadow-xl md:shadow-none flex flex-col
-        ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
+        transition-all duration-300 ease-out
+        bg-card/95 dark:bg-card/90 backdrop-blur-xl border-r border-border shadow-2xl md:shadow-lg flex flex-col
+        ${isSidebarOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-72"}
       `}>
-        <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
-          <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
+        <div className="p-4 flex items-center justify-between h-16 border-b border-border">
+          <h2 className={`font-bold text-primary truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
             Virtual Assistant
           </h2>
-          {/* Close button only visible on mobile when open */}
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="p-2 hover:bg-accent/10 rounded-lg md:hidden"
+            className="p-2.5 hover:bg-muted rounded-xl md:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X size={20} />
           </button>
         </div>
 
-        <nav className="space-y-1 p-3 mt-4 overflow-y-auto flex-1">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon
+            const isActive = activeView === item.id
             return (
               <button
                 key={item.id}
@@ -113,17 +107,17 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
                   setActiveView(item.id as View)
                   if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 
-                  ${activeView === item.id
-                    ? "bg-slate-100 text-slate-900 font-semibold shadow-sm ring-1 ring-slate-200"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                className={`group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-h-[48px]
+                  ${isActive
+                    ? "bg-primary/10 text-primary font-semibold shadow-sm dark:bg-primary/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 title={item.label}
               >
                 <Icon
                   size={20}
-                  strokeWidth={activeView === item.id ? 2.5 : 2}
-                  className={`shrink-0 transition-colors ${activeView === item.id ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={`shrink-0 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`}
                 />
                 <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left text-sm`}>
                   {item.label}
@@ -133,10 +127,10 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
           })}
         </nav>
 
-        <div className="p-3 border-t border-border/10">
+        <div className="p-4 border-t border-border space-y-1">
           <button
             onClick={handleSignOut}
-            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+            className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 transition-all duration-200 min-h-[48px]"
             title="Sign Out"
           >
             <LogOut size={20} className="shrink-0 transition-colors" />
@@ -146,45 +140,45 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background/95">
-        {/* Header - Slim Mobile First */}
-        <header className="bg-white border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-50 via-slate-50 to-emerald-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20">
+        {/* Header */}
+        <header className="bg-card/80 dark:bg-card/60 backdrop-blur-xl border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
           <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              {/* Hamburger - Only visible on mobile */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 -ml-2 hover:bg-accent/10 rounded-lg md:hidden text-foreground"
+                className="p-2.5 -ml-2 hover:bg-muted rounded-xl md:hidden text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
-                <Menu size={24} />
+                <Menu size={22} />
               </button>
 
               <div className="flex flex-col">
                 <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight truncate">
-                  <span className="md:hidden">{APP_NAME}</span>
-                  <span className="hidden md:inline">{APP_NAME}</span>
+                  {APP_NAME}
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">
-                  Welcome, {userName} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
+                  Welcome back, <span className="font-medium text-foreground">{userName}</span> • <span className="text-primary font-medium">{getFormattedDate()}</span>
                 </p>
               </div>
             </div>
 
-            {/* Profile - Compact on Mobile */}
-            <div className="flex-shrink-0">
-              <UserProfileCard
-                fullName={userName}
-                email={userEmail}
-                role={userRole}
-                compact={true}
-              />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <NotificationBell userId={userId} isAdmin={false} />
+              <div className="flex-shrink-0 hidden sm:block">
+                <UserProfileCard
+                  fullName={userName}
+                  email={userEmail}
+                  role={userRole}
+                  compact={true}
+                />
+              </div>
             </div>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
-          {/* Mobile Greeting (if hidden in header) */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative pb-20 md:pb-6">
           <div className="md:hidden mb-4">
             <p className="text-sm text-muted-foreground">{getTimeBasedGreeting(userName)}</p>
           </div>

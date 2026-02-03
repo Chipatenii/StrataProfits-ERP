@@ -1,11 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Inter } from "next/font/google"
 import { APP_NAME } from "@/lib/config"
+import { Toaster } from "sonner"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: APP_NAME,
@@ -19,8 +20,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <body className="font-sans bg-background text-foreground">{children}</body>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-background text-foreground">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

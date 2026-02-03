@@ -56,7 +56,7 @@ export function ClientsView() {
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto justify-center"
+                    className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 hover:brightness-110 active:scale-[0.98] transition-all duration-200 font-semibold w-full sm:w-auto justify-center min-h-[48px]"
                 >
                     <Plus className="w-4 h-4" />
                     Add Client
@@ -70,7 +70,7 @@ export function ClientsView() {
                     placeholder="Search clients..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none transition-all min-h-[48px]"
                 />
             </div>
 
@@ -108,10 +108,10 @@ export function ClientsView() {
                             </div>
 
                             <div className="mb-4">
-                                <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap
-                        ${client.status === 'Active' ? 'bg-green-100 text-green-700' :
-                                        client.status === 'Lead' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-gray-100 text-gray-700'}`}>
+                                <span className={`px-2.5 py-1 text-xs rounded-full font-medium whitespace-nowrap
+                        ${client.status === 'Active' ? 'badge-success' :
+                                        client.status === 'Lead' ? 'badge-warning' :
+                                            'badge-neutral'}`}>
                                     {client.status}
                                 </span>
                             </div>

@@ -74,23 +74,22 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
     if (loading) return (
         <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
     )
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-orange-100 rounded-full text-orange-600 shrink-0">
-                    <Sun className="w-6 h-6 md:w-8 md:h-8" />
+        <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl text-white shadow-lg shadow-emerald-500/25 shrink-0">
+                    <Sun className="w-6 h-6 md:w-7 md:h-7" />
                 </div>
                 <div>
-                    <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent leading-tight">
+                    <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent leading-tight">
                         {getTimeBasedGreeting(userName)}
                     </h2>
-                    <p className="text-sm md:text-base text-muted-foreground">Here is your focus for today.</p>
+                    <p className="text-sm md:text-base text-muted-foreground">Here's your focus for today.</p>
                 </div>
-
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -99,8 +98,8 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                     {/* OVERDUE WARNING */}
                     {overdue.length > 0 && (
-                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                            <h3 className="flex items-center gap-2 text-red-800 font-bold mb-3">
+                        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-2xl p-5">
+                            <h3 className="flex items-center gap-2 text-red-700 dark:text-red-400 font-bold mb-4">
                                 <AlertCircle className="w-5 h-5" /> Overdue Tasks ({overdue.length})
                             </h3>
                             <div className="space-y-2">
@@ -108,10 +107,10 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="bg-white p-3 rounded-lg border border-red-100 flex justify-between items-center shadow-sm cursor-pointer hover:border-red-300 transition-colors"
+                                        className="bg-white dark:bg-card p-4 rounded-xl border border-red-100 dark:border-red-900 flex justify-between items-center shadow-sm cursor-pointer hover:border-red-300 dark:hover:border-red-700 transition-all active:scale-[0.99] min-h-[52px]"
                                     >
-                                        <span className="font-medium text-gray-800 truncate mr-2">{t.title}</span>
-                                        <span className="text-xs text-red-600 font-semibold whitespace-nowrap">{t.due_date}</span>
+                                        <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
+                                        <span className="text-xs text-red-600 dark:text-red-400 font-semibold whitespace-nowrap">{t.due_date}</span>
                                     </div>
                                 ))}
                             </div>
@@ -120,12 +119,12 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                     {/* DUE TODAY */}
                     <div>
-                        <h3 className="flex items-center gap-2 text-lg font-bold mb-3 text-gray-800">
-                            <CheckCircle className="w-5 h-5 text-blue-600" /> Due Today
+                        <h3 className="flex items-center gap-2 text-lg font-bold mb-4 text-foreground">
+                            <CheckCircle className="w-5 h-5 text-primary" /> Due Today
                         </h3>
                         {dueToday.length === 0 ? (
-                            <div className="p-8 text-center bg-white rounded-xl border border-dashed text-gray-400">
-                                No tasks specifically due today. Great job!
+                            <div className="p-8 text-center glass-card rounded-2xl border border-dashed border-border text-muted-foreground">
+                                No tasks specifically due today. Great job! 🎉
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -133,19 +132,19 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="glass-card p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group hover:border-blue-300 transition-colors cursor-pointer"
+                                        className="glass-card-hover p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer"
                                     >
                                         <div className="min-w-0">
-                                            <h4 className="font-semibold text-lg truncate">{t.title}</h4>
-                                            <p className="text-sm text-gray-500">{t.project_id ? "Project Task" : "General Task"}</p>
+                                            <h4 className="font-semibold text-lg text-foreground truncate">{t.title}</h4>
+                                            <p className="text-sm text-muted-foreground">{t.project_id ? "Project Task" : "General Task"}</p>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${t.priority === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}`}>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`badge ${t.priority === 'high' ? 'badge-warning' : 'badge-neutral'}`}>
                                                 {t.priority}
-                                            </div>
-                                            <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium whitespace-nowrap">
+                                            </span>
+                                            <span className="badge badge-info">
                                                 {t.estimated_hours ? `${t.estimated_hours}h` : 'No est.'}
-                                            </div>
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
@@ -156,7 +155,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                     {/* HIGH PRIORITY */}
                     {highPriority.length > 0 && (
                         <div>
-                            <h3 className="flex items-center gap-2 text-lg font-bold mb-3 text-gray-800 mt-6">
+                            <h3 className="flex items-center gap-2 text-lg font-bold mb-4 text-foreground mt-6">
                                 <AlertCircle className="w-5 h-5 text-amber-500" /> High Priority Backlog
                             </h3>
                             <div className="space-y-3">
@@ -164,10 +163,10 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:border-blue-200"
+                                        className="glass-card-hover p-4 rounded-xl flex justify-between items-center cursor-pointer min-h-[52px]"
                                     >
-                                        <span className="font-medium text-gray-800 truncate mr-2">{t.title}</span>
-                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded uppercase font-bold whitespace-nowrap">High</span>
+                                        <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
+                                        <span className="badge badge-warning">High</span>
                                     </div>
                                 ))}
                             </div>
@@ -177,22 +176,22 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                 {/* RIGHT COLUMN: SCHEDULE */}
                 <div className="space-y-6">
-                    <div className="glass-card p-6 rounded-2xl bg-gradient-to-b from-white to-blue-50/50">
-                        <h3 className="flex items-center gap-2 font-bold text-gray-800 mb-4">
-                            <CalendarIcon className="w-5 h-5 text-purple-600" /> Today's Schedule
+                    <div className="glass-card p-6 rounded-2xl">
+                        <h3 className="flex items-center gap-2 font-bold text-foreground mb-4">
+                            <CalendarIcon className="w-5 h-5 text-violet-500" /> Today's Schedule
                         </h3>
                         {todaysMeetings.length === 0 ? (
-                            <p className="text-sm text-gray-500 italic">No meetings scheduled for today.</p>
+                            <p className="text-sm text-muted-foreground italic">No meetings scheduled for today.</p>
                         ) : (
-                            <div className="relative border-l-2 border-purple-200 ml-2 space-y-6 pl-6 py-2">
+                            <div className="relative border-l-2 border-violet-200 dark:border-violet-800 ml-2 space-y-6 pl-6 py-2">
                                 {todaysMeetings.map(m => (
                                     <div key={m.id} className="relative">
-                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white"></div>
-                                        <p className="text-xs font-bold text-purple-600 mb-1">
+                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-violet-500 ring-4 ring-card"></div>
+                                        <p className="text-xs font-bold text-violet-600 dark:text-violet-400 mb-1">
                                             {new Date(m.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
-                                        <h4 className="font-bold text-sm leading-tight text-gray-900">{m.title}</h4>
-                                        <p className="text-xs text-gray-500 mt-0.5">{m.mode}</p>
+                                        <h4 className="font-bold text-sm leading-tight text-foreground">{m.title}</h4>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{m.mode}</p>
                                     </div>
                                 ))}
                             </div>
@@ -201,10 +200,10 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                     {/* Time Tracking Widget Summary */}
                     <div className="glass-card p-6 rounded-2xl hidden lg:block">
-                        <h3 className="flex items-center gap-2 font-bold text-gray-800 mb-2">
-                            <Clock className="w-5 h-5 text-green-600" /> Time Tracked
+                        <h3 className="flex items-center gap-2 font-bold text-foreground mb-2">
+                            <Clock className="w-5 h-5 text-emerald-500" /> Time Tracked
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-1">See dashboard for details</p>
+                        <p className="text-sm text-muted-foreground">See dashboard for details</p>
                     </div>
                 </div>
             </div>

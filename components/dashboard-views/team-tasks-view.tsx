@@ -35,6 +35,7 @@ export function TeamTasksView({
     const [members, setMembers] = useState<UserProfile[]>([])
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+    const [userRole, setUserRole] = useState<string | null>(null)
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)
@@ -49,8 +50,10 @@ export function TeamTasksView({
 
             // Check if user is VA/Admin via profile (we need role here)
             const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single()
+            const role = profile?.role
+            setUserRole(role)
 
-            if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+            if (role !== 'admin' && role !== 'virtual_assistant') {
                 query = query.or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
             }
 
@@ -187,13 +190,16 @@ export function TeamTasksView({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-accent">My Day Tasks</h2>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <button
-                        onClick={() => setShowCreateTask(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Task
-                    </button>
+                    {/* Only VAs and admins can create tasks */}
+                    {(userRole === 'admin' || userRole === 'virtual_assistant') && (
+                        <button
+                            onClick={() => setShowCreateTask(true)}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Task
+                        </button>
+                    )}
                     <div className="flex bg-white rounded-lg p-1 border border-border">
                         {(["all", "active", "completed"] as const).map((filter) => (
                             <button

@@ -23,11 +23,14 @@ import {
   Briefcase,
   Calendar,
   Sun,
-  DollarSign
+  DollarSign,
+  Home,
+  MoreHorizontal
 } from "lucide-react"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
 import { NotificationBell } from "./notification-bell"
+import { ThemeToggle } from "./theme-toggle"
 import { AdminEditTaskModal } from "./modals/admin-edit-task-modal"
 import { AdminCreateTaskModal } from "./modals/admin-create-task-modal"
 import { AdminReviewTaskModal } from "./modals/admin-review-task-modal"
@@ -45,10 +48,9 @@ import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ReportsView } from "@/components/dashboard-views/reports-view"
 import { AdminTasksView } from "@/components/dashboard-views/admin-tasks-view"
 import { FinanceView } from "@/components/dashboard-views/finance-view"
-import { SalesView } from "@/components/dashboard-views/sales-view" // New Import
+import { SalesView } from "@/components/dashboard-views/sales-view"
 
-
-import { Task, UserProfile, Stats } from "@/lib/types" // Using shared types
+import { Task, UserProfile, Stats } from "@/lib/types"
 import { VAFinance } from "@/components/dashboard-views/va-finance"
 
 import { ProjectListView } from "@/components/projects/project-list-view"
@@ -241,7 +243,10 @@ export function AdminDashboard({
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     )
   }
@@ -252,30 +257,35 @@ export function AdminDashboard({
     badge: item.id === 'tasks' ? taskStats.active : item.id === 'team' ? members.length : undefined
   }))
 
+  // Filter out admin and VA from assignable members - tasks can only be assigned to team members
+  const assignableMembers = members.filter(m =>
+    m.role !== 'admin' && m.role !== 'virtual_assistant'
+  )
+
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Desktop Sidebar */}
       <div className={`
         fixed md:relative z-50 h-full
-        transition-all duration-300 ease-in-out
-        bg-white border-r border-slate-200 shadow-xl md:shadow-none flex flex-col
-        ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-64"}
+        transition-all duration-300 ease-out
+        bg-card/95 dark:bg-card/90 backdrop-blur-xl border-r border-border shadow-2xl md:shadow-lg flex flex-col
+        ${isSidebarOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-72"}
       `}>
-        <div className="p-4 flex items-center justify-between h-16 border-b border-border/10">
-          <h2 className={`font-bold text-accent truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
+        <div className="p-4 flex items-center justify-between h-16 border-b border-border">
+          <h2 className={`font-bold text-primary truncate text-lg ${!isSidebarOpen && "md:hidden lg:block"}`}>
             Admin Panel
           </h2>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="p-2 hover:bg-accent/10 rounded-lg md:hidden"
+            className="p-2.5 hover:bg-muted rounded-xl md:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X size={20} />
           </button>
@@ -292,27 +302,27 @@ export function AdminDashboard({
                   setActiveView(item.id as any)
                   if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 
+                className={`group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-h-[48px]
                     ${isActive
-                    ? "bg-slate-100 text-slate-900 font-semibold shadow-sm ring-1 ring-slate-200"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-primary/10 text-primary font-semibold shadow-sm dark:bg-primary/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 title={item.label}
               >
                 <Icon
                   size={20}
                   strokeWidth={isActive ? 2.5 : 2}
-                  className={`shrink-0 transition-colors ${isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                  className={`shrink-0 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`}
                 />
                 <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left text-sm`}>
                   {item.label}
                 </span>
 
                 {item.badge !== undefined && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto border
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto
                       ${isActive
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-slate-100 text-slate-500 border-slate-200'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
                     } ${!isSidebarOpen && "md:hidden lg:block"}`}>
                     {item.badge}
                   </span>
@@ -322,18 +332,18 @@ export function AdminDashboard({
           })}
         </nav>
 
-        <div className="p-4 bg-card border-t border-border/10 space-y-1">
+        <div className="p-4 border-t border-border space-y-1">
           <button
             onClick={() => setShowProfileSettings(true)}
-            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200"
+            className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200 min-h-[48px]"
             title="Settings"
           >
-            <Settings size={20} className="shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            <Settings size={20} className="shrink-0 transition-colors" />
             <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} text-sm font-medium`}>Settings</span>
           </button>
           <button
             onClick={handleLogout}
-            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+            className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 transition-all duration-200 min-h-[48px]"
             title="Sign Out"
           >
             <LogOut size={20} className="shrink-0 transition-colors" />
@@ -343,16 +353,16 @@ export function AdminDashboard({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100">
-        {/* Header - Slim Mobile First */}
-        <header className="bg-white border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-50 via-slate-50 to-emerald-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20">
+        {/* Header - Premium Mobile First */}
+        <header className="bg-card/80 dark:bg-card/60 backdrop-blur-xl border-b border-border shadow-sm h-16 flex-shrink-0 z-30">
           <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 -ml-2 hover:bg-accent/10 rounded-lg md:hidden text-foreground"
+                className="p-2.5 -ml-2 hover:bg-muted rounded-xl md:hidden text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
-                <Menu size={24} />
+                <Menu size={22} />
               </button>
 
               <div className="flex flex-col">
@@ -360,14 +370,15 @@ export function AdminDashboard({
                   {APP_NAME}
                 </h1>
                 <p className="text-xs text-muted-foreground hidden md:block">
-                  Welcome, {userName} • <span className="text-blue-600 font-medium">{getFormattedDate()}</span> • <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{getFormattedTime()}</span>
+                  Welcome back, <span className="font-medium text-foreground">{userName}</span> • <span className="text-primary font-medium">{getFormattedDate()}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <NotificationBell userId={userId} isAdmin={true} />
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 hidden sm:block">
                 {profile && (
                   <UserProfileCard
                     fullName={profile.full_name}
@@ -383,7 +394,7 @@ export function AdminDashboard({
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative">
+        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative pb-20 md:pb-6">
           <div className="md:hidden mb-4">
             <p className="text-sm text-muted-foreground">
               {typeof window !== 'undefined' && (new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening")},
@@ -532,7 +543,7 @@ export function AdminDashboard({
             <AdminEditTaskModal
               open={!!editingTask}
               task={editingTask}
-              members={members}
+              members={assignableMembers}
               onOpenChange={(open) => !open && setEditingTask(null)}
               onSuccess={loadData}
             />
@@ -542,7 +553,7 @@ export function AdminDashboard({
           {showCreateTask && (
             <AdminCreateTaskModal
               open={showCreateTask}
-              members={members}
+              members={assignableMembers}
               userId={userId}
               onOpenChange={setShowCreateTask}
               onSuccess={loadData}
