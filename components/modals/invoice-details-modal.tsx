@@ -219,8 +219,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                             <select
                                                 value={method}
                                                 onChange={e => setMethod(e.target.value)}
-                                                value={method}
-                                                onChange={e => setMethod(e.target.value)}
+
                                                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
                                             >
                                                 <option value="bank_transfer">Bank Transfer</option>
@@ -235,8 +234,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                             <Input
                                                 value={ref}
                                                 onChange={e => setRef(e.target.value)}
-                                                value={ref}
-                                                onChange={e => setRef(e.target.value)}
+
                                                 className="bg-background h-9"
                                                 placeholder="Transaction ID"
                                             />
