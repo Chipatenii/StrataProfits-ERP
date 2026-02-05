@@ -98,6 +98,14 @@ const ROLE_PERMISSIONS: Record<UserProfile["role"], Permission[]> = {
         "sops:read",
         "dashboard:my_day",
     ],
+    graphic_designer: [
+        "projects:read",
+        "tasks:read", "tasks:write",
+        "time_logs:read", "time_logs:write",
+        "meetings:read",
+        "sops:read",
+        "dashboard:my_day",
+    ],
 }
 
 export function hasPermission(role: UserProfile["role"], permission: Permission): boolean {
