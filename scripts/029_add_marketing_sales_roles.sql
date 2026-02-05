@@ -33,7 +33,8 @@ CHECK (role IN (
     'social_media_manager', 
     'book_keeper',
     'marketing',
-    'sales'
+    'sales',
+    'graphic_designer'
 ));
 
 -- Verify the constraint was added (query will show constraint details)

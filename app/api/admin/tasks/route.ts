@@ -5,7 +5,7 @@ import { APP_CONFIG } from "@/lib/config"
 import { createTaskSchema } from "@/lib/schemas"
 
 // Roles that can have tasks assigned to them (not admin, not VA)
-const ASSIGNABLE_ROLES = ['team_member', 'developer', 'social_media_manager', 'book_keeper', 'marketing', 'sales']
+const ASSIGNABLE_ROLES = ['team_member', 'developer', 'social_media_manager', 'book_keeper', 'marketing', 'sales', 'graphic_designer']
 
 export async function GET(request: NextRequest) {
   try {

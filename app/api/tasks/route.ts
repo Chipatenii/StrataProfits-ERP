@@ -16,15 +16,30 @@ export async function GET(request: NextRequest) {
         const status = searchParams.get("status")
 
         const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+        const userRole = profile?.role
 
         let query = admin
             .from("tasks")
             .select("*")
             .order("created_at", { ascending: false })
 
-        if (assigneeId) {
+        // Security Check: Only Admin and VA can query other users' tasks
+        if (assigneeId && assigneeId !== user.id) {
+            if (userRole !== 'admin' && userRole !== 'virtual_assistant') {
+                // For security, regular users checking others just get their own or nothing
+                // But let's return 403 to be explicit
+                return NextResponse.json({ error: "Forbidden: You can only view your own tasks" }, { status: 403 })
+            }
             query = query.eq("assigned_to", assigneeId)
+        } else if (!assigneeId && userRole !== 'admin' && userRole !== 'virtual_assistant') {
+            // If no assignee specified, non-admins see ONLY their own tasks
+            query = query.eq("assigned_to", user.id)
+        } else if (assigneeId === user.id) {
+            // User works looking up their own tasks
+            query = query.eq("assigned_to", user.id)
         }
+        // If Admin/VA and no assigneeId, they get all tasks (or we could enforce filtering, but "all" is useful for admin view)
 
         if (status) {
             query = query.eq("status", status)
