@@ -209,8 +209,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                                 max={balanceDue}
                                                 value={amount}
                                                 onChange={e => setAmount(e.target.value)}
-                                                value={amount}
-                                                onChange={e => setAmount(e.target.value)}
+
                                                 className="bg-background h-9"
                                                 required
                                             />
