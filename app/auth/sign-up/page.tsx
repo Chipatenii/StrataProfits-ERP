@@ -30,6 +30,8 @@ export default function SignUpPage() {
     }
 
     try {
+      const safeRole = ["marketing", "sales"].includes(role) ? "team_member" : role
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -37,7 +39,8 @@ export default function SignUpPage() {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
-            role: role,
+            role: safeRole,
+            requested_role: role, // Keep track of what they actually wanted
           },
         },
       })
