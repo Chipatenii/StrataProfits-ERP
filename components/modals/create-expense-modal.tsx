@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 interface CreateExpenseModalProps {
     open: boolean
@@ -70,9 +71,10 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
 
             onSuccess()
             onOpenChange(false)
+            toast.success(initialData ? 'Expense updated successfully' : 'Expense recorded successfully')
         } catch (error) {
             console.error(error)
-            alert(`Failed to ${initialData ? 'update' : 'create'} expense`)
+            toast.error(`Failed to ${initialData ? 'update' : 'create'} expense`)
         } finally {
             setLoading(false)
         }
@@ -154,12 +156,16 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                                             try {
                                                 const res = await fetch(`/api/expenses?id=${initialData.id}`, { method: "DELETE" })
                                                 if (res.ok) {
+                                                    toast.success("Expense deleted successfully")
                                                     onSuccess()
                                                     onOpenChange(false)
                                                 } else {
-                                                    alert("Failed to delete expense")
+                                                    toast.error("Failed to delete expense")
                                                 }
-                                            } catch (e) { console.error(e) }
+                                            } catch (e) {
+                                                console.error(e)
+                                                toast.error("Error deleting expense")
+                                            }
                                             finally { setLoading(false) }
                                         }
                                     }}

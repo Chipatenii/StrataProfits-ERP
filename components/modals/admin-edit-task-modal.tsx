@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Task, UserProfile } from "@/lib/types"
+import { toast } from "sonner"
 
 interface AdminEditTaskModalProps {
     open: boolean
@@ -81,9 +82,10 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
 
             onSuccess()
             onOpenChange(false)
+            toast.success("Task updated successfully")
         } catch (error) {
             console.error("Error updating task:", error)
-            alert("Failed to update task")
+            toast.error("Failed to update task")
         } finally {
             setIsLoading(false)
         }

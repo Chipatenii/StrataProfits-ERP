@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Invoice, InvoiceItem, Payment } from "@/lib/types"
 import { Loader2, Download, Printer, CreditCard, CheckCircle, FileText } from "lucide-react"
 import { PDFService } from "@/lib/pdf-service"
+import { toast } from "sonner"
 
 interface InvoiceDetailsModalProps {
     invoice: Invoice
@@ -68,7 +69,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
 
             if (!res.ok) {
                 const err = await res.json()
-                alert(err.error || "Failed to record payment")
+                toast.error(err.error || "Failed to record payment")
                 return
             }
 
@@ -78,8 +79,10 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
             setRef("")
             fetchDetails() // Reload details to see new balance/status
             onUpdate() // Refresh parent list
+            toast.success("Payment recorded successfully")
         } catch (error) {
             console.error(error)
+            toast.error("An unexpected error occurred")
         } finally {
             setIsSubmitting(false)
         }
@@ -125,7 +128,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                 ) : fullInvoice ? (
                     <div className="space-y-6">
                         {/* Summary Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50/50 rounded-lg border border-gray-100">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
                             <div>
                                 <p className="text-xs text-muted-foreground uppercase">Date Issued</p>
                                 <p className="font-medium">{new Date(fullInvoice.created_at).toLocaleDateString()}</p>
@@ -149,7 +152,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                             <h3 className="font-semibold text-lg border-b pb-2">Line Items</h3>
                             <div className="border rounded-lg overflow-hidden">
                                 <table className="w-full text-sm">
-                                    <thead className="bg-gray-50 text-gray-500">
+                                    <thead className="bg-muted text-muted-foreground">
                                         <tr>
                                             <th className="px-4 py-2 text-left">Description</th>
                                             <th className="px-4 py-2 text-right">Qty</th>
@@ -195,7 +198,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                             </div>
 
                             {paymentTab && (
-                                <form onSubmit={handlePayment} className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2">
+                                <form onSubmit={handlePayment} className="bg-primary/5 p-4 rounded-lg border border-primary/10 animate-in fade-in slide-in-from-top-2">
                                     <h4 className="font-medium mb-3 text-sm">New Payment Record (Internal Only)</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         <div>
@@ -206,7 +209,9 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                                 max={balanceDue}
                                                 value={amount}
                                                 onChange={e => setAmount(e.target.value)}
-                                                className="bg-white h-9"
+                                                value={amount}
+                                                onChange={e => setAmount(e.target.value)}
+                                                className="bg-background h-9"
                                                 required
                                             />
                                         </div>
@@ -215,7 +220,9 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                             <select
                                                 value={method}
                                                 onChange={e => setMethod(e.target.value)}
-                                                className="w-full h-9 rounded-md border border-input bg-white px-3 text-sm"
+                                                value={method}
+                                                onChange={e => setMethod(e.target.value)}
+                                                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
                                             >
                                                 <option value="bank_transfer">Bank Transfer</option>
                                                 <option value="mobile_money">Mobile Money</option>
@@ -229,7 +236,9 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                             <Input
                                                 value={ref}
                                                 onChange={e => setRef(e.target.value)}
-                                                className="bg-white h-9"
+                                                value={ref}
+                                                onChange={e => setRef(e.target.value)}
+                                                className="bg-background h-9"
                                                 placeholder="Transaction ID"
                                             />
                                         </div>
@@ -246,7 +255,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                             {fullInvoice.payments && fullInvoice.payments.length > 0 ? (
                                 <div className="space-y-2">
                                     {fullInvoice.payments.map(payment => (
-                                        <div key={payment.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg text-sm border">
+                                        <div key={payment.id} className="flex justify-between items-center p-3 bg-muted/40 rounded-lg text-sm border border-border/50">
                                             <div className="flex items-center gap-3">
                                                 <div className="bg-green-100 p-1.5 rounded-full text-green-600">
                                                     <CheckCircle className="w-4 h-4" />
@@ -257,7 +266,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                                                 </div>
                                             </div>
                                             {payment.reference && (
-                                                <span className="text-xs bg-white px-2 py-1 rounded border text-gray-500 font-mono">
+                                                <span className="text-xs bg-background px-2 py-1 rounded border border-border text-muted-foreground font-mono">
                                                     Ref: {payment.reference}
                                                 </span>
                                             )}

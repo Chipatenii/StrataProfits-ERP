@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 type CreateDeliverableForm = z.infer<typeof createDeliverableSchema>
 
@@ -63,8 +64,10 @@ export function CreateDeliverableModal({ projectId, open, onOpenChange, onSucces
             form.reset({ project_id: projectId, name: "", description: "", status: "pending", sort_order: 0, billing_type: "fixed", total_price: 0 })
             onSuccess()
             onOpenChange(false)
+            toast.success("Deliverable created successfully")
         } catch (error) {
             console.error("Error creating deliverable:", error)
+            toast.error("Failed to create deliverable")
         } finally {
             setSubmitting(false)
         }
@@ -72,7 +75,7 @@ export function CreateDeliverableModal({ projectId, open, onOpenChange, onSucces
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] glass-card border-border/50">
                 <DialogHeader>
                     <DialogTitle>Create New Deliverable</DialogTitle>
                     <DialogDescription>Add a high-level deliverable to group your project tasks.</DialogDescription>

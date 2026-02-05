@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 type CreateProjectForm = z.infer<typeof createProjectSchema>
 
@@ -47,7 +48,7 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: CreateProj
             onOpenChange(false)
         } catch (error) {
             console.error("Error creating project:", error)
-            // Ideally show toast error here
+            toast.error("Failed to create project")
         } finally {
             setSubmitting(false)
         }
@@ -55,7 +56,7 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: CreateProj
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] glass-card border-border/50">
                 <DialogHeader>
                     <DialogTitle>Create New Project</DialogTitle>
                     <DialogDescription>Add a new project to organize tasks and track time.</DialogDescription>

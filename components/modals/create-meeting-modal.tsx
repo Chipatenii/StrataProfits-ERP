@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Meeting, Client, Project } from "@/lib/types"
+import { toast } from "sonner"
 
 interface CreateMeetingModalProps {
     open: boolean
@@ -108,9 +109,10 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
             })
             onSuccess()
             onOpenChange(false)
+            toast.success(meetingToEdit ? "Meeting updated successfully" : "Meeting scheduled successfully")
         } catch (error) {
             console.error("Error creating meeting:", error)
-            alert("Failed to create meeting")
+            toast.error(error instanceof Error ? error.message : "Failed to create meeting")
         } finally {
             setIsLoading(false)
         }

@@ -4,7 +4,17 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { X } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 interface ProfileSettingsModalProps {
@@ -160,8 +170,8 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
   if (fetching) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8 flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex items-center gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span>Loading profile...</span>
         </div>
       </div>
@@ -169,111 +179,93 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-10">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-muted rounded-lg transition-colors">
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold">Account Settings</h2>
-          <p className="text-sm text-muted-foreground">Manage profile details</p>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md glass-card border-border/50">
+        <DialogHeader>
+          <DialogTitle>Account Settings</DialogTitle>
+          <DialogDescription>Manage profile details and settings.</DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Full Name</label>
-            <input
-              type="text"
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input
+              id="fullName"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Enter full name"
-              className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email"
-              className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
-              // Disable email editing for non-self users to avoid confusion since we can't update it easily
               disabled={false}
             />
           </div>
 
           {isAdmin && (
-            <>
-              <div className="border-t border-border pt-4 mt-4">
-                <h3 className="text-sm font-semibold text-accent mb-3 uppercase tracking-wider">Admin Controls</h3>
+            <div className="border-t border-border pt-4 mt-4 space-y-4">
+              <h3 className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Admin Controls</h3>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Role</label>
-                    <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent appearance-none"
-                    >
-                      <option value="team_member">Team Member</option>
-                      <option value="virtual_assistant">Virtual Assistant</option>
-                      <option value="social_media_manager">Social Media Manager</option>
-                      <option value="developer">Developer</option>
-                      <option value="book_keeper">Book Keeper</option>
-                      <option value="marketing">Marketing</option>
-                      <option value="sales">Sales</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Hourly Rate (ZMW)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={hourlyRate}
-                      onChange={(e) => setHourlyRate(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="team_member">Team Member</option>
+                  <option value="virtual_assistant">Virtual Assistant</option>
+                  <option value="social_media_manager">Social Media Manager</option>
+                  <option value="developer">Developer</option>
+                  <option value="book_keeper">Book Keeper</option>
+                  <option value="marketing">Marketing</option>
+                  <option value="sales">Sales</option>
+                  <option value="admin">Admin</option>
+                </select>
               </div>
-            </>
-          )}
 
-          {/* Password Section Removed as per request */}
+              <div className="space-y-2">
+                <Label htmlFor="hourlyRate">Hourly Rate (ZMW)</Label>
+                <Input
+                  id="hourlyRate"
+                  type="number"
+                  step="0.01"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          )}
 
           {message && (
             <div
-              className={`p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              className={`p-3 rounded-lg text-sm ${message.type === "success" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400" : "bg-destructive/10 text-destructive dark:bg-destructive/20"
                 }`}
             >
               {message.text}
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 disabled:opacity-50 transition-colors"
-            >
-              {loading ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-colors"
-            >
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
-            </button>
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

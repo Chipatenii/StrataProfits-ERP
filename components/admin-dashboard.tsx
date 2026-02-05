@@ -34,6 +34,7 @@ import { ThemeToggle } from "./theme-toggle"
 import { AdminEditTaskModal } from "./modals/admin-edit-task-modal"
 import { AdminCreateTaskModal } from "./modals/admin-create-task-modal"
 import { AdminReviewTaskModal } from "./modals/admin-review-task-modal"
+import { ConfirmModal } from "./modals/confirm-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { approveTask, rejectTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
@@ -85,6 +86,21 @@ export function AdminDashboard({
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [editingMember, setEditingMember] = useState<UserProfile | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+
+  // Confirmation Modal State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean
+    title: string
+    description: string
+    action: () => Promise<void> | void
+    variant?: "default" | "destructive"
+    confirmText?: string
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    action: () => { },
+  })
 
   // Review Modal State
   const [reviewingTask, setReviewingTask] = useState<Task | null>(null)
@@ -147,35 +163,59 @@ export function AdminDashboard({
   }
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Task",
+      description: "Are you sure you want to delete this task? This action cannot be undone.",
+      variant: "destructive",
+      confirmText: "Delete",
+      action: async () => {
+        try {
+          const response = await fetch(`/api/admin/tasks?id=${taskId}`, {
+            method: "DELETE",
+          })
 
-    try {
-      const response = await fetch(`/api/admin/tasks?id=${taskId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        loadData()
+          if (response.ok) {
+            toast.success("Task deleted successfully")
+            loadData()
+          } else {
+            toast.error("Failed to delete task")
+          }
+        } catch (error) {
+          console.error("Error deleting task:", error)
+          toast.error("An error occurred")
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }))
       }
-    } catch (error) {
-      console.error("Error deleting task:", error)
-    }
+    })
   }
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!confirm("Are you sure you want to delete this team member? This action cannot be undone.")) return
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Team Member",
+      description: "Are you sure you want to delete this team member? This action cannot be undone and will remove all their data.",
+      variant: "destructive",
+      confirmText: "Delete Member",
+      action: async () => {
+        try {
+          const response = await fetch(`/api/admin/members/${memberId}`, {
+            method: "DELETE",
+          })
 
-    try {
-      const response = await fetch(`/api/admin/members/${memberId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        loadData()
+          if (response.ok) {
+            toast.success("Member deleted successfully")
+            loadData()
+          } else {
+            toast.error("Failed to delete member")
+          }
+        } catch (error) {
+          console.error("Error deleting member:", error)
+          toast.error("An error occurred")
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }))
       }
-    } catch (error) {
-      console.error("Error deleting member:", error)
-    }
+    })
   }
 
   // Review Actions
@@ -199,24 +239,32 @@ export function AdminDashboard({
   }
 
   const handleRejectTask = async (task: Task) => {
-    if (!confirm("Are you sure you want to reject this task? This action cannot be undone.")) return
-
-    setIsProcessing(true)
-    try {
-      const result = await rejectTask(task.id)
-      if (result.success) {
-        toast.success("Task rejected")
-        setReviewingTask(null)
-        loadData()
-      } else {
-        toast.error("Failed to reject task")
+    setConfirmConfig({
+      isOpen: true,
+      title: "Reject Task",
+      description: "Are you sure you want to reject this task? This action cannot be undone.",
+      variant: "destructive",
+      confirmText: "Reject",
+      action: async () => {
+        setIsProcessing(true)
+        try {
+          const result = await rejectTask(task.id)
+          if (result.success) {
+            toast.success("Task rejected")
+            setReviewingTask(null)
+            loadData()
+          } else {
+            toast.error("Failed to reject task")
+          }
+        } catch (error) {
+          console.error("Error rejecting task:", error)
+          toast.error("An error occurred")
+        } finally {
+          setIsProcessing(false)
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+        }
       }
-    } catch (error) {
-      console.error("Error rejecting task:", error)
-      toast.error("An error occurred")
-    } finally {
-      setIsProcessing(false)
-    }
+    })
   }
 
   const getMemberName = (memberId: string | null) => {
@@ -538,6 +586,16 @@ export function AdminDashboard({
               }}
             />
           )}
+
+          <ConfirmModal
+            open={confirmConfig.isOpen}
+            onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, isOpen: open }))}
+            title={confirmConfig.title}
+            description={confirmConfig.description}
+            onConfirm={confirmConfig.action}
+            confirmText={confirmConfig.confirmText}
+            variant={confirmConfig.variant}
+          />
         </main>
       </div>
     </div>

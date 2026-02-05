@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { X, PartyPopper, Clock } from "lucide-react"
 import { formatDuration, getTimeStatusMessage } from "@/lib/time-utils"
+import { toast } from "sonner"
 
 interface TaskCompletionModalProps {
     isOpen: boolean
@@ -40,6 +41,7 @@ export function TaskCompletionModal({
             }, 2000)
         } catch (error) {
             console.error("Error completing task:", error)
+            toast.error("Failed to complete task")
             setShowConfetti(false)
         } finally {
             setIsSubmitting(false)

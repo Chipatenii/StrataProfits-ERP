@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { UserProfile } from "@/lib/types"
+import { toast } from "sonner"
 
 type AddMemberForm = z.infer<typeof addProjectMemberSchema>
 
@@ -57,9 +58,10 @@ export function AddMemberModal({ projectId, open, onOpenChange, onSuccess }: Add
             form.reset()
             onSuccess()
             onOpenChange(false)
+            toast.success("Member added successfully")
         } catch (error) {
             console.error("Error adding member:", error)
-            alert(error instanceof Error ? error.message : "Failed to add member")
+            toast.error(error instanceof Error ? error.message : "Failed to add member")
         } finally {
             setSubmitting(false)
         }
@@ -67,7 +69,7 @@ export function AddMemberModal({ projectId, open, onOpenChange, onSuccess }: Add
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] glass-card border-border/50">
                 <DialogHeader>
                     <DialogTitle>Add Project Member</DialogTitle>
                     <DialogDescription>Select a team member to add to this project.</DialogDescription>

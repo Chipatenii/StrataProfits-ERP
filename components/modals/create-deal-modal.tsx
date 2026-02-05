@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Client } from "@/lib/types"
+import { toast } from "sonner"
 
 interface CreateDealModalProps {
     open: boolean
@@ -97,9 +98,10 @@ export function CreateDealModal({ open, onOpenChange, onSuccess, initialData }: 
             })
             onSuccess()
             onOpenChange(false)
+            toast.success(initialData?.id ? "Deal updated successfully" : "Deal created successfully")
         } catch (error) {
             console.error(`Error ${initialData?.id ? 'updating' : 'creating'} deal:`, error)
-            alert(`Failed to ${initialData?.id ? 'update' : 'create'} deal`)
+            toast.error(error instanceof Error ? error.message : `Failed to ${initialData?.id ? 'update' : 'create'} deal`)
         } finally {
             setIsLoading(false)
         }
@@ -208,12 +210,16 @@ export function CreateDealModal({ open, onOpenChange, onSuccess, initialData }: 
                                             try {
                                                 const res = await fetch(`/api/admin/deals?id=${initialData.id}`, { method: "DELETE" })
                                                 if (res.ok) {
+                                                    toast.success("Deal deleted successfully")
                                                     onSuccess()
                                                     onOpenChange(false)
                                                 } else {
-                                                    alert("Failed to delete deal")
+                                                    toast.error("Failed to delete deal")
                                                 }
-                                            } catch (e) { console.error(e) }
+                                            } catch (e) {
+                                                console.error(e)
+                                                toast.error("Error deleting deal")
+                                            }
                                             finally { setIsLoading(false) }
                                         }
                                     }}

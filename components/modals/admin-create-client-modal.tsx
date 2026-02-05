@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Client } from "@/lib/types"
+import { toast } from "sonner"
 
 interface AdminCreateClientModalProps {
     open: boolean
@@ -94,9 +95,10 @@ export function AdminCreateClientModal({ open, onOpenChange, onSuccess, client }
             }
             onSuccess()
             onOpenChange(false)
+            toast.success(client ? "Client updated successfully" : "Client created successfully")
         } catch (error) {
             console.error("Error saving client:", error)
-            alert("Failed to save client")
+            toast.error("Failed to save client")
         } finally {
             setIsLoading(false)
         }

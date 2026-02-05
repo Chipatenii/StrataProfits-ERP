@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from "lucide-react"
 import { Invoice } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
+import { toast } from "sonner"
 
 interface CreateReceiptModalProps {
     open: boolean
@@ -103,9 +104,10 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
             setAmount(0)
             setReceiptNumber("")
             setReference("")
+            toast.success(initialData ? "Receipt updated successfully" : "Receipt created successfully")
         } catch (error) {
             console.error(error)
-            alert(`Failed to ${initialData ? 'update' : 'create'} receipt`)
+            toast.error(`Failed to ${initialData ? 'update' : 'create'} receipt`)
         } finally {
             setLoading(false)
         }
@@ -210,12 +212,16 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                                             try {
                                                 const res = await fetch(`/api/payments?id=${initialData.id}`, { method: "DELETE" })
                                                 if (res.ok) {
+                                                    toast.success("Receipt deleted successfully")
                                                     onSuccess()
                                                     onOpenChange(false)
                                                 } else {
-                                                    alert("Failed to delete receipt")
+                                                    toast.error("Failed to delete receipt")
                                                 }
-                                            } catch (e) { console.error(e) }
+                                            } catch (e) {
+                                                console.error(e)
+                                                toast.error("Error deleting receipt")
+                                            }
                                             finally { setLoading(false) }
                                         }
                                     }}

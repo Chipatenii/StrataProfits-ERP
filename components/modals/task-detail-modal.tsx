@@ -36,7 +36,7 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] bg-white border-border/30 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[500px] glass-card border-border/30 max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold border ${getStatusColor(task.status)}`}>
@@ -46,7 +46,7 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
                             {task.priority}
                         </span>
                     </div>
-                    <DialogTitle className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">
+                    <DialogTitle className="text-xl md:text-2xl font-bold text-foreground leading-tight">
                         {task.title}
                     </DialogTitle>
                 </DialogHeader>
@@ -54,11 +54,11 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
                 <div className="space-y-6 pt-4">
                     {/* Description Section */}
                     <div className="space-y-2">
-                        <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                             <Clipboard className="w-4 h-4" /> Description
                         </h4>
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm md:text-base">
+                        <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
+                            <p className="text-foreground leading-relaxed whitespace-pre-wrap text-sm md:text-base">
                                 {task.description || "No description provided."}
                             </p>
                         </div>
@@ -67,42 +67,42 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
                     {/* Meta Grid */}
                     <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                 <User className="w-4 h-4" /> Assigned To
                             </h4>
-                            <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs uppercase">
+                            <div className="p-3 bg-card rounded-lg border border-border/50 shadow-sm flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase">
                                     {assignedMember?.full_name?.charAt(0) || "?"}
                                 </div>
-                                <span className="text-sm font-medium text-slate-700">
+                                <span className="text-sm font-medium text-foreground">
                                     {assignedMember?.full_name || "Unassigned"}
                                 </span>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                 <Clock className="w-4 h-4" /> Estimate
                             </h4>
-                            <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                            <div className="p-3 bg-card rounded-lg border border-border/50 shadow-sm flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                                     <Clock className="w-4 h-4" />
                                 </div>
-                                <span className="text-sm font-medium text-slate-700">
+                                <span className="text-sm font-medium text-foreground">
                                     {task.estimated_hours ? `${task.estimated_hours} Hours` : "Not estimated"}
                                 </span>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                 <Calendar className="w-4 h-4" /> Due Date
                             </h4>
-                            <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                            <div className="p-3 bg-card rounded-lg border border-border/50 shadow-sm flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
                                     <Calendar className="w-4 h-4" />
                                 </div>
-                                <span className="text-sm font-medium text-slate-700">
+                                <span className="text-sm font-medium text-foreground">
                                     {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No deadline"}
                                 </span>
                             </div>
@@ -110,7 +110,7 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
 
                         {task.completed_at && (
                             <div className="space-y-2">
-                                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                     <CheckCircle2 className="w-4 h-4" /> Completed At
                                 </h4>
                                 <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100 shadow-sm flex items-center gap-3 text-emerald-700">
@@ -126,7 +126,7 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
                     {/* Completion Notes */}
                     {task.status === 'completed' && task.completion_notes && (
                         <div className="space-y-2">
-                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4" /> Completion Notes
                             </h4>
                             <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 italic text-emerald-800 text-sm">
