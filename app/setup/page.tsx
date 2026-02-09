@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { createAdminUser } from "@/app/actions/setup"
 import { createClient } from "@/lib/supabase/client"
+import { APP_NAME } from "@/lib/config"
 
 export default function SetupPage() {
   const [loading, setLoading] = useState(false)
@@ -79,7 +80,7 @@ export default function SetupPage() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Setup</h1>
             <p className="text-slate-600">
-              {adminExists ? "Your system is ready" : "Initialize your admin account for Ostento Media Agency"}
+              {adminExists ? "Your system is ready" : `Initialize your admin account for ${APP_NAME}`}
             </p>
           </div>
 
@@ -107,11 +108,10 @@ export default function SetupPage() {
 
           {message && (
             <div
-              className={`mt-6 p-4 rounded-lg ${
-                message.type === "success"
+              className={`mt-6 p-4 rounded-lg ${message.type === "success"
                   ? "bg-green-50 border border-green-200 text-green-900"
                   : "bg-red-50 border border-red-200 text-red-900"
-              }`}
+                }`}
             >
               <p className="text-sm">{message.text}</p>
             </div>

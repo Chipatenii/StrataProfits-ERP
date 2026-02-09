@@ -168,7 +168,7 @@ async function reevaluateInvoiceStatus(admin: any, invoiceId: string) {
             totalDue = invoice.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unit_price), 0)
         }
         const totalPaid = payments.reduce((sum: number, p: any) => sum + p.amount, 0)
-        let newStatus = totalPaid >= totalDue ? 'paid' : totalPaid > 0 ? 'sent' : 'sent'
+        let newStatus = totalPaid >= totalDue ? 'paid' : totalPaid > 0 ? 'sent' : 'draft'
         await admin.from("invoices").update({ status: newStatus }).eq("id", invoiceId)
     }
 }

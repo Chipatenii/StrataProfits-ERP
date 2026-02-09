@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ProjectListView } from "@/components/projects/project-list-view"
+import { APP_NAME } from "@/lib/config"
 
 // For now, consistent header is good. I'll stick to a simple page structure.
 
@@ -35,7 +36,7 @@ export default async function ProjectsPage() {
         <div className="min-h-screen bg-gray-50">
             <header className="bg-white border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <h1 className="text-xl font-bold">Ostento Tracker</h1>
+                    <h1 className="text-xl font-bold">{APP_NAME}</h1>
                     <div className="flex items-center gap-4">
                         {/* Simplified header for sub-page */}
                         <a href="/dashboard" className="text-sm font-medium text-gray-600 hover:text-gray-900">Back to Dashboard</a>
