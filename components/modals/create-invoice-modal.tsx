@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -221,6 +221,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
             <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto w-full glass-card border-border/30">
                 <DialogHeader>
                     <DialogTitle>{invoiceToEdit ? `Edit Invoice ${invoiceToEdit.invoice_number || ''}` : "Create Invoice"}</DialogTitle>
+                    <DialogDescription>Fill in the invoice details and add line items below.</DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6 mt-2">

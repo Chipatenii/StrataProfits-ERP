@@ -1,12 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Task, UserProfile } from "@/lib/types"
 import { toast } from "sonner"
+
+// Helper to format ISO date string to yyyy-MM-dd for HTML date inputs
+function formatDateForInput(dateString: string | null | undefined): string {
+    if (!dateString) return ""
+    try {
+        const date = new Date(dateString)
+        return date.toISOString().split('T')[0]
+    } catch {
+        return ""
+    }
+}
 
 interface AdminEditTaskModalProps {
     open: boolean
@@ -44,7 +55,7 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                     status: task.status,
                     priority: task.priority,
                     assigned_to: task.assigned_to || "",
-                    due_date: task.due_date || "",
+                    due_date: formatDateForInput(task.due_date),
                     estimated_hours: task.estimated_hours?.toString() || "",
                     project_id: task.project_id || "",
                 })
@@ -96,6 +107,7 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
             <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-primary">Edit Task</DialogTitle>
+                    <DialogDescription>Modify task details below.</DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
