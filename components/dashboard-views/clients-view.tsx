@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Users, Search, Folder, Globe, Facebook, Instagram, Phone, Mail, MapPin, Sparkles, Building2, UserPlus } from "lucide-react"
+import { Users, Search, Globe, Facebook, Instagram, Phone, Mail, MapPin, Sparkles, Building2, UserPlus } from "lucide-react"
 import { Client } from "@/lib/types"
 import { AdminCreateClientModal } from "@/components/modals/admin-create-client-modal"
 import { Edit } from "lucide-react"

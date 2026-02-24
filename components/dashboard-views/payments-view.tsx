@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Loader2, ArrowUpRight, CheckCircle, AlertCircle, FileText } from "lucide-react"
+import { Plus, Search, Loader2, FileText } from "lucide-react"
 import { Payment } from "@/lib/types"
 import { CreateReceiptModal } from "@/components/modals/create-receipt-modal"
 import { Button } from "@/components/ui/button"

@@ -8,25 +8,9 @@ import { useRouter } from "next/navigation"
 import {
   LogOut,
   Settings,
-  CheckCircle,
   Menu,
   X,
-  Loader2,
-  Plus,
-  Trash2,
-  Edit,
-  Users,
-  ClipboardList,
-  BarChart3,
-  FileText,
-  Folder,
-  Briefcase,
-  Calendar,
-  Sun,
-  DollarSign,
-  Home,
-  MoreHorizontal
-} from "lucide-react"
+  Loader2} from "lucide-react"
 import { UserProfileCard } from "./user-profile-card"
 import { ProfileSettingsModal } from "./profile-settings-modal"
 import { NotificationBell } from "./notification-bell"
@@ -38,20 +22,18 @@ import { ConfirmModal } from "./modals/confirm-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { approveTask, rejectTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
-import Link from "next/link"
-import { getFormattedDate, getFormattedTime } from "@/lib/time-utils"
+import { getFormattedDate } from "@/lib/time-utils"
 
 import { MyDayView } from "@/components/dashboard-views/my-day-view"
 import { OverviewView } from "@/components/dashboard-views/overview-view"
 import { ClientsView } from "@/components/dashboard-views/clients-view"
-import { PipelineView } from "@/components/dashboard-views/pipeline-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ReportsView } from "@/components/dashboard-views/reports-view"
 import { AdminTasksView } from "@/components/dashboard-views/admin-tasks-view"
 import { FinanceView } from "@/components/dashboard-views/finance-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
 
-import { Task, UserProfile, Stats } from "@/lib/types"
+import { Task, UserProfile } from "@/lib/types"
 import { VAFinance } from "@/components/dashboard-views/va-finance"
 
 import { ProjectListView } from "@/components/projects/project-list-view"
@@ -59,7 +41,6 @@ import { ProjectDetailView } from "@/components/projects/project-detail-view"
 import { TeamView } from "@/components/dashboard-views/team-view"
 import { VASOPs } from "@/components/dashboard-views/va-sops"
 
-import { Receipt, Boxes } from "lucide-react"
 
 export function AdminDashboard({
   userId,
@@ -267,19 +248,8 @@ export function AdminDashboard({
     })
   }
 
-  const getMemberName = (memberId: string | null) => {
-    if (!memberId) return "Unassigned"
-    const member = members.find((m: UserProfile) => m.id === memberId)
-    return member?.full_name || "Unknown"
-  }
 
   const pendingTasks = tasks.filter((t: Task) => t.approval_status === "pending")
-  const filteredTasks = tasks.filter((task: Task) => {
-    if (taskFilter === "all") return true
-    if (taskFilter === "active") return task.status !== "completed"
-    if (taskFilter === "completed") return task.status === "completed"
-    return true
-  })
 
   // Safe access to length properties
   const taskStats = {

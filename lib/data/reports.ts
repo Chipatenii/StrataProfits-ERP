@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { APP_CONFIG } from "@/lib/config/constants"
 
 export interface DashboardStats {
     totalRevenue: number
@@ -59,7 +60,7 @@ export async function getCashflowSummary() {
     const { data, error } = await supabase
         .from("cashflow_summary")
         .select("*")
-        .limit(12) // Last 12 months
+        .limit(APP_CONFIG.REPORTS.MONTHS_LIMIT) // Last 12 months
 
     if (error) {
         console.error("Error fetching cashflow summary:", error)

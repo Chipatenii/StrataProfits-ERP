@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createSelfCreatedTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase/client"
 
 interface CreateSelfTaskModalProps {
     open: boolean

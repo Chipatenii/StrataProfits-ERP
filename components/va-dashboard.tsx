@@ -2,8 +2,8 @@
 
 import { APP_NAME } from "@/lib/config"
 import { getNavItemsForRole } from "@/lib/navigation"
-import { useState, useEffect } from "react"
-import { LogOut, Menu, X, Settings } from "lucide-react"
+import { useState } from "react"
+import { LogOut, Menu, X } from "lucide-react"
 import { getTimeBasedGreeting, getFormattedDate } from "@/lib/time-utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"

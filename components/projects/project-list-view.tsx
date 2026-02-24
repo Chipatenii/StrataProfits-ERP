@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Plus, Folder, Calendar, Users, CheckCircle, ArrowRight, Loader2, Briefcase } from "lucide-react"
+import { Plus, Folder, Users, CheckCircle, ArrowRight, Loader2, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CreateProjectModal } from "./create-project-modal"
 import { Project } from "@/lib/types"
@@ -13,7 +12,7 @@ interface ProjectListViewProps {
     onSelectProject?: (projectId: string) => void
 }
 
-export function ProjectListView({ userId, onSelectProject }: ProjectListViewProps) {
+export function ProjectListView({ onSelectProject }: ProjectListViewProps) {
     const router = useRouter()
     const [projects, setProjects] = useState<(Project & { tasks: { count: number }[], members: { count: number }[] })[]>([])
     const [loading, setLoading] = useState(true)

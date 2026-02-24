@@ -17,7 +17,7 @@ const updateApprovalSchema = z.object({
     decision_note: z.string().optional()
 })
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -10,6 +10,7 @@ import { Plus, Trash2, Loader2, ArrowUp, ArrowDown } from "lucide-react"
 import { Client, Invoice } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
+import { APP_CONFIG } from "@/lib/config/constants"
 
 interface CreateInvoiceModalProps {
     open: boolean
@@ -48,7 +49,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
     const [terms, setTerms] = useState("")
 
     const [items, setItems] = useState<LineItem[]>([
-        { id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }
+        { id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }
     ])
 
     useEffect(() => {
@@ -86,7 +87,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
                 setAdjustment(0)
                 setCustomerNotes("")
                 setTerms("")
-                setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+                setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }])
             }
         }
     }, [open, invoiceToEdit])
@@ -111,7 +112,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
     }
 
     const addItem = () => {
-        setItems([...items, { id: Math.random().toString(), description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+        setItems([...items, { id: Math.random().toString(), description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }])
     }
 
     const removeItem = (id: string) => {
@@ -201,7 +202,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
             onOpenChange(false)
             // Reset form
             setClientId("")
-            setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+            setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }])
             setOrderNumber("")
             setDiscountRate(0)
             setAdjustment(0)

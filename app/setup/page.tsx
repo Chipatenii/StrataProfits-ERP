@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { createAdminUser } from "@/app/actions/setup"
 import { createClient } from "@/lib/supabase/client"
+import { APP_CONFIG } from "@/lib/config/constants"
 import { APP_NAME } from "@/lib/config"
 
 export default function SetupPage() {
@@ -15,7 +16,7 @@ export default function SetupPage() {
     async function checkAdminExists() {
       try {
         const supabase = createClient()
-        const { data, error } = await supabase.from("profiles").select("id").eq("role", "admin").limit(1)
+        const { data, error } = await supabase.from("profiles").select("id").eq("role", "admin").limit(APP_CONFIG.PAGINATION.DEFAULT_SINGLE_RECORD)
 
         if (!error && data && data.length > 0) {
           setAdminExists(true)

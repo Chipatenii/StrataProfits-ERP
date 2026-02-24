@@ -1,9 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin"
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic" // Prevent caching
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const admin = await createAdminClient()
 

@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Invoice, InvoiceItem, Payment } from "@/lib/types"
-import { Loader2, Download, Printer, CreditCard, CheckCircle, FileText } from "lucide-react"
+import { Invoice } from "@/lib/types"
+import { Loader2, CreditCard, CheckCircle, FileText } from "lucide-react"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
 

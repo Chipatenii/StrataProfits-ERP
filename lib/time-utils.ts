@@ -45,24 +45,6 @@ export function formatDuration(minutes: number): string {
 }
 
 /**
- * Format duration in minutes to decimal hours
- * Example: 90 minutes -> "1.5h"
- */
-export function formatHours(minutes: number): string {
-    const hours = (minutes / 60).toFixed(1)
-    return `${hours}h`
-}
-
-/**
- * Check if time spent exceeds estimated time
- */
-export function isTimeExceeded(spentMinutes: number, estimatedHours: number): boolean {
-    if (!estimatedHours || estimatedHours <= 0) return false
-    const estimatedMinutes = estimatedHours * 60
-    return spentMinutes > estimatedMinutes
-}
-
-/**
  * Get time status based on percentage
  * Returns: 'good' (< 80%), 'warning' (80-100%), 'exceeded' (> 100%)
  */
@@ -77,31 +59,6 @@ export function getTimeStatus(
     if (percentage > 100) return "exceeded"
     if (percentage >= 80) return "warning"
     return "good"
-}
-
-/**
- * Get color class based on time status
- */
-export function getTimeStatusColor(status: "good" | "warning" | "exceeded" | "none"): string {
-    switch (status) {
-        case "good":
-            return "text-green-600 bg-green-50 border-green-200"
-        case "warning":
-            return "text-yellow-600 bg-yellow-50 border-yellow-200"
-        case "exceeded":
-            return "text-red-600 bg-red-50 border-red-200"
-        default:
-            return "text-gray-600 bg-gray-50 border-gray-200"
-    }
-}
-
-/**
- * Get progress ring color based on percentage
- */
-export function getProgressColor(percentage: number): string {
-    if (percentage > 100) return "#ef4444" // red-500
-    if (percentage >= 80) return "#f59e0b" // amber-500
-    return "#10b981" // green-500
 }
 
 /**
@@ -148,31 +105,6 @@ export function getTimeStatusMessage(spentMinutes: number, estimatedHours: numbe
 
     const remaining = getTimeRemaining(spentMinutes, estimatedHours)
     return `${formatDuration(remaining)} remaining (${percentage}%)`
-}
-
-/**
- * Parse hours input (handles decimal and "h:m" format)
- */
-export function parseHoursInput(input: string): number | null {
-    if (!input || input.trim() === "") return null
-
-    // Try parsing as decimal (e.g., "2.5")
-    const decimal = Number.parseFloat(input)
-    if (!Number.isNaN(decimal) && decimal > 0) {
-        return decimal
-    }
-
-    // Try parsing as "h:m" format (e.g., "2:30")
-    const parts = input.split(":")
-    if (parts.length === 2) {
-        const hours = Number.parseInt(parts[0], 10)
-        const minutes = Number.parseInt(parts[1], 10)
-        if (!Number.isNaN(hours) && !Number.isNaN(minutes) && hours >= 0 && minutes >= 0 && minutes < 60) {
-            return hours + minutes / 60
-        }
-    }
-
-    return null
 }
 
 /**

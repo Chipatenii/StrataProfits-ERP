@@ -3,12 +3,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { Plus, FileText, Loader2, ChevronDown, TrendingUp, TrendingDown, RefreshCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
 import type { Invoice } from "@/lib/types"
 import { CreateInvoiceModal } from "@/components/modals/create-invoice-modal"
-import { PDFService } from "@/lib/pdf-service"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 interface FinanceSummary {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Calendar, Video, MapPin, User, Clock, Phone, CalendarDays, Edit2 } from "lucide-react"
+import { Plus, Video, MapPin, User, Clock, Phone, CalendarDays, Edit2 } from "lucide-react"
 import { Meeting } from "@/lib/types"
 import { CreateMeetingModal } from "@/components/modals/create-meeting-modal"
 import { AttachmentList } from "@/components/attachment-list"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, DollarSign, Calendar, ChevronRight } from "lucide-react"
+import { Plus, DollarSign, Calendar } from "lucide-react"
 import type { Deal } from "@/lib/types"
 import { CreateDealModal } from "@/components/modals/create-deal-modal"
 import { AttachmentList } from "@/components/attachment-list"

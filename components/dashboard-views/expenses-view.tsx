@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Loader2, ArrowDownRight, FileText } from "lucide-react"
+import { Plus, Search, Loader2 } from "lucide-react"
 import { Expense } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

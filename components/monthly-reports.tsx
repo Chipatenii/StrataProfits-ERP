@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Download, Loader2 } from "lucide-react"
 import jsPDF from "jspdf"
@@ -25,8 +24,7 @@ interface TeamMemberReport {
   }>
 }
 
-export function MonthlyReports({ userId }: { userId: string }) {
-  const supabase = createClient()
+export function MonthlyReports() {
   const router = useRouter()
   const [reports, setReports] = useState<TeamMemberReport[]>([])
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))

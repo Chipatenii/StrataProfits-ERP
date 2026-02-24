@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Bell, X, CheckCircle, AlertTriangle, Clock } from "lucide-react"
-import { subscribeToNotifications, markAsRead, markAllAsRead } from "@/lib/notification-utils"
+import { subscribeToNotifications } from "@/lib/notification-utils"
 import type { Notification } from "@/lib/notification-utils"
 
 interface NotificationBellProps {

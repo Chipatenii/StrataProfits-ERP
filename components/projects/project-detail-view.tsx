@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Deliverable, Project, ProjectMember, Task, UserProfile } from "@/lib/types"
-import { Loader2, ArrowLeft, Users, Calendar, CheckCircle, Trash2, Plus, ClipboardList } from "lucide-react"
+import { Loader2, ArrowLeft, Users, Calendar, CheckCircle, Trash2, Plus } from "lucide-react"
 import { getRoleBadgeStyles, formatRoleName } from "@/lib/utils/role-styles"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"

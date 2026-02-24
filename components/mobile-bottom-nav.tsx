@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Home, CheckSquare, Calendar, User, MoreHorizontal, type LucideIcon } from "lucide-react"
 
 interface MobileBottomNavProps {

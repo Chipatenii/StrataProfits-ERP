@@ -22,5 +22,5 @@ export default async function ReportsPage() {
     redirect("/dashboard")
   }
 
-  return <MonthlyReports userId={user.id} />
+  return <MonthlyReports />
 }

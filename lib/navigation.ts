@@ -1,4 +1,4 @@
-import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, TrendingUp, Book, ClipboardCheck, Settings, Sun } from "lucide-react"
+import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, Book, ClipboardCheck, Sun } from "lucide-react"
 import { Permission, hasPermission } from "./permissions"
 import { UserProfile } from "./types"
 

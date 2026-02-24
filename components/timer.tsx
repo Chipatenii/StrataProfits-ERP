@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { shouldShowWarning, hasTimeElapsed, getRemainingMinutesFromStart } from "@/lib/time-utils"
 
 interface TimerProps {
   isActive: boolean

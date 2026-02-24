@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { APP_CONFIG } from "@/lib/config/constants"
 
 export async function GET(request: Request) {
     try {
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
             .eq("admin_id", adminId)
             .eq("is_read", false)
             .order("created_at", { ascending: false })
-            .limit(50)
+            .limit(APP_CONFIG.PAGINATION.NOTIFICATIONS_LIMIT)
 
         if (error) {
             console.error("Error fetching notifications:", error)

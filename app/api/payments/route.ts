@@ -14,19 +14,18 @@ const createPaymentSchema = z.object({
     receipt_number: z.string().optional()
 })
 
-export async function GET(request: NextRequest) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-    const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-
-    if (!['admin', 'book_keeper', 'virtual_assistant'].includes(profile?.role)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
+export async function GET() {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (!['admin', 'book_keeper', 'virtual_assistant'].includes(profile?.role)) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
         const { data: payments, error } = await admin
             .from("payments")
             .select("*")
@@ -42,19 +41,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-    // Check Role: Only Admin or Bookkeeper can record funds
-    const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-
-    if (!['admin', 'book_keeper'].includes(profile?.role)) {
-        return NextResponse.json({ error: "Forbidden: Only Admin/Bookkeeper can record payments" }, { status: 403 })
-    }
-
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+        // Check Role: Only Admin or Bookkeeper can record funds
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (!['admin', 'book_keeper'].includes(profile?.role)) {
+            return NextResponse.json({ error: "Forbidden: Only Admin/Bookkeeper can record payments" }, { status: 403 })
+        }
+
         const body = await request.json()
         const validation = createPaymentSchema.safeParse(body)
         if (!validation.success) {
@@ -62,6 +61,18 @@ export async function POST(request: NextRequest) {
         }
 
         const { invoice_id, amount } = validation.data
+
+        // 0. Prevent Overpayments
+        const { data: invoice } = await admin.from("invoices").select("amount").eq("id", invoice_id).single()
+        if (!invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
+
+        const { data: existingPayments } = await admin.from("payments").select("amount").eq("invoice_id", invoice_id)
+        const totalPaid = (existingPayments || []).reduce((sum: number, p: any) => sum + p.amount, 0)
+        const balanceDue = invoice.amount - totalPaid
+
+        if (amount > balanceDue) {
+            return NextResponse.json({ error: "Unprocessable Entity", details: "Payment amount exceeds balance due" }, { status: 422 })
+        }
 
         // 1. Record Payment
         const { data: payment, error } = await admin.from("payments").insert({
@@ -83,18 +94,18 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-    const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-
-    if (!['admin', 'book_keeper'].includes(profile?.role)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (!['admin', 'book_keeper'].includes(profile?.role)) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+
         const { searchParams } = new URL(request.url)
         const id = searchParams.get('id')
         if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
@@ -126,18 +137,18 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-    const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-
-    if (profile?.role !== 'admin') {
-        return NextResponse.json({ error: "Forbidden: Admin Only" }, { status: 403 })
-    }
-
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (profile?.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden: Admin Only" }, { status: 403 })
+        }
+
         const { searchParams } = new URL(request.url)
         const id = searchParams.get('id')
         if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
@@ -159,14 +170,11 @@ export async function DELETE(request: NextRequest) {
 }
 
 async function reevaluateInvoiceStatus(admin: any, invoiceId: string) {
-    const { data: invoice } = await admin.from("invoices").select("amount, items:invoice_items(quantity, unit_price)").eq("id", invoiceId).single()
+    const { data: invoice } = await admin.from("invoices").select("amount").eq("id", invoiceId).single()
     const { data: payments } = await admin.from("payments").select("amount").eq("invoice_id", invoiceId)
 
     if (invoice && payments) {
-        let totalDue = invoice.amount;
-        if (invoice.items && invoice.items.length > 0) {
-            totalDue = invoice.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unit_price), 0)
-        }
+        let totalDue = invoice.amount || 0;
         const totalPaid = payments.reduce((sum: number, p: any) => sum + p.amount, 0)
         let newStatus = totalPaid >= totalDue ? 'paid' : totalPaid > 0 ? 'sent' : 'draft'
         await admin.from("invoices").update({ status: newStatus }).eq("id", invoiceId)

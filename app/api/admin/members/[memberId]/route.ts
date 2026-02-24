@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server"
 
 import { updateMemberSchema } from "@/lib/schemas"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
+export async function GET({ params }: { params: Promise<{ memberId: string }> }) {
   try {
     const { memberId } = await params
     const supabase = await createClient()
@@ -83,7 +83,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
+export async function DELETE({ params }: { params: Promise<{ memberId: string }> }) {
   try {
     const { memberId } = await params
     const supabase = await createClient()

@@ -23,17 +23,22 @@ const createInvoiceSchema = z.object({
 const updateInvoiceSchema = createInvoiceSchema.partial()
 
 async function checkPermission(request: NextRequest) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: "Unauthorized", status: 401 }
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { error: "Unauthorized", status: 401 }
 
-    const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
 
-    if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
-        return { error: "Forbidden", status: 403 }
+        if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+            return { error: "Forbidden", status: 403 }
+        }
+        return { user }
+    } catch (error) {
+        console.error("Auth permission check failed:", error)
+        return { error: "Internal Server Error", status: 500 }
     }
-    return { user }
 }
 
 export async function GET(request: NextRequest) {
@@ -122,6 +127,10 @@ export async function POST(request: NextRequest) {
 
             // Final Amount = Subtotal - Discount + Tax + Adjustment
             invoiceData.amount = itemSubtotal - discount + itemTaxTotal + adjust
+
+            if (invoiceData.amount < 0) {
+                return NextResponse.json({ error: "Validation failed", details: "Calculated final amount cannot be negative" }, { status: 400 })
+            }
         }
 
         const { data: invoice, error } = await admin
@@ -202,6 +211,10 @@ export async function PATCH(request: NextRequest) {
             const discount = invoiceData.discount_amount || 0
             const adjust = invoiceData.adjustment || 0
             invoiceData.amount = itemSubtotal - discount + itemTaxTotal + adjust
+
+            if (invoiceData.amount < 0) {
+                return NextResponse.json({ error: "Validation failed", details: "Calculated final amount cannot be negative" }, { status: 400 })
+            }
         }
 
         // 2. Update Invoice
@@ -214,10 +227,11 @@ export async function PATCH(request: NextRequest) {
 
         if (error) throw error
 
-        // 3. Update Items (Replace strategy)
+        // 3. Update Items (Safe Replace strategy)
         if (items && items.length > 0) {
-            // Delete existing
-            await admin.from("invoice_items").delete().eq('invoice_id', id)
+            // Grab old items to delete later
+            const { data: old } = await admin.from("invoice_items").select("id").eq("invoice_id", id)
+            const oldIds = old?.map(i => i.id) || []
 
             // Insert new
             const itemsWithId = items.map(item => ({
@@ -234,6 +248,11 @@ export async function PATCH(request: NextRequest) {
                 .insert(itemsWithId)
 
             if (itemsError) throw itemsError
+
+            // Cleanly delete old items only after successful insertion
+            if (oldIds.length > 0) {
+                await admin.from("invoice_items").delete().in('id', oldIds)
+            }
         }
 
         return NextResponse.json(invoice)

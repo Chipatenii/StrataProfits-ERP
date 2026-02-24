@@ -19,7 +19,6 @@ interface TeamTasksViewProps {
 
 export function TeamTasksView({
     userId,
-    userName,
     onDataChange,
 }: TeamTasksViewProps) {
     const supabase = createClient()

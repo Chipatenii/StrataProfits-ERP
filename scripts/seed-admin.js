@@ -2,9 +2,10 @@ import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables")
+if (!supabaseUrl || !supabaseServiceKey || !defaultPassword) {
+  console.error("Missing SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or DEFAULT_ADMIN_PASSWORD environment variables")
   process.exit(1)
 }
 
@@ -27,12 +28,12 @@ async function seedAdmin() {
       process.exit(0)
     }
 
-    console.log("Creating default admin user with email 'admin@ostento.com' and password '1234'...")
+    console.log(`Creating default admin user with email 'admin@ostento.com' and password '${defaultPassword}'...`)
 
     // Create auth user
     const { data, error } = await supabase.auth.admin.createUser({
       email: "admin@ostento.com",
-      password: "1234",
+      password: defaultPassword,
       email_confirm: true,
       user_metadata: {
         full_name: "Admin",
@@ -59,7 +60,7 @@ async function seedAdmin() {
 
     console.log("Default admin user seeded successfully!")
     console.log("Email: admin@ostento.com")
-    console.log("Password: 1234")
+    console.log(`Password: ${defaultPassword}`)
     process.exit(0)
   } catch (error) {
     console.error("Unexpected error:", error)

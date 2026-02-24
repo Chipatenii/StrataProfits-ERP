@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getQuotes } from "@/lib/data/quotes" // We will need to expose this via API or generic fetcher since this is client component
 import { Quote } from "@/lib/types"
 import { Plus, Loader2, FileText, Edit } from "lucide-react"
 import { CreateQuoteModal } from "@/components/modals/create-quote-modal"

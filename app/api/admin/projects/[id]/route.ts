@@ -5,7 +5,6 @@ import { type NextRequest, NextResponse } from "next/server"
 import { APP_CONFIG } from "@/lib/config"
 
 export async function GET(
-    request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
@@ -115,7 +114,6 @@ export async function PATCH(
 }
 
 export async function DELETE(
-    request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {

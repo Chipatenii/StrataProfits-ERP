@@ -1,6 +1,6 @@
 "use client"
 
-import { Users, Mail, Phone, Calendar, Briefcase, CheckCircle, Clock, Edit, Trash2 } from "lucide-react"
+import { Users, Mail, Phone, Clock, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface TeamViewProps {
@@ -11,7 +11,7 @@ interface TeamViewProps {
     currentUserId?: string
 }
 
-export function TeamView({ members, tasks, onEditMember, onDeleteMember, currentUserId }: TeamViewProps) {
+export function TeamView({ members, tasks, onEditMember, onDeleteMember }: TeamViewProps) {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}

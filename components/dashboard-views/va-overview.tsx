@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AlertCircle, CheckCircle, Clock } from "lucide-react"
+import { AlertCircle, Clock } from "lucide-react"
 import { Task, Invoice, Meeting, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"

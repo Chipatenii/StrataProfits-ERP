@@ -5,7 +5,7 @@ import { InvoicesView } from "./invoices-view"
 import { QuotesView } from "./quotes-view"
 import { PaymentsView } from "./payments-view"
 import { PipelineView } from "./pipeline-view"
-import { Receipt, TrendingUp } from "lucide-react"
+import { TrendingUp } from "lucide-react"
 
 export function SalesView() {
     return (

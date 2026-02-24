@@ -7,7 +7,7 @@ import { createTaskSchema } from "@/lib/schemas"
 // Roles that can have tasks assigned to them (not admin, not VA)
 const ASSIGNABLE_ROLES = ['team_member', 'developer', 'social_media_manager', 'book_keeper', 'marketing', 'sales', 'graphic_designer']
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

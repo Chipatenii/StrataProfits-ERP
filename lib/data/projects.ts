@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { Project, ProjectMember } from "@/lib/types"
+import { Project } from "@/lib/types"
 
 export async function getProjects() {
     const supabase = await createClient()

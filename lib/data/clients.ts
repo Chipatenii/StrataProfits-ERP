@@ -35,7 +35,7 @@ export async function getClientById(id: string) {
     return data as Client
 }
 
-export async function getClientMetrics(id: string) {
+export async function getClientMetrics() {
     // This could fetch related counts or sums if needed
     // For now returning basic placeholders or implementing specialized aggregations
     return {

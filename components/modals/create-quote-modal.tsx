@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2, Loader2, ArrowUp, ArrowDown } from "lucide-react"
-import { Client, Quote } from "@/lib/types" // Added Quote type
+import { Client } from "@/lib/types" // Added Quote type
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
+import { APP_CONFIG } from "@/lib/config/constants"
 
 interface CreateQuoteModalProps {
     open: boolean
@@ -47,7 +48,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
     const [terms, setTerms] = useState("")
 
     const [items, setItems] = useState<LineItem[]>([
-        { id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }
+        { id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }
     ])
 
     useEffect(() => {
@@ -80,7 +81,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
                 setAdjustment(0)
                 setNotes("")
                 setTerms("")
-                setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+                setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }])
             }
         }
     }, [open, initialData])
@@ -100,7 +101,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
     }
 
     const addItem = () => {
-        setItems([...items, { id: Math.random().toString(), description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+        setItems([...items, { id: Math.random().toString(), description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }])
     }
 
     const removeItem = (id: string) => {
@@ -184,7 +185,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
             onOpenChange(false)
             // Reset form
             setClientId("")
-            setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: 0 }])
+            setItems([{ id: '1', description: '', quantity: 1, unit_price: 0, tax_rate: APP_CONFIG.FINANCE.DEFAULT_TAX_RATE }])
             setQuoteNumber("")
             setDiscountRate(0)
             setAdjustment(0)

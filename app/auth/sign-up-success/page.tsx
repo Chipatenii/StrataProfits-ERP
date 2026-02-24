@@ -1,5 +1,5 @@
 import { APP_NAME } from "@/lib/config"
-import { CheckCircle, Sparkles } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 
 export default function SignUpSuccessPage() {
   return (

@@ -12,21 +12,26 @@ const sopSchema = z.object({
 })
 
 async function checkPermission(request: NextRequest, write: boolean = false) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: "Unauthorized", status: 401 }
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { error: "Unauthorized", status: 401 }
 
-    // Read: authenticated is enough
-    if (!write) return { user }
+        // Read: authenticated is enough
+        if (!write) return { user }
 
-    // Write: Admin or VA only
-    const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+        // Write: Admin or VA only
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
 
-    if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
-        return { error: "Forbidden", status: 403 }
+        if (profile?.role !== 'admin' && profile?.role !== 'virtual_assistant') {
+            return { error: "Forbidden", status: 403 }
+        }
+        return { user }
+    } catch (error) {
+        console.error("Auth error in SOPs:", error)
+        return { error: "Internal Server Error", status: 500 }
     }
-    return { user }
 }
 
 export async function GET(request: NextRequest) {

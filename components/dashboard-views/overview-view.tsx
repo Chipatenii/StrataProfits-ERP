@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ClipboardList, CheckCircle, Users, BarChart3, FileText, Folder, AlertCircle, TrendingUp, DollarSign, Wallet, ArrowUpRight, Sparkles, Target, Zap } from "lucide-react"
+import { ClipboardList, Users, Folder, AlertCircle, DollarSign, Wallet, ArrowUpRight, Sparkles, Target } from "lucide-react"
 import type { Invoice, Deal, Project } from "@/lib/types"
-import { createClient } from "@/lib/supabase/client"
 
 interface OverviewViewProps {
     stats: any
@@ -22,7 +21,6 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
     const [pipelineStats, setPipelineStats] = useState({ count: 0, value: 0 })
     const [financeStats, setFinanceStats] = useState({ revenueYTD: 0, outstanding: 0, outstandingCount: 0 })
     const [activeProjectsCount, setActiveProjectsCount] = useState(0)
-    const supabase = createClient()
 
     useEffect(() => {
         fetch('/api/invoices')

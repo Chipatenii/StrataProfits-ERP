@@ -1,27 +1,28 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import { APP_CONFIG } from "@/lib/config/constants"
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-    const admin = await createAdminClient()
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-
-    if (!['admin', 'book_keeper'].includes(profile?.role)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
+export async function GET() {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+        const admin = await createAdminClient()
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+        if (!['admin', 'book_keeper'].includes(profile?.role)) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+
         // 1. Get Cashflow Summary (from View) - Last 6 months
         const { data: cashflow, error: cfError } = await admin
             .from("cashflow_summary")
             .select("*")
-            .limit(6)
+            .limit(APP_CONFIG.REPORTS.FINANCE_HISTORY_LIMIT)
 
         if (cfError) console.error("Cashflow view error", cfError)
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
             .from("project_profit_summary")
             .select("*")
             .order("net_profit", { ascending: false })
-            .limit(5)
+            .limit(APP_CONFIG.REPORTS.FINANCE_SUMMARY_LIMIT)
 
         if (ppError) console.error("Profit view error", ppError)
 

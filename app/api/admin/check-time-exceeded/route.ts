@@ -5,7 +5,7 @@ import { NextResponse } from "next/server"
 /**
  * API endpoint to check for tasks exceeding time estimates
  */
-export async function POST(request: Request) {
+export async function POST() {
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()

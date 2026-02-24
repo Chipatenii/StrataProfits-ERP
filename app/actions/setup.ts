@@ -21,10 +21,16 @@ export async function createAdminUser() {
       return { success: false, error: "Admin user already exists" }
     }
 
+    const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD
+
+    if (!defaultPassword) {
+      return { success: false, error: "Default admin password is not configured in environment variables." }
+    }
+
     // Create auth user with valid email format
     const { data, error } = await supabase.auth.admin.createUser({
       email: "admin@ostento.com",
-      password: "1234",
+      password: defaultPassword,
       email_confirm: true,
       user_metadata: {
         full_name: "Admin",
@@ -48,7 +54,7 @@ export async function createAdminUser() {
     return {
       success: true,
       email: "admin@ostento.com",
-      password: "1234",
+      password: defaultPassword,
     }
   } catch (error) {
     return {

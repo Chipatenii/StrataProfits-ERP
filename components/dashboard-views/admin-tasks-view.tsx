@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Edit, Trash2, ClipboardCheck, Clock, CheckCircle2, ListTodo, AlertCircle, Sparkles } from "lucide-react"
+import { Plus, Edit, Trash2, ClipboardCheck, Clock, CheckCircle2, ListTodo } from "lucide-react"
 import { Task, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 
@@ -48,7 +48,6 @@ export function AdminTasksView({
     }
 
     const activeCount = tasks.filter(t => normalize(t.status) !== "completed").length
-    const completedCount = tasks.filter(t => normalize(t.status) === "completed").length
     const pendingApprovalCount = tasks.filter(t => normalize(t.approval_status) === "pending").length
 
     return (
