@@ -11,6 +11,7 @@ interface AdminReviewTaskModalProps {
     onOpenChange: (open: boolean) => void
     onApprove: (task: Task) => void
     onReject: (task: Task) => void
+    onVerify?: (task: Task) => void
     isProcessing: boolean
 }
 
@@ -20,22 +21,29 @@ export function AdminReviewTaskModal({
     onOpenChange,
     onApprove,
     onReject,
+    onVerify,
     isProcessing
 }: AdminReviewTaskModalProps) {
     if (!task) return null
+
+    const isPendingApproval = task.status === "pending_approval" || task.approval_status === "pending"
+    const isCompleted = task.status === "completed"
+    
+    // We only show Verify if onVerify is provided and task is completed
+    const canVerify = isCompleted && onVerify
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="glass-card border-border/30 max-w-lg">
                 <DialogHeader>
                     <DialogTitle className="text-xl text-primary flex items-center justify-between">
-                        <span>Review Task Request</span>
-                        <div className="ml-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                            Pending Approval
+                        <span>{canVerify ? "Verify Task" : "Review Task Request"}</span>
+                        <div className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${canVerify ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                            {canVerify ? "Needs Verification" : "Pending Approval"}
                         </div>
                     </DialogTitle>
                     <DialogDescription>
-                        Review the details below before approving or rejecting this task.
+                        Review the details below before {canVerify ? 'verifying' : 'approving or rejecting'} this task.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -54,6 +62,17 @@ export function AdminReviewTaskModal({
                                 </p>
                             </div>
                         </div>
+                        
+                        {task.completion_notes && (
+                            <div>
+                                <h3 className="text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-1">Completion Notes</h3>
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-md border border-emerald-100 dark:border-emerald-800/50">
+                                    <p className="text-sm text-emerald-800 dark:text-emerald-300 italic whitespace-pre-wrap">
+                                        "{task.completion_notes}"
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex items-center gap-2">
@@ -63,6 +82,17 @@ export function AdminReviewTaskModal({
                                     <p className="text-sm font-medium">{task.estimated_hours ? `${task.estimated_hours} hrs` : "Not specified"}</p>
                                 </div>
                             </div>
+                            
+                            {task.time_allocated && (
+                                <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-emerald-600" />
+                                    <div>
+                                        <p className="text-xs text-emerald-600 font-medium">Time Allocated</p>
+                                        <p className="text-sm font-bold text-emerald-700">{task.time_allocated} hrs</p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4 text-muted-foreground" />
                                 <div>
@@ -79,15 +109,6 @@ export function AdminReviewTaskModal({
                                     <p className="text-sm font-medium capitalize">{task.priority}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Submitted</p>
-                                    <p className="text-sm font-medium">
-                                        {new Date(task.created_at).toLocaleDateString()}
-                                    </p>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -102,21 +123,33 @@ export function AdminReviewTaskModal({
                         Cancel
                     </Button>
                     <div className="flex gap-2 w-full sm:w-auto">
-                        <Button
-                            variant="destructive"
-                            onClick={() => onReject(task)}
-                            disabled={isProcessing}
-                            className="flex-1 sm:flex-none bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                        >
-                            Reject
-                        </Button>
-                        <Button
-                            onClick={() => onApprove(task)}
-                            disabled={isProcessing}
-                            className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
-                        >
-                            {isProcessing ? "Processing..." : "Approve Task"}
-                        </Button>
+                        {!canVerify && (
+                            <Button
+                                variant="destructive"
+                                onClick={() => onReject(task)}
+                                disabled={isProcessing}
+                                className="flex-1 sm:flex-none bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                                Reject
+                            </Button>
+                        )}
+                        {canVerify ? (
+                            <Button
+                                onClick={() => onVerify(task)}
+                                disabled={isProcessing}
+                                className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                                {isProcessing ? "Processing..." : "Verify Task"}
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => onApprove(task)}
+                                disabled={isProcessing}
+                                className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+                            >
+                                {isProcessing ? "Processing..." : "Approve Task"}
+                            </Button>
+                        )}
                     </div>
                 </DialogFooter>
             </DialogContent>

@@ -4,6 +4,9 @@ export const CANONICAL_TASK_STATUSES = {
     blocked: "blocked",
     in_review: "in_review",
     done: "done",
+    pending_approval: "pending_approval",
+    approved: "approved",
+    verified: "verified",
 } as const
 
 export type CanonicalTaskStatus = keyof typeof CANONICAL_TASK_STATUSES
@@ -28,6 +31,9 @@ const LEGACY_STATUS_MAP: Record<string, CanonicalTaskStatus> = {
     "blocked": "blocked",
     "in_review": "in_review",
     "done": "done",
+    "pending_approval": "pending_approval",
+    "approved": "approved",
+    "verified": "verified",
 }
 
 export function normalizeTaskStatus(status: string | null | undefined): CanonicalTaskStatus {
@@ -42,6 +48,9 @@ export const STATUS_LABELS: Record<CanonicalTaskStatus, string> = {
     blocked: "Blocked",
     in_review: "In Review",
     done: "Done",
+    pending_approval: "Pending Approval",
+    approved: "Approved",
+    verified: "Verified",
 }
 
 export const STATUS_COLORS: Record<CanonicalTaskStatus, string> = {
@@ -50,4 +59,7 @@ export const STATUS_COLORS: Record<CanonicalTaskStatus, string> = {
     blocked: "bg-red-100 text-red-800",
     in_review: "bg-yellow-100 text-yellow-800",
     done: "bg-green-100 text-green-800",
+    pending_approval: "bg-orange-100 text-orange-800",
+    approved: "bg-emerald-100 text-emerald-800",
+    verified: "bg-purple-100 text-purple-800",
 }

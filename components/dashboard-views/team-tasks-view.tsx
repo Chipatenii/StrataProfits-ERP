@@ -152,7 +152,7 @@ export function TeamTasksView({
         }
     }
 
-    const handleTaskComplete = async (notes: string) => {
+    const handleTaskComplete = async (notes: string, timeAllocated: number) => {
         if (!completingTask) return
 
         try {
@@ -160,25 +160,28 @@ export function TeamTasksView({
                 await handleTaskStartStop(completingTask.id)
             }
 
-            const response = await fetch("/api/tasks", {
+            const response = await fetch(`/api/admin/tasks?id=${completingTask.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    id: completingTask.id,
                     status: "completed",
                     completion_notes: notes,
+                    time_allocated: timeAllocated,
                     completed_at: new Date().toISOString()
                 })
             })
 
-            if (!response.ok) throw new Error("Failed to complete task")
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.error || "Failed to complete task")
+            }
 
             setShowCompleteModal(false)
             setCompletingTask(null)
             refreshData()
-        } catch (e) {
+        } catch (e: any) {
             console.error("Task completion error:", e)
-            alert("Failed to complete task.")
+            alert(e.message || "Failed to complete task.")
         }
     }
 

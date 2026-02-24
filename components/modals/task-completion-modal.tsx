@@ -8,7 +8,7 @@ import { toast } from "sonner"
 interface TaskCompletionModalProps {
     isOpen: boolean
     onClose: () => void
-    onComplete: (notes: string) => Promise<void>
+    onComplete: (notes: string, timeAllocated: number) => Promise<void>
     taskTitle: string
     spentMinutes: number
     estimatedHours?: number
@@ -23,21 +23,29 @@ export function TaskCompletionModal({
     estimatedHours,
 }: TaskCompletionModalProps) {
     const [notes, setNotes] = useState("")
+    const [timeAllocated, setTimeAllocated] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showConfetti, setShowConfetti] = useState(false)
 
     const handleSubmit = async () => {
+        const timeVal = parseFloat(timeAllocated)
+        if (!timeAllocated || isNaN(timeVal) || timeVal <= 0) {
+            toast.error("Please enter a valid time allocated (hours)")
+            return
+        }
+
         setIsSubmitting(true)
         setShowConfetti(true)
 
         try {
-            await onComplete(notes)
+            await onComplete(notes, timeVal)
 
             // Show confetti for 2 seconds then close
             setTimeout(() => {
                 setShowConfetti(false)
                 onClose()
                 setNotes("")
+                setTimeAllocated("")
             }, 2000)
         } catch (error) {
             console.error("Error completing task:", error)
@@ -129,6 +137,24 @@ export function TaskCompletionModal({
                                     </>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Time Allocated */}
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Actual Time Allocated (Hours) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                step="0.25"
+                                min="0.25"
+                                value={timeAllocated}
+                                onChange={(e) => setTimeAllocated(e.target.value)}
+                                placeholder="e.g. 2.5"
+                                className="w-full px-4 py-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-green-500"
+                                disabled={isSubmitting}
+                                required
+                            />
                         </div>
 
                         {/* Completion Notes */}

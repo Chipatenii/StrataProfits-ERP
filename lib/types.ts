@@ -55,6 +55,8 @@ export interface Task {
     approved_by?: string | null
     approved_at?: string | null
     deliverable_id?: string | null // Stage 1
+    assigned_by?: string | null
+    time_allocated?: number | null
 }
 
 export interface TimeLog {

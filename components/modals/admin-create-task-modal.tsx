@@ -16,17 +16,23 @@ interface AdminCreateTaskModalProps {
     open: boolean
     members: Member[]
     userId: string
+    userRole?: string
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
 }
 
-export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSuccess }: AdminCreateTaskModalProps) {
+export function AdminCreateTaskModal({ open, members, userId, userRole, onOpenChange, onSuccess }: AdminCreateTaskModalProps) {
+    // Default status for team_member and va is pending_approval
+    const defaultStatus = (userRole === "team_member" || userRole === "virtual_assistant") ? "pending_approval" : "pending"
+    // Default assignee for team member is themselves
+    const defaultAssignedTo = userRole === "team_member" ? userId : ""
+
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        status: "pending",
+        status: defaultStatus,
         priority: "medium",
-        assigned_to: "",
+        assigned_to: defaultAssignedTo,
         due_date: "",
         estimated_hours: "",
         project_id: "",
@@ -42,16 +48,23 @@ export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSu
                 .then(res => res.json())
                 .then(data => setProjects(data || []))
                 .catch(err => console.error("Failed to load projects", err))
+            
+            // Re-initialize state when opened
+            setFormData(prev => ({
+                ...prev,
+                status: defaultStatus,
+                assigned_to: defaultAssignedTo
+            }))
         }
-    }, [open])
+    }, [open, defaultStatus, defaultAssignedTo])
 
     const resetForm = () => {
         setFormData({
             title: "",
             description: "",
-            status: "pending",
+            status: defaultStatus,
             priority: "medium",
-            assigned_to: "",
+            assigned_to: defaultAssignedTo,
             due_date: "",
             estimated_hours: "",
             project_id: "",
@@ -98,6 +111,8 @@ export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSu
             setIsLoading(false)
         }
     }
+
+    const canReassign = userRole === "admin" || userRole === "virtual_assistant"
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,8 +161,10 @@ export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSu
                                 value={formData.status}
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value })}
                                 className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                disabled={userRole === "team_member" || userRole === "virtual_assistant"}
                             >
-                                <option value="pending">Pending</option>
+                                <option value="pending_approval">Pending Approval</option>
+                                <option value="pending">Todo / Pending</option>
                                 <option value="in-progress">In Progress</option>
                                 <option value="completed">Completed</option>
                             </select>
@@ -171,7 +188,7 @@ export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSu
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
+                        <div className={canReassign ? "" : "col-span-2"}>
                             <Label htmlFor="project" className="text-foreground font-medium">
                                 Project
                             </Label>
@@ -190,24 +207,26 @@ export function AdminCreateTaskModal({ open, members, userId, onOpenChange, onSu
                             </select>
                         </div>
 
-                        <div>
-                            <Label htmlFor="assignedTo" className="text-foreground font-medium">
-                                Assign To
-                            </Label>
-                            <select
-                                id="assignedTo"
-                                value={formData.assigned_to}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, assigned_to: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
-                            >
-                                <option value="">Unassigned</option>
-                                {members.map((member) => (
-                                    <option key={member.id} value={member.id}>
-                                        {member.full_name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        {canReassign && (
+                            <div>
+                                <Label htmlFor="assignedTo" className="text-foreground font-medium">
+                                    Assign To
+                                </Label>
+                                <select
+                                    id="assignedTo"
+                                    value={formData.assigned_to}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, assigned_to: e.target.value })}
+                                    className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                >
+                                    <option value="">Unassigned</option>
+                                    {members.map((member) => (
+                                        <option key={member.id} value={member.id}>
+                                            {member.full_name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

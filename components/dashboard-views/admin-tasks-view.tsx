@@ -22,7 +22,7 @@ export function AdminTasksView({
     onCreateTask,
     onReviewTask,
 }: AdminTasksViewProps) {
-    const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
+    const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed" | "review">("all")
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
@@ -35,9 +35,11 @@ export function AdminTasksView({
 
     const filteredTasks = tasks.filter((task) => {
         const status = normalize(task.status)
+        const approvalStatus = normalize(task.approval_status)
         if (taskFilter === "all") return true
-        if (taskFilter === "active") return status !== "completed"
-        if (taskFilter === "completed") return status === "completed"
+        if (taskFilter === "active") return status !== "completed" && status !== "verified" && status !== "pending_approval"
+        if (taskFilter === "completed") return status === "completed" || status === "verified"
+        if (taskFilter === "review") return status === "pending_approval" || status === "completed" || approvalStatus === "pending"
         return true
     })
 
@@ -47,8 +49,8 @@ export function AdminTasksView({
         return member ? member.full_name : "Unknown"
     }
 
-    const activeCount = tasks.filter(t => normalize(t.status) !== "completed").length
-    const pendingApprovalCount = tasks.filter(t => normalize(t.approval_status) === "pending").length
+    const activeCount = tasks.filter(t => normalize(t.status) !== "completed" && normalize(t.status) !== "verified").length
+    const reviewCount = tasks.filter(t => normalize(t.status) === "pending_approval" || normalize(t.status) === "completed" || normalize(t.approval_status) === "pending").length
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -86,16 +88,16 @@ export function AdminTasksView({
                         <p className="text-3xl font-bold">{activeCount}</p>
                         <p className="text-sm text-amber-100/80">Active</p>
                     </div>
-                    <div className={`backdrop-blur-lg rounded-2xl p-4 border text-center ${pendingApprovalCount > 0 ? 'bg-yellow-500/30 border-yellow-400/40' : 'bg-white/15 border-white/20'}`}>
-                        <p className="text-3xl font-bold">{pendingApprovalCount}</p>
-                        <p className="text-sm text-amber-100/80">Pending Approval</p>
+                    <div className={`backdrop-blur-lg rounded-2xl p-4 border text-center ${reviewCount > 0 ? 'bg-yellow-500/30 border-yellow-400/40' : 'bg-white/15 border-white/20'}`}>
+                        <p className="text-3xl font-bold">{reviewCount}</p>
+                        <p className="text-sm text-amber-100/80">Requires Review</p>
                     </div>
                 </div>
             </div>
 
             {/* Filter Tabs */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 inline-flex">
-                {(["all", "active", "completed"] as const).map((filter) => (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 inline-flex flex-wrap gap-2">
+                {(["all", "review",  "active", "completed"] as const).map((filter) => (
                     <button
                         key={filter}
                         onClick={() => setTaskFilter(filter)}
@@ -115,12 +117,13 @@ export function AdminTasksView({
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
                         <ListTodo className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-foreground mb-2">No tasks found</h3>
-                        <p className="text-muted-foreground">Create your first task to get started</p>
+                        <p className="text-muted-foreground">Adjust your filters or create a new task to get started.</p>
                     </div>
                 ) : (
                     filteredTasks.map((task) => {
-                        const isPendingApproval = normalize(task.approval_status) === "pending"
-                        const isCompleted = normalize(task.status) === "completed"
+                        const isPendingApproval = normalize(task.status) === "pending_approval" || normalize(task.approval_status) === "pending"
+                        const isCompletedNeedsReview = normalize(task.status) === "completed"
+                        const isFullyDone = normalize(task.status) === "verified"
                         const isInProgress = normalize(task.status) === "in_progress"
 
                         return (
@@ -140,6 +143,12 @@ export function AdminTasksView({
                                                         Needs Approval
                                                     </span>
                                                 )}
+                                                {isCompletedNeedsReview && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs rounded-lg font-semibold">
+                                                        <CheckCircle2 className="w-3 h-3" />
+                                                        Needs Verification
+                                                    </span>
+                                                )}
                                                 <span className="text-xs font-mono text-muted-foreground bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
                                                     {(task.estimated_hours || 0).toFixed(1)}h Est
                                                 </span>
@@ -149,14 +158,14 @@ export function AdminTasksView({
 
                                         {/* Action Buttons */}
                                         <div className="flex gap-1 shrink-0">
-                                            {isPendingApproval && (
+                                            {(isPendingApproval || isCompletedNeedsReview) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         onReviewTask(task)
                                                     }}
-                                                    className="p-2.5 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-600 transition-colors"
-                                                    title="Review Task"
+                                                    className={`p-2.5 rounded-xl transition-colors ${isCompletedNeedsReview ? 'hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600' : 'hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-600'}`}
+                                                    title={isCompletedNeedsReview ? "Verify Task" : "Approve Task"}
                                                 >
                                                     <ClipboardCheck className="w-5 h-5" />
                                                 </button>
@@ -186,11 +195,12 @@ export function AdminTasksView({
 
                                     {/* Tags Row */}
                                     <div className="flex flex-wrap gap-2 items-center">
-                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold ${isCompleted ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" :
+                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold ${isFullyDone ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" :
+                                                isCompletedNeedsReview ? "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300" :
                                                 isInProgress ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" :
                                                     "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                             }`}>
-                                            {isCompleted && <CheckCircle2 className="w-3 h-3" />}
+                                            {isFullyDone && <CheckCircle2 className="w-3 h-3" />}
                                             {task.status?.replace("_", " ")}
                                         </span>
                                         <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${task.priority === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300" :
@@ -211,7 +221,7 @@ export function AdminTasksView({
                                     </div>
 
                                     {/* Completion Notes */}
-                                    {isCompleted && task.completion_notes && (
+                                    {(isFullyDone || isCompletedNeedsReview) && task.completion_notes && (
                                         <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
                                             <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1">Completion Notes:</p>
                                             <p className="text-sm text-emerald-700 dark:text-emerald-400 italic">"{task.completion_notes}"</p>

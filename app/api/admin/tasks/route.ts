@@ -88,8 +88,8 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
     const userRole = profile?.role
 
-    // Only admin and VA can create tasks
-    if (userRole !== 'admin' && userRole !== 'virtual_assistant') {
+    // Admin, VA, and Team members can create tasks now
+    if (userRole !== 'admin' && userRole !== 'virtual_assistant' && !ASSIGNABLE_ROLES.includes(userRole)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -152,11 +152,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // VA-created tasks require admin approval
+    // Apply role-based creation rules
+    let finalStatus = validation.data.status || 'todo'
+    let finalAssignedTo = validation.data.assigned_to
+    
+    if (userRole === 'team_member' || ASSIGNABLE_ROLES.includes(userRole)) {
+      if (userRole !== 'virtual_assistant' && userRole !== 'admin') {
+         // Team Member: must assign to self, default to pending_approval
+         finalAssignedTo = user.id
+         if (finalStatus !== 'pending_approval') {
+             finalStatus = 'pending_approval' // Enforce default unless specifically creating differently (but requirement says "must"). Let's enforce.
+         }
+      } else if (userRole === 'virtual_assistant') {
+         // Virtual Assistant: can assign anyone else valid, but default status must be pending_approval
+         if (finalStatus !== 'pending_approval') {
+             finalStatus = 'pending_approval'
+         }
+      }
+    }
+
     const taskData = {
       ...validation.data,
+      assigned_to: finalAssignedTo, // Output correct assignee natively
+      status: finalStatus,
       created_by: user.id,
-      approval_status: userRole === 'virtual_assistant' ? 'pending' : 'auto_approved'
+      assigned_by: user.id, // Track who actually created/assigned it
+      approval_status: (userRole === 'virtual_assistant' || (!['admin', 'virtual_assistant'].includes(userRole))) ? 'pending' : 'auto_approved'
     }
 
     const { data: task, error } = await admin
@@ -274,8 +295,8 @@ export async function PATCH(request: NextRequest) {
         )
       }
 
-      // Team members can only update status, completion_notes, completed_at
-      const allowedFields = ['status', 'completion_notes', 'completed_at']
+      // Team members can only update status, completion_notes, completed_at, time_allocated
+      const allowedFields = ['status', 'completion_notes', 'completed_at', 'time_allocated']
       const attemptedFields = Object.keys(body)
       const disallowedFields = attemptedFields.filter(f => !allowedFields.includes(f))
 
@@ -287,6 +308,15 @@ export async function PATCH(request: NextRequest) {
       }
     } else {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    // Task Completion Logic
+    if (body.status === 'completed') {
+       if (body.time_allocated === undefined || body.time_allocated === null) {
+          if (!existingTask.time_allocated) {
+              return NextResponse.json({ error: "Time allocated is required when completing a task." }, { status: 400 })
+          }
+       }
     }
 
     const { data: task, error } = await admin

@@ -20,7 +20,7 @@ import { AdminCreateTaskModal } from "./modals/admin-create-task-modal"
 import { AdminReviewTaskModal } from "./modals/admin-review-task-modal"
 import { ConfirmModal } from "./modals/confirm-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
-import { approveTask, rejectTask } from "@/app/actions/tasks"
+import { approveTask, rejectTask, verifyTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
 import { getFormattedDate } from "@/lib/time-utils"
 
@@ -200,6 +200,25 @@ export function AdminDashboard({
   }
 
   // Review Actions
+  const handleVerifyTask = async (task: Task) => {
+    setIsProcessing(true)
+    try {
+      const result = await verifyTask(task.id)
+      if (result.success) {
+        toast.success("Task verified successfully")
+        setReviewingTask(null)
+        loadData()
+      } else {
+        toast.error("Failed to verify task")
+      }
+    } catch (error) {
+      console.error("Error verifying task:", error)
+      toast.error("An error occurred")
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   const handleApproveTask = async (task: Task) => {
     setIsProcessing(true)
     try {
@@ -276,9 +295,9 @@ export function AdminDashboard({
     badge: item.id === 'tasks' ? taskStats.active : item.id === 'team' ? members.length : undefined
   }))
 
-  // Filter out admin and VA from assignable members - tasks can only be assigned to team members
+  // Filter out admin from assignable members (allow team members and VAs)
   const assignableMembers = members.filter(m =>
-    m.role !== 'admin' && m.role !== 'virtual_assistant'
+    m.role !== 'admin'
   )
 
   return (
@@ -527,6 +546,7 @@ export function AdminDashboard({
               open={showCreateTask}
               members={assignableMembers}
               userId={userId}
+              userRole={userRole}
               onOpenChange={setShowCreateTask}
               onSuccess={loadData}
             />
@@ -540,6 +560,7 @@ export function AdminDashboard({
               onOpenChange={(open) => !open && setReviewingTask(null)}
               onApprove={handleApproveTask}
               onReject={handleRejectTask}
+              onVerify={handleVerifyTask}
               isProcessing={isProcessing}
             />
           )}

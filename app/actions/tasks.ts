@@ -40,7 +40,7 @@ export async function createSelfCreatedTask(data: z.infer<typeof createSelfTaskS
             assigned_to: user.id, // Assign to self
             is_self_created: true,
             approval_status: "pending",
-            status: "pending" // Initial status of the task work itself
+            status: "pending_approval" // Requires admin approval, and the status itself becomes pending_approval
         })
         .select()
         .single()
@@ -74,6 +74,7 @@ export async function approveTask(taskId: string) {
         .from("tasks")
         .update({
             approval_status: "approved",
+            status: "todo", // Make it actionable for the team member
             approved_by: user.id,
             approved_at: new Date().toISOString()
         })
@@ -117,6 +118,35 @@ export async function rejectTask(taskId: string) {
     if (error) {
         console.error("Error rejecting task:", error)
         return { error: "Failed to reject task" }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+}
+
+export async function verifyTask(taskId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: "Unauthorized" }
+
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    if (profile?.role !== "admin") {
+        return { error: "Forbidden" }
+    }
+
+    const admin = await createAdminClient()
+
+    const { error } = await admin
+        .from("tasks")
+        .update({
+            status: "verified"
+        })
+        .eq("id", taskId)
+
+    if (error) {
+        console.error("Error verifying task:", error)
+        return { error: "Failed to verify task" }
     }
 
     revalidatePath("/dashboard")
