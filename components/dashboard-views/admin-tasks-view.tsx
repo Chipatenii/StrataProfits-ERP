@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Edit, Trash2, ClipboardCheck, Clock, CheckCircle2, ListTodo } from "lucide-react"
+import { Plus, Edit, Trash2, ClipboardCheck, Clock, CheckCircle2, ListTodo, Search } from "lucide-react"
 import { Task, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 
@@ -23,6 +23,7 @@ export function AdminTasksView({
     onReviewTask,
 }: AdminTasksViewProps) {
     const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed" | "review">("all")
+    const [searchQuery, setSearchQuery] = useState("")
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
@@ -36,10 +37,16 @@ export function AdminTasksView({
     const filteredTasks = tasks.filter((task) => {
         const status = normalize(task.status)
         const approvalStatus = normalize(task.approval_status)
+        // Apply search filter first
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase()
+            if (!task.title?.toLowerCase().includes(q) && !task.description?.toLowerCase().includes(q)) return false
+        }
         if (taskFilter === "all") return true
         if (taskFilter === "active") return status !== "completed" && status !== "verified" && status !== "pending_approval"
         if (taskFilter === "completed") return status === "completed" || status === "verified"
-        if (taskFilter === "review") return status === "pending_approval" || status === "completed" || approvalStatus === "pending"
+        // review: only show tasks that need admin action (not already verified)
+        if (taskFilter === "review") return (status === "pending_approval" || approvalStatus === "pending") && status !== "verified"
         return true
     })
 
@@ -95,20 +102,37 @@ export function AdminTasksView({
                 </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 inline-flex flex-wrap gap-2">
-                {(["all", "review",  "active", "completed"] as const).map((filter) => (
-                    <button
-                        key={filter}
-                        onClick={() => setTaskFilter(filter)}
-                        className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${taskFilter === filter
-                            ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25"
-                            : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                            }`}
-                    >
-                        {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                    </button>
-                ))}
+            {/* Search + Filter Row */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search */}
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search tasks by title or description..."
+                        className="w-full pl-9 pr-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 transition-all shadow-lg shadow-black/5 dark:shadow-black/20"
+                    />
+                </div>
+                {/* Filter Tabs */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 flex flex-wrap gap-2">
+                    {(["all", "review", "active", "completed"] as const).map((filter) => (
+                        <button
+                            key={filter}
+                            onClick={() => setTaskFilter(filter)}
+                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${taskFilter === filter
+                                ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25"
+                                : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                                }`}
+                        >
+                            {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                            {filter === "review" && reviewCount > 0 && (
+                                <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] bg-white/30 rounded-full">{reviewCount}</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Tasks Grid */}

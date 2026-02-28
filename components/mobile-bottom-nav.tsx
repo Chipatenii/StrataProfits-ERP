@@ -33,7 +33,7 @@ export function MobileBottomNav({ activeView, onViewChange, items = defaultItems
                         <button
                             key={item.id}
                             onClick={() => onViewChange(item.id)}
-                            className={`mobile-nav-item ${isActive ? "active" : ""}`}
+                            className={`mobile-nav-item relative ${isActive ? "active" : ""}`}
                             aria-label={item.label}
                         >
                             <Icon

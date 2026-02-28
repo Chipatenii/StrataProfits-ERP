@@ -182,7 +182,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 
   /* Better focus styles for accessibility */
@@ -192,7 +194,6 @@
 }
 
 @layer components {
-
   /* Premium Glass Card */
   .glass-card {
     @apply bg-card/80 dark:bg-card/60 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/[0.03] dark:shadow-black/[0.2] rounded-2xl transition-all duration-300;
@@ -309,6 +310,27 @@
   .avatar-xl {
     @apply w-16 h-16 text-lg;
   }
+
+  /* Sidebar collapsed icon tooltips */
+  .sidebar-icon-btn {
+    @apply relative;
+  }
+
+  .sidebar-icon-btn [data-tooltip] {
+    @apply relative;
+  }
+
+  .sidebar-icon-btn [data-tooltip]::after {
+    content: attr(data-tooltip);
+    @apply absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap pointer-events-none z-[100]
+      bg-slate-900 text-white dark:bg-white dark:text-slate-900
+      opacity-0 scale-95 transition-all duration-150;
+  }
+
+  .sidebar-icon-btn:hover [data-tooltip]::after,
+  .sidebar-icon-btn:focus-visible [data-tooltip]::after {
+    @apply opacity-100 scale-100;
+  }
 }
 
 /* Safe area for mobile devices */
@@ -344,7 +366,6 @@
 }
 
 @keyframes pulse-soft {
-
   0%,
   100% {
     opacity: 1;

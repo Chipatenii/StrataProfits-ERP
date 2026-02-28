@@ -64,7 +64,7 @@ export function TaskCompletionModal({
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
                 {/* Modal */}
                 <div
-                    className="bg-white rounded-2xl shadow-2xl max-w-md w-full relative overflow-hidden"
+                    className="bg-card rounded-2xl shadow-2xl max-w-md w-full relative overflow-hidden border border-border"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Confetti Animation */}
@@ -114,10 +114,10 @@ export function TaskCompletionModal({
                         </div>
 
                         {/* Time Summary */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-2">
-                                <Clock className="w-4 h-4 text-blue-600" />
-                                <span className="text-sm font-medium text-blue-900">Time Summary</span>
+                                <Clock className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-medium text-foreground">Time Summary</span>
                             </div>
                             <div className="space-y-1 text-sm">
                                 <div className="flex justify-between">
@@ -130,7 +130,7 @@ export function TaskCompletionModal({
                                             <span className="text-muted-foreground">Estimated:</span>
                                             <span className="font-semibold">{estimatedHours}h</span>
                                         </div>
-                                        <div className="flex justify-between pt-2 border-t border-blue-200">
+                                        <div className="flex justify-between pt-2 border-t border-primary/20">
                                             <span className="text-muted-foreground">Status:</span>
                                             <span className="font-semibold">{getTimeStatusMessage(spentMinutes, estimatedHours)}</span>
                                         </div>
@@ -151,7 +151,7 @@ export function TaskCompletionModal({
                                 value={timeAllocated}
                                 onChange={(e) => setTimeAllocated(e.target.value)}
                                 placeholder="e.g. 2.5"
-                                className="w-full px-4 py-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                 disabled={isSubmitting}
                                 required
                             />
@@ -166,7 +166,7 @@ export function TaskCompletionModal({
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 placeholder="Any notes about completing this task? Challenges, learnings, etc."
-                                className="w-full px-4 py-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none transition-all"
                                 rows={4}
                                 disabled={isSubmitting}
                             />
@@ -177,7 +177,7 @@ export function TaskCompletionModal({
                             <button
                                 onClick={onClose}
                                 disabled={isSubmitting}
-                                className="flex-1 px-4 py-3 rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-colors font-medium disabled:opacity-50"
+                                className="flex-1 px-4 py-3 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors font-medium disabled:opacity-50"
                             >
                                 Cancel
                             </button>

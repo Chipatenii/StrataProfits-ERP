@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Zap, Menu, X, LogOut, LayoutDashboard, FileText, Users } from "lucide-react"
+import { APP_NAME } from "@/lib/config"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -57,8 +58,8 @@ export function Header() {
               <Zap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-primary leading-tight">Ostento</h1>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Task Tracker</p>
+              <h1 className="text-xl font-bold text-primary leading-tight">{APP_NAME}</h1>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">ERP Platform</p>
             </div>
           </Link>
 

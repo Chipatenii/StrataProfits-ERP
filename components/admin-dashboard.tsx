@@ -40,6 +40,8 @@ import { ProjectListView } from "@/components/projects/project-list-view"
 import { ProjectDetailView } from "@/components/projects/project-detail-view"
 import { TeamView } from "@/components/dashboard-views/team-view"
 import { VASOPs } from "@/components/dashboard-views/va-sops"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+import { LayoutDashboard, ListTodo, Users, Wallet } from "lucide-react"
 
 
 export function AdminDashboard({
@@ -351,7 +353,7 @@ export function AdminDashboard({
                   setActiveView(item.id as any)
                   if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-h-[48px]
+                className={`sidebar-icon-btn group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-h-[48px]
                     ${isActive
                     ? "bg-primary/10 text-primary font-semibold shadow-sm dark:bg-primary/20"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -361,6 +363,7 @@ export function AdminDashboard({
                 <Icon
                   size={20}
                   strokeWidth={isActive ? 2.5 : 2}
+                  data-tooltip={item.label}
                   className={`shrink-0 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`}
                 />
                 <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left text-sm`}>
@@ -443,7 +446,7 @@ export function AdminDashboard({
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative pb-20 md:pb-6">
+        <main className="flex-1 overflow-auto p-4 md:p-6 w-full relative pb-24 md:pb-6">
           <div className="md:hidden mb-4">
             <p className="text-sm text-muted-foreground">
               {typeof window !== 'undefined' && (new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening")},
@@ -588,6 +591,18 @@ export function AdminDashboard({
             variant={confirmConfig.variant}
           />
         </main>
+
+        {/* Mobile Bottom Nav for Admin */}
+        <MobileBottomNav
+          activeView={activeView}
+          onViewChange={(view) => setActiveView(view as any)}
+          items={[
+            { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+            { id: 'tasks', label: 'Tasks', icon: ListTodo },
+            { id: 'team', label: 'Team', icon: Users },
+            { id: 'finance', label: 'Finance', icon: Wallet },
+          ]}
+        />
       </div>
     </div>
   )

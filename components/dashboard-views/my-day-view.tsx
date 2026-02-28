@@ -1,10 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon, Zap, ArrowUpRight, Star } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon, Zap, Star, Play, Pause } from "lucide-react"
 import { Task, Meeting, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
+import { Timer } from "@/components/timer"
 import { getTimeBasedGreeting } from "@/lib/time-utils"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 
 
 interface MyDayViewProps {
@@ -13,59 +16,116 @@ interface MyDayViewProps {
 }
 
 export function MyDayView({ userId, userName }: MyDayViewProps) {
+    const supabase = createClient()
     const [tasks, setTasks] = useState<Task[]>([])
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [loading, setLoading] = useState(true)
     const [members, setMembers] = useState<UserProfile[]>([])
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+    const [activeLogId, setActiveLogId] = useState<string | null>(null)
+    const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+    const [activeClockIn, setActiveClockIn] = useState<string | null>(null)
+    const [isClockedIn, setIsClockedIn] = useState(false)
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)
         setIsDetailModalOpen(true)
     }
 
-    useEffect(() => {
-        async function loadData() {
-            try {
-                setLoading(true)
-                const [tasksRes, meetingsRes, membersRes] = await Promise.all([
-                    fetch(`/api/admin/tasks`),
-                    fetch(`/api/meetings`),
-                    fetch(`/api/admin/members`)
-                ])
+    const loadData = useCallback(async () => {
+        try {
+            setLoading(true)
+            const [tasksRes, meetingsRes, membersRes] = await Promise.all([
+                // Use user-scoped endpoint: tasks assigned to or created by this user
+                fetch(`/api/tasks?userId=${userId}`),
+                fetch(`/api/meetings`),
+                fetch(`/api/admin/members`)
+            ])
 
-                if (tasksRes.ok) {
-                    const allTasks: Task[] = await tasksRes.json()
+            if (tasksRes.ok) {
+                const allTasks: Task[] = await tasksRes.json()
+                const myTasks = Array.isArray(allTasks)
+                    ? allTasks.filter(t => t.status !== 'completed' && t.status !== 'verified')
+                    : []
+                setTasks(myTasks)
+            } else {
+                // Fallback to admin endpoint
+                const fallback = await fetch(`/api/admin/tasks`)
+                if (fallback.ok) {
+                    const allTasks: Task[] = await fallback.json()
                     const myTasks = allTasks.filter(t => t.assigned_to === userId && t.status !== 'completed')
                     setTasks(myTasks)
                 }
-
-                if (meetingsRes.ok) {
-                    const allMeetings: Meeting[] = await meetingsRes.json()
-                    setMeetings(allMeetings)
-                }
-
-                if (membersRes.ok) {
-                    const allMembers: UserProfile[] = await membersRes.json()
-                    setMembers(allMembers)
-                }
-
-            } catch (err) {
-                console.error(err)
-            } finally {
-                setLoading(false)
             }
+
+            if (meetingsRes.ok) {
+                const allMeetings: Meeting[] = await meetingsRes.json()
+                setMeetings(allMeetings)
+            }
+
+            if (membersRes.ok) {
+                const allMembers: UserProfile[] = await membersRes.json()
+                setMembers(allMembers)
+            }
+
+            // Load current time-log state
+            const today = new Date().toISOString().split('T')[0]
+            const { data: logs } = await supabase
+                .from('time_logs')
+                .select('*')
+                .eq('user_id', userId)
+                .gte('clock_in', today)
+            const activeLog = (logs || []).find((l: any) => !l.clock_out)
+            setActiveLogId(activeLog?.id || null)
+            setActiveTaskId(activeLog?.task_id || null)
+            setActiveClockIn(activeLog?.clock_in || null)
+            setIsClockedIn(!!activeLog)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
         }
+    }, [userId, supabase])
 
-        loadData()
-    }, [userId])
+    const handleTimerToggle = useCallback(async () => {
+        try {
+            if (isClockedIn && activeLogId) {
+                // Clock out
+                const clockOut = new Date().toISOString()
+                const durationMinutes = Math.round(
+                    (new Date(clockOut).getTime() - new Date(activeClockIn!).getTime()) / 60000
+                )
+                await supabase
+                    .from('time_logs')
+                    .update({ clock_out: clockOut, duration_minutes: durationMinutes })
+                    .eq('id', activeLogId)
+                setIsClockedIn(false)
+                setActiveLogId(null)
+                setActiveTaskId(null)
+                setActiveClockIn(null)
+                toast.success('Clocked out successfully')
+            } else {
+                // Clock in
+                const now = new Date().toISOString()
+                const { data, error } = await supabase
+                    .from('time_logs')
+                    .insert({ user_id: userId, clock_in: now })
+                    .select()
+                    .single()
+                if (error) throw error
+                setIsClockedIn(true)
+                setActiveLogId(data.id)
+                setActiveClockIn(now)
+                toast.success('Clocked in — timer running!')
+            }
+        } catch (e: any) {
+            console.error(e)
+            toast.error('Failed to toggle timer')
+        }
+    }, [isClockedIn, activeLogId, activeClockIn, userId, supabase])
 
-    const todayStr = new Date().toISOString().split('T')[0]
-    const dueToday = tasks.filter(t => t.due_date && t.due_date.startsWith(todayStr))
-    const overdue = tasks.filter(t => t.due_date && t.due_date < todayStr)
-    const highPriority = tasks.filter(t => t.priority === 'high' && !dueToday.includes(t) && !overdue.includes(t))
-    const todaysMeetings = meetings.filter(m => m.date_time_start.startsWith(todayStr))
+    useEffect(() => { loadData() }, [loadData])
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-12 gap-4">
@@ -73,6 +133,12 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
             <p className="text-sm text-muted-foreground">Loading your day...</p>
         </div>
     )
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    const dueToday = tasks.filter(t => t.due_date && t.due_date.startsWith(todayStr))
+    const overdue = tasks.filter(t => t.due_date && t.due_date < todayStr)
+    const highPriority = tasks.filter(t => t.priority === 'high' && !dueToday.includes(t) && !overdue.includes(t))
+    const todaysMeetings = meetings.filter(m => m.date_time_start.startsWith(todayStr))
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -135,7 +201,9 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                             className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-red-100 dark:border-red-900/50 flex justify-between items-center shadow-md cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px]"
                                         >
                                             <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
-                                            <span className="text-xs text-red-600 dark:text-red-400 font-semibold whitespace-nowrap bg-red-100 dark:bg-red-900/50 px-3 py-1 rounded-full">{t.due_date}</span>
+                                            <span className="text-xs text-red-600 dark:text-red-400 font-semibold whitespace-nowrap bg-red-100 dark:bg-red-900/50 px-3 py-1 rounded-full">
+                                                {new Date(t.due_date!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
@@ -254,10 +322,29 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                 <Clock className="w-5 h-5" />
                                 <h3 className="font-bold">Time Tracking</h3>
                             </div>
-                            <p className="text-emerald-100/80 text-sm">Track your time to stay productive and earn more.</p>
-                            <button className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl font-medium hover:bg-white/30 transition-all border border-white/20">
-                                Start Timer
-                                <ArrowUpRight className="w-4 h-4" />
+                            {isClockedIn && activeClockIn ? (
+                                <div className="mb-3">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                        <span className="text-xs text-emerald-100 font-medium">Currently tracking</span>
+                                    </div>
+                                    <div className="text-2xl font-mono font-bold">
+                                        <Timer isActive={true} startTime={activeClockIn} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-emerald-100/80 text-sm mb-3">Track your time to stay productive and earn more.</p>
+                            )}
+                            <button
+                                onClick={handleTimerToggle}
+                                className={`mt-1 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all border ${
+                                    isClockedIn
+                                        ? 'bg-white/30 border-white/40 hover:bg-white/40'
+                                        : 'bg-white/20 border-white/20 hover:bg-white/30'
+                                }`}
+                            >
+                                {isClockedIn ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                {isClockedIn ? 'Stop Timer' : 'Start Timer'}
                             </button>
                         </div>
                     </div>

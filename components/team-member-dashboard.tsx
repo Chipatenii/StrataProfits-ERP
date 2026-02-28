@@ -233,7 +233,7 @@ export function TeamMemberDashboard({
                   setActiveView(item.id as any)
                   if (window.innerWidth < 768) setIsSidebarOpen(false)
                 }}
-                className={`group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-h-[48px]
+                className={`sidebar-icon-btn group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-h-[48px]
                   ${isActive
                     ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300 font-semibold shadow-sm"
                     : "text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground"
@@ -243,6 +243,7 @@ export function TeamMemberDashboard({
                 <Icon
                   size={20}
                   strokeWidth={isActive ? 2.5 : 2}
+                  data-tooltip={item.label}
                   className={`shrink-0 transition-colors ${isActive ? "text-indigo-600 dark:text-indigo-300" : "text-muted-foreground group-hover:text-foreground"}`}
                 />
                 <span className={`whitespace-nowrap ${!isSidebarOpen && "md:hidden lg:block"} transition-opacity duration-200 flex-1 text-left text-sm`}>
@@ -333,6 +334,16 @@ export function TeamMemberDashboard({
               onDataChange={loadData}
             />
           ) : null}
+
+          {/* Create Task FAB — for team members who aren't admin/VA (they use TeamTasksView's own button) */}
+          <button
+            onClick={() => setShowCreateTask(true)}
+            className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 flex items-center gap-2 px-4 py-3 md:px-5 md:py-3 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 hover:brightness-110 active:scale-[0.97] transition-all duration-200"
+            aria-label="Create new task"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            <span className="hidden sm:inline">New Task</span>
+          </button>
         </main>
 
         {/* Mobile Bottom Navigation */}
