@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
         const validation = sopSchema.safeParse(body)
-        if (!validation.success) return NextResponse.json({ error: "Validation failed" }, { status: 400 })
+        if (!validation.success) return NextResponse.json({ error: "Validation failed", details: validation.error.format() }, { status: 400 })
 
         const admin = await createAdminClient()
         const { data: sop, error } = await admin
@@ -75,6 +75,65 @@ export async function POST(request: NextRequest) {
         if (error) throw error
         return NextResponse.json(sop)
     } catch (error) {
+        console.error("Failed to create SOP:", error)
         return NextResponse.json({ error: "Failed to create SOP" }, { status: 500 })
+    }
+}
+
+export async function PATCH(request: NextRequest) {
+    const perm = await checkPermission(request, true)
+    if (perm.error || !perm.user) return NextResponse.json({ error: perm.error || "Unauthorized" }, { status: perm.status || 401 })
+
+    try {
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get("id")
+        if (!id) return NextResponse.json({ error: "SOP ID is required" }, { status: 400 })
+
+        const body = await request.json()
+        const validation = sopSchema.partial().safeParse(body)
+        if (!validation.success) return NextResponse.json({ error: "Validation failed", details: validation.error.format() }, { status: 400 })
+
+        const admin = await createAdminClient()
+
+        // Verify SOP exists
+        const { data: existing } = await admin.from("sops").select("id").eq("id", id).maybeSingle()
+        if (!existing) return NextResponse.json({ error: "SOP not found" }, { status: 404 })
+
+        const { data: sop, error } = await admin
+            .from("sops")
+            .update({
+                ...validation.data,
+                last_updated_by_user_id: perm.user.id,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id)
+            .select()
+            .single()
+
+        if (error) throw error
+        return NextResponse.json(sop)
+    } catch (error) {
+        console.error("Failed to update SOP:", error)
+        return NextResponse.json({ error: "Failed to update SOP" }, { status: 500 })
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    const perm = await checkPermission(request, true)
+    if (perm.error || !perm.user) return NextResponse.json({ error: perm.error || "Unauthorized" }, { status: perm.status || 401 })
+
+    try {
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get("id")
+        if (!id) return NextResponse.json({ error: "SOP ID is required" }, { status: 400 })
+
+        const admin = await createAdminClient()
+        const { error } = await admin.from("sops").delete().eq("id", id)
+        if (error) throw error
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Failed to delete SOP:", error)
+        return NextResponse.json({ error: "Failed to delete SOP" }, { status: 500 })
     }
 }

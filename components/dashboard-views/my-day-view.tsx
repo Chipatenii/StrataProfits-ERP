@@ -38,7 +38,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
             setLoading(true)
             const [tasksRes, meetingsRes, membersRes] = await Promise.all([
                 // Use user-scoped endpoint: tasks assigned to or created by this user
-                fetch(`/api/tasks?userId=${userId}`),
+                fetch(`/api/tasks?assignee_id=${userId}`),
                 fetch(`/api/meetings`),
                 fetch(`/api/admin/members`)
             ])

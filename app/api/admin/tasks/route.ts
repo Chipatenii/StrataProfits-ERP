@@ -104,19 +104,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prevent assigning tasks to admin or VA
-    if (validation.data.assigned_to) {
-      const { data: assigneeProfile } = await admin
-        .from("profiles")
-        .select("role")
-        .eq("id", validation.data.assigned_to)
-        .single()
+    // Prevent assigning tasks to other admins (VAs can be assigned by admin)
+    if (body.assigned_to || validation.data.assigned_to) {
+      const assigneeId = validation.data.assigned_to
+      if (assigneeId) {
+        const { data: assigneeProfile } = await admin
+          .from("profiles")
+          .select("role")
+          .eq("id", assigneeId)
+          .maybeSingle()
 
-      if (assigneeProfile?.role === 'admin' || assigneeProfile?.role === 'virtual_assistant') {
-        return NextResponse.json(
-          { error: "Tasks cannot be assigned to admins or virtual assistants" },
-          { status: 400 }
-        )
+        // Only block admin → admin assignment; VAs can receive tasks from admins
+        if (assigneeProfile?.role === 'admin') {
+          return NextResponse.json(
+            { error: "Tasks cannot be assigned to other admins" },
+            { status: 400 }
+          )
+        }
+        // Non-admin creators (VAs etc.) still cannot assign to admins or other VAs
+        if (userRole !== 'admin' && assigneeProfile?.role === 'virtual_assistant') {
+          return NextResponse.json(
+            { error: "Tasks cannot be assigned to virtual assistants" },
+            { status: 400 }
+          )
+        }
       }
     }
 
@@ -216,15 +227,32 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json()
 
-    // Get existing task
-    const { data: existingTask } = await admin
+    // Sanitize empty strings to null for UUID/FK fields
+    if (body.assigned_to === '') body.assigned_to = null
+    if (body.project_id === '') body.project_id = null
+    if (body.deliverable_id === '') body.deliverable_id = null
+
+    // Get existing task — separate from assignee profile to avoid FK join failure
+    const { data: existingTask, error: taskFetchError } = await admin
       .from("tasks")
-      .select("*, assignee:profiles!assigned_to(role)")
+      .select("*")
       .eq("id", id)
       .single()
 
-    if (!existingTask) {
+    if (taskFetchError || !existingTask) {
+      console.error("[PATCH /api/admin/tasks] Task not found:", id, taskFetchError)
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
+    // Separately fetch current assignee role (if task has one) for VA permission checks
+    let existingAssigneeRole: string | null = null
+    if (existingTask.assigned_to) {
+      const { data: assigneeProfile } = await admin
+        .from("profiles")
+        .select("role")
+        .eq("id", existingTask.assigned_to)
+        .maybeSingle()
+      existingAssigneeRole = assigneeProfile?.role || null
     }
 
     // Role-based update permissions:
@@ -233,25 +261,24 @@ export async function PATCH(request: NextRequest) {
     // - Team members: can only update status to "completed" on their own tasks
 
     if (userRole === 'admin') {
-      // Admin can do anything, but prevent assigning to admin/VA
+      // Admin can assign to anyone except other admins
       if (body.assigned_to) {
         const { data: newAssignee } = await admin
           .from("profiles")
           .select("role")
           .eq("id", body.assigned_to)
-          .single()
+          .maybeSingle()
 
-        if (newAssignee?.role === 'admin' || newAssignee?.role === 'virtual_assistant') {
+        if (newAssignee?.role === 'admin') {
           return NextResponse.json(
-            { error: "Tasks cannot be assigned to admins or virtual assistants" },
+            { error: "Tasks cannot be assigned to other admins" },
             { status: 400 }
           )
         }
       }
     } else if (userRole === 'virtual_assistant') {
       // VA can only update tasks assigned to team members
-      const assigneeRole = existingTask.assignee?.role
-      if (!ASSIGNABLE_ROLES.includes(assigneeRole)) {
+      if (!existingAssigneeRole || !ASSIGNABLE_ROLES.includes(existingAssigneeRole)) {
         return NextResponse.json(
           { error: "You can only edit tasks assigned to team members" },
           { status: 403 }

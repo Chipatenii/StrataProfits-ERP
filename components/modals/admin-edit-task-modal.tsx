@@ -89,14 +89,17 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                 body: JSON.stringify(updateData),
             })
 
-            if (!response.ok) throw new Error("Failed to update task")
+            if (!response.ok) {
+                const errJson = await response.json().catch(() => ({}))
+                throw new Error(errJson.error || "Failed to update task")
+            }
 
             onSuccess()
             onOpenChange(false)
             toast.success("Task updated successfully")
         } catch (error) {
             console.error("Error updating task:", error)
-            toast.error("Failed to update task")
+            toast.error(error instanceof Error ? error.message : "Failed to update task")
         } finally {
             setIsLoading(false)
         }
@@ -149,8 +152,10 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                                 className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
                             >
                                 <option value="pending">Pending</option>
-                                <option value="in-progress">In Progress</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="pending_approval">Pending Approval</option>
                                 <option value="completed">Completed</option>
+                                <option value="verified">Verified</option>
                             </select>
                         </div>
 
