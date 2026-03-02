@@ -37,23 +37,14 @@ export async function GET() {
     }
 
     if (userRole === 'virtual_assistant') {
-      // VA sees only tasks assigned to team members (using assignable roles)
-      // First get all users with assignable roles
-      const { data: teamMembers } = await admin
-        .from("profiles")
-        .select("id")
-        .in("role", ASSIGNABLE_ROLES)
-
-      const teamMemberIds = teamMembers?.map(m => m.id) || []
-
-      if (teamMemberIds.length === 0) {
-        return NextResponse.json([])
-      }
-
+      // VA sees only:
+      //   1. Tasks assigned directly to this VA
+      //   2. Tasks this VA has created/assigned to others
+      // This prevents cross-VA data leakage.
       const { data: tasks, error } = await admin
         .from("tasks")
         .select("*")
-        .in("assigned_to", teamMemberIds)
+        .or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`)
         .order("created_at", { ascending: false })
 
       if (error) throw error
@@ -277,42 +268,59 @@ export async function PATCH(request: NextRequest) {
         }
       }
     } else if (userRole === 'virtual_assistant') {
-      // VA can only update tasks assigned to team members
-      if (!existingAssigneeRole || !ASSIGNABLE_ROLES.includes(existingAssigneeRole)) {
+      const vaIsCreator = existingTask.created_by === user.id
+      const vaIsAssignee = existingTask.assigned_to === user.id
+
+      if (!vaIsCreator && !vaIsAssignee) {
+        // VA has no relationship to this task at all
         return NextResponse.json(
-          { error: "You can only edit tasks assigned to team members" },
+          { error: "You can only edit tasks you have assigned or that are assigned to you" },
           { status: 403 }
         )
       }
 
-      // If VA is changing the assignee, must be to a team member
-      if (body.assigned_to && body.assigned_to !== existingTask.assigned_to) {
-        const { data: newAssignee } = await admin
-          .from("profiles")
-          .select("role")
-          .eq("id", body.assigned_to)
-          .single()
+      if (vaIsCreator) {
+        // Full edit rights: VA created/assigned this task
+        // If changing the assignee, it must be to a valid team member (not admin or another VA)
+        if (body.assigned_to && body.assigned_to !== existingTask.assigned_to) {
+          const { data: newAssignee } = await admin
+            .from("profiles")
+            .select("role")
+            .eq("id", body.assigned_to)
+            .single()
 
-        if (!ASSIGNABLE_ROLES.includes(newAssignee?.role)) {
+          if (!ASSIGNABLE_ROLES.includes(newAssignee?.role)) {
+            return NextResponse.json(
+              { error: "You can only assign tasks to team members" },
+              { status: 400 }
+            )
+          }
+        }
+
+        // Log activity for admin notification
+        await admin.from("activity_logs").insert({
+          actor_user_id: user.id,
+          action: "task_edited_by_va",
+          entity_type: "task",
+          entity_id: id,
+          metadata: {
+            task_title: existingTask.title,
+            edited_by: profile?.full_name,
+            changes: Object.keys(body)
+          }
+        })
+      } else {
+        // VA is the assignee (task was assigned TO them): only allow completion fields
+        const allowedFields = ['status', 'completion_notes', 'completed_at', 'time_allocated']
+        const disallowedFields = Object.keys(body).filter(f => !allowedFields.includes(f))
+
+        if (disallowedFields.length > 0) {
           return NextResponse.json(
-            { error: "You can only assign tasks to team members" },
-            { status: 400 }
+            { error: `As an assignee you can only update: ${allowedFields.join(', ')}` },
+            { status: 403 }
           )
         }
       }
-
-      // Log activity for admin notification (VA edit takes effect immediately)
-      await admin.from("activity_logs").insert({
-        actor_user_id: user.id,
-        action: "task_edited_by_va",
-        entity_type: "task",
-        entity_id: id,
-        metadata: {
-          task_title: existingTask.title,
-          edited_by: profile?.full_name,
-          changes: Object.keys(body)
-        }
-      })
     } else if (ASSIGNABLE_ROLES.includes(userRole)) {
       // Team members can only complete their own tasks
       if (existingTask.assigned_to !== user.id) {

@@ -5,11 +5,15 @@ import { Plus, CheckCircle, Clock, Pause, Play } from "lucide-react"
 import { Task, UserProfile, TimeLog } from "@/lib/types"
 import { createClient } from "@/lib/supabase/client"
 import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
+import { AdminCreateTaskModal } from "@/components/modals/admin-create-task-modal"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { Timer } from "@/components/timer"
 import { calculateTimeSpent } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+
+// Roles that a VA can assign tasks to (must match the API route)
+const ASSIGNABLE_ROLES = ['team_member', 'developer', 'social_media_manager', 'book_keeper', 'marketing', 'sales', 'graphic_designer']
 
 interface TeamTasksViewProps {
     userId: string
@@ -32,6 +36,7 @@ export function TeamTasksView({
     const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
     const [members, setMembers] = useState<UserProfile[]>([])
+    const [assignableMembers, setAssignableMembers] = useState<{ id: string; full_name: string }[]>([])
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
     const [userRole, setUserRole] = useState<string | null>(null)
@@ -44,23 +49,32 @@ export function TeamTasksView({
     const loadData = useCallback(async (isInitial = false) => {
         if (isInitial) setLoading(true)
         try {
-            // Fetch tasks: VAs and Admins see all, others see assigned/created
-            let query = supabase.from("tasks").select("*")
-
-            // Check if user is VA/Admin via profile (we need role here)
+            // Check role first — roles determine which data source to use
             const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single()
             const role = profile?.role
             setUserRole(role)
 
-            if (role !== 'admin' && role !== 'virtual_assistant') {
-                query = query.or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
+            let tasksData: Task[] = []
+            if (role === 'admin' || role === 'virtual_assistant') {
+                // Use the secure API endpoint which applies server-side isolation:
+                // - Admin gets all tasks
+                // - VA gets only tasks assigned_to them OR created_by them
+                const res = await fetch('/api/admin/tasks')
+                if (!res.ok) throw new Error('Failed to fetch tasks')
+                tasksData = await res.json()
+            } else {
+                // Regular team members: filter client-side to own tasks
+                const { data, error: tasksError } = await supabase
+                    .from("tasks")
+                    .select("*")
+                    .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
+                    .order("created_at", { ascending: false })
+                if (tasksError) throw tasksError
+                tasksData = data || []
             }
 
-            const { data: tasksData, error: tasksError } = await query.order("created_at", { ascending: false })
-
-            if (tasksError) throw tasksError
             // @ts-ignore
-            setTasks(tasksData || [])
+            setTasks(tasksData)
 
             // Fetch today's time logs
             const today = new Date().toISOString().split("T")[0]
@@ -81,6 +95,14 @@ export function TeamTasksView({
             // Fetch members for detail modal
             const { data: membersData } = await supabase.from("profiles").select("*")
             if (membersData) setMembers(membersData as UserProfile[])
+
+            // For VA: also build a filtered list of assignable team members for the task creation modal
+            if (role === 'virtual_assistant' && membersData) {
+                const filtered = (membersData as UserProfile[])
+                    .filter(m => ASSIGNABLE_ROLES.includes(m.role as string))
+                    .map(m => ({ id: m.id || (m as any).user_id, full_name: m.full_name || 'Unknown' }))
+                setAssignableMembers(filtered)
+            }
         } catch (error: any) {
             console.error("Failed to load team tasks:", error.message || error)
         } finally {
@@ -263,6 +285,19 @@ export function TeamTasksView({
                                                             Edit Details
                                                         </button>
                                                     )}
+                                                    {/* VA can edit tasks they personally created */}
+                                                    {userRole === 'virtual_assistant' && task.created_by === userId && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                setTaskToEdit(task)
+                                                                setShowCreateTask(true)
+                                                            }}
+                                                            className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold uppercase mt-1"
+                                                        >
+                                                            Edit Task
+                                                        </button>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex gap-2 shrink-0">
@@ -334,15 +369,31 @@ export function TeamTasksView({
                 )}
             </div>
 
-            <CreateSelfTaskModal
-                open={showCreateTask}
-                onOpenChange={(open) => {
-                    setShowCreateTask(open)
-                    if (!open) setTaskToEdit(null)
-                }}
-                onSuccess={() => refreshData()}
-                taskToEdit={taskToEdit}
-            />
+            {/* VA uses AdminCreateTaskModal so they can assign to team members */}
+            {userRole === 'virtual_assistant' ? (
+                <AdminCreateTaskModal
+                    open={showCreateTask}
+                    members={assignableMembers}
+                    userId={userId}
+                    userRole={userRole}
+                    taskToEdit={taskToEdit}
+                    onOpenChange={(open) => {
+                        setShowCreateTask(open)
+                        if (!open) setTaskToEdit(null)
+                    }}
+                    onSuccess={() => refreshData()}
+                />
+            ) : (
+                <CreateSelfTaskModal
+                    open={showCreateTask}
+                    onOpenChange={(open) => {
+                        setShowCreateTask(open)
+                        if (!open) setTaskToEdit(null)
+                    }}
+                    onSuccess={() => refreshData()}
+                    taskToEdit={taskToEdit}
+                />
+            )}
 
             <TaskCompletionModal
                 isOpen={showCompleteModal}

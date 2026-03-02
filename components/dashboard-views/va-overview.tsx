@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { AlertCircle, Clock } from "lucide-react"
 import { Task, Invoice, Meeting, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
-import { getTimeBasedGreeting, getFormattedDate, getFormattedTime } from "@/lib/time-utils"
+import { getTimeBasedGreeting } from "@/lib/time-utils"
 
 interface VAOverviewProps {
     userName: string
@@ -17,7 +17,7 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     const [overdueInvoices, setOverdueInvoices] = useState<Invoice[]>([])
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [stats, setStats] = useState({ leads: 0, proposals: 0 })
-    const [currentTime, setCurrentTime] = useState(new Date())
+    const [currentTime, setCurrentTime] = useState<Date | null>(null)
     const [members, setMembers] = useState<UserProfile[]>([])
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -28,6 +28,8 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     }
 
     useEffect(() => {
+        // Set initial time on client to avoid hydration mismatch
+        setCurrentTime(new Date())
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
         return () => clearInterval(timer)
     }, [])
@@ -88,9 +90,19 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">{getTimeBasedGreeting(userName)}</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">
+                        {currentTime ? getTimeBasedGreeting(userName) : `Hello, ${userName.split(' ')[0]}`}
+                    </h2>
                     <p className="text-muted-foreground">
-                        {getFormattedDate()} • <span className="font-mono bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{getFormattedTime()}</span>
+                        {currentTime ? (
+                            <>
+                                {new Intl.DateTimeFormat('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentTime)}
+                                {' • '}
+                                <span className="font-mono bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                                    {new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(currentTime)}
+                                </span>
+                            </>
+                        ) : null}
                     </p>
                 </div>
             </div>
