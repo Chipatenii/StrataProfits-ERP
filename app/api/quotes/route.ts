@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
+import { generateDocumentNumber } from "@/lib/utils/document-numbers"
 
 const createQuoteSchema = z.object({
     client_id: z.string().uuid(),
@@ -75,6 +76,11 @@ export async function POST(request: NextRequest) {
         }
 
         const { items, ...quoteData } = validation.data
+
+        // Auto-generate quote number if not supplied
+        if (!quoteData.quote_number) {
+            quoteData.quote_number = await generateDocumentNumber(admin, 'quotes', 'QUO')
+        }
 
         // 1. Create Quote
         const { data: quote, error } = await admin

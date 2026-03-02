@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
+import { generateDocumentNumber } from "@/lib/utils/document-numbers"
 
 export const dynamic = 'force-dynamic'
 
@@ -74,9 +75,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unprocessable Entity", details: "Payment amount exceeds balance due" }, { status: 422 })
         }
 
+        // Auto-generate receipt number if not supplied
+        const paymentData = { ...validation.data }
+        if (!paymentData.receipt_number) {
+            paymentData.receipt_number = await generateDocumentNumber(admin, 'payments', 'RCT')
+        }
+
         // 1. Record Payment
         const { data: payment, error } = await admin.from("payments").insert({
-            ...validation.data,
+            ...paymentData,
             received_by_user_id: user.id
         }).select().single()
 

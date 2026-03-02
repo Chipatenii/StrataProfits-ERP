@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { generateDocumentNumber } from "@/lib/utils/document-numbers"
 
 const createInvoiceSchema = z.object({
     client_id: z.string().uuid(),
@@ -114,6 +115,11 @@ export async function POST(request: NextRequest) {
 
         const { items, ...invoiceData } = validation.data
         const admin = await createAdminClient()
+
+        // Auto-generate invoice number if not supplied
+        if (!invoiceData.invoice_number) {
+            invoiceData.invoice_number = await generateDocumentNumber(admin, 'invoices', 'INV')
+        }
 
         // 1. Create Invoice
         // Calculate total amount correctly on server side to ensure data integrity
