@@ -193,7 +193,7 @@ export function TeamMemberDashboard({
               </div>
               <div className="text-white">
                 <h2 className="font-bold text-lg leading-tight">Team Portal</h2>
-                <p className="text-xs text-indigo-100/80">StrataProfits ERP</p>
+                <p className="text-xs text-indigo-100/80">StrataForge Business Suite</p>
               </div>
             </div>
             <button

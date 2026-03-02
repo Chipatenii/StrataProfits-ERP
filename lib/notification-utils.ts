@@ -60,7 +60,7 @@ function showBrowserNotification(title: string, body: string, icon?: string): vo
       body,
       icon: icon || "/placeholder-logo.png",
       badge: "/placeholder-logo.png",
-      tag: "ostento-notification",
+      tag: "strataforge-notification",
       requireInteraction: false,
     })
   }
@@ -91,7 +91,7 @@ export function subscribeToNotifications(
 
         // Show browser notification if permission granted
         if (Notification.permission === "granted") {
-          showBrowserNotification("Ostento Notification", notification.message)
+          showBrowserNotification("StrataForge Notification", notification.message)
         }
       },
     )

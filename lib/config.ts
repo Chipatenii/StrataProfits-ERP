@@ -1,6 +1,6 @@
 export const APP_CONFIG = {
-    name: "Strata ERP",
-    shortName: "Strata",
+    name: "StrataForge Business Suite",
+    shortName: "StrataForge",
     tagline: "ERP for Service Businesses",
     currency: "ZMW",
     version: "2.0.0",

@@ -95,7 +95,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
               </div>
               <div className="text-white">
                 <h2 className="font-bold text-lg leading-tight">Virtual Assistant</h2>
-                <p className="text-xs text-blue-100/80">StrataProfits ERP</p>
+                <p className="text-xs text-blue-100/80">StrataForge Business Suite</p>
               </div>
             </div>
             <button

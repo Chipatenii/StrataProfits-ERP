@@ -86,7 +86,7 @@ export function MonthlyReports() {
 
   const handleExportPDF = () => {
     const doc = new jsPDF()
-    doc.text(`OSTENTO MEDIA AGENCY - MONTHLY REPORT`, 10, 10)
+    doc.text(`STRATAFORGE BUSINESS SUITE - MONTHLY REPORT`, 10, 10)
     doc.text(`Month: ${selectedMonth}`, 10, 20)
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 10, 30)
 
@@ -149,7 +149,7 @@ export function MonthlyReports() {
       y += 10
     })
 
-    doc.save(`ostento-report-${selectedMonth}.pdf`)
+    doc.save(`strataforge-report-${selectedMonth}.pdf`)
   }
 
   if (loading) {

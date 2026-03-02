@@ -330,7 +330,7 @@ export function AdminDashboard({
               </div>
               <div className="text-white">
                 <h2 className="font-bold text-lg leading-tight">Admin Panel</h2>
-                <p className="text-xs text-emerald-100/80">StrataProfits ERP</p>
+                <p className="text-xs text-emerald-100/80">StrataForge Business Suite</p>
               </div>
             </div>
             <button

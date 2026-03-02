@@ -180,7 +180,7 @@ export class PDFService {
         reports: any[]
     }) {
         const doc = new jsPDF()
-        doc.text(`OSTENTO MEDIA AGENCY - MONTHLY REPORT`, 10, 10)
+        doc.text(`STRATAFORGE BUSINESS SUITE - MONTHLY REPORT`, 10, 10)
         doc.text(`Month: ${data.month}`, 10, 20)
         doc.text(`Generated: ${new Date().toLocaleDateString()}`, 10, 30)
 
@@ -241,6 +241,6 @@ export class PDFService {
             y += 10
         })
 
-        doc.save(`ostento-report-${data.month}.pdf`)
+        doc.save(`strataforge-report-${data.month}.pdf`)
     }
 }

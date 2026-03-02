@@ -25,9 +25,9 @@ export function InvoiceTemplate({ invoice }: InvoiceTemplateProps) {
                     <p className="text-gray-500">#{invoice.invoice_number || "DRAFT"}</p>
                 </div>
                 <div className="text-right">
-                    <h2 className="text-2xl font-bold text-blue-600 mb-1">Ostento Media</h2>
+                    <h2 className="text-2xl font-bold text-blue-600 mb-1">StrataForge Business Suite</h2>
                     <p className="text-sm text-gray-600">Lusaka, Zambia</p>
-                    <p className="text-sm text-gray-600">contact@ostentomedia.com</p>
+                    <p className="text-sm text-gray-600">contact@strataforge.com</p>
                 </div>
             </div>
 
