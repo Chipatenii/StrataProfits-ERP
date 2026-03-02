@@ -120,3 +120,34 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Failed to update meeting" }, { status: 500 })
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const supabase = await createClient()
+        const admin = await createAdminClient()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get("id")
+
+        if (!id) {
+            return NextResponse.json({ error: "Meeting ID required" }, { status: 400 })
+        }
+
+        const { error } = await admin
+            .from("meetings")
+            .delete()
+            .eq("id", id)
+
+        if (error) throw error
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Error deleting meeting:", error)
+        return NextResponse.json({ error: "Failed to delete meeting" }, { status: 500 })
+    }
+}
