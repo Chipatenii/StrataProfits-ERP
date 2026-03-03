@@ -27,6 +27,8 @@ import { getTimeBasedGreeting, getFormattedDate } from "@/lib/time-utils"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { CreateSelfTaskModal } from "@/components/modals/create-self-task-modal"
 import { TeamTasksView } from "@/components/dashboard-views/team-tasks-view"
+import { FilesView } from "@/components/dashboard-views/files-view"
+import { HRView } from "@/components/dashboard-views/hr-view"
 
 interface Task {
   id: string
@@ -80,7 +82,7 @@ export function TeamMemberDashboard({
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [showCreateTask, setShowCreateTask] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "tasks" | "meetings" | "profile">("my-day")
+  const [activeView, setActiveView] = useState<"my-day" | "tasks" | "meetings" | "profile" | "files" | "hr">("my-day")
 
   const loadData = useCallback(async () => {
     try {
@@ -333,6 +335,10 @@ export function TeamMemberDashboard({
               userName={userName}
               onDataChange={loadData}
             />
+          ) : activeView === "files" ? (
+            <FilesView />
+          ) : activeView === "hr" ? (
+            <HRView />
           ) : null}
 
           {/* Create Task FAB — for team members who aren't admin/VA (they use TeamTasksView's own button) */}

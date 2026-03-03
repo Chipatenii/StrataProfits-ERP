@@ -32,6 +32,8 @@ import { ReportsView } from "@/components/dashboard-views/reports-view"
 import { AdminTasksView } from "@/components/dashboard-views/admin-tasks-view"
 import { FinanceView } from "@/components/dashboard-views/finance-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
+import { FilesView } from "@/components/dashboard-views/files-view"
+import { HRView } from "@/components/dashboard-views/hr-view"
 
 import { Task, UserProfile } from "@/lib/types"
 import { VAFinance } from "@/components/dashboard-views/va-finance"
@@ -61,7 +63,7 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales">("overview")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales" | "files" | "hr">("overview")
 
   const [stats, setStats] = useState<any>(null) // Stats type in lib/types might differ from local usage, safe with any for now or check
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
@@ -469,6 +471,8 @@ export function AdminDashboard({
             )
           )}
           {activeView === "sops" && <VASOPs />}
+          {activeView === "files" && <FilesView />}
+          {activeView === "hr" && <HRView />}
 
           {/* Existing Views */}
           {activeView === "my-day" && (

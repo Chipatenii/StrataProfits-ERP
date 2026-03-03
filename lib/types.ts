@@ -203,6 +203,21 @@ export interface SOP {
     updated_at: string
 }
 
+export interface CompanyFile {
+    id: string
+    name: string
+    type: 'file' | 'folder'
+    parent_id: string | null
+    file_path: string | null
+    size_bytes: number | null
+    mime_type: string | null
+    uploaded_by: string
+    created_at: string
+    updated_at: string
+    // Joined relations
+    uploader?: UserProfile
+}
+
 export interface Client {
     id: string
     name: string
@@ -335,5 +350,68 @@ export interface EntityComment {
     content: string
     created_at: string
     author?: UserProfile
+}
+
+// ─── HR & Onboarding ─────────────────────────────────────────────────────────
+
+export interface TimeOffRequest {
+    id: string
+    user_id: string
+    type: 'vacation' | 'sick' | 'personal' | 'unpaid' | 'other'
+    start_date: string
+    end_date: string
+    days_count: number
+    reason: string | null
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+    reviewed_by: string | null
+    reviewed_at: string | null
+    reviewer_notes: string | null
+    created_at: string
+    updated_at: string
+    // Joined relations
+    user?: UserProfile
+    reviewer?: UserProfile
+}
+
+export interface PerformanceReview {
+    id: string
+    user_id: string
+    reviewer_id: string
+    review_period: string
+    overall_rating: number | null
+    strengths: string | null
+    areas_for_improvement: string | null
+    goals: string | null
+    additional_notes: string | null
+    status: 'draft' | 'published'
+    created_at: string
+    updated_at: string
+    // Joined relations
+    user?: UserProfile
+    reviewer?: UserProfile
+}
+
+export interface OnboardingTask {
+    id: string
+    title: string
+    description: string | null
+    category: 'General' | 'IT Setup' | 'HR Paperwork' | 'Team Intro' | 'Training' | 'Tools & Access' | 'Other'
+    sort_order: number
+    is_active: boolean
+    created_at: string
+    updated_at: string
+}
+
+export interface UserOnboardingProgress {
+    id: string
+    user_id: string
+    task_id: string
+    completed: boolean
+    completed_at: string | null
+    notes: string | null
+    created_at: string
+    // Joined relations
+    task?: OnboardingTask
+    user?: UserProfile
 }
 
