@@ -1,18 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Zap, Menu, X, LogOut, LayoutDashboard, FileText, Users } from "lucide-react"
+import { Zap, Menu, X, LogOut, LayoutDashboard, FileText, Users, MessageSquare } from "lucide-react"
 import { APP_NAME } from "@/lib/config"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { NotificationBell } from "@/components/notification-bell"
+import { ChatPanel } from "@/components/chat/chat-panel"
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -53,6 +55,7 @@ export function Header() {
   ]
 
   return (
+    <>
     <header className="glass-card border-b border-border/30 sticky top-0 z-50 bg-white/80 backdrop-blur-md">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
@@ -93,6 +96,11 @@ export function Header() {
             {user && (
               <>
                 <NotificationBell userId={user.id} isAdmin={isAdmin} />
+                {!isClient && (
+                  <button onClick={() => setIsChatOpen(true)} className="p-2 rounded-lg hover:bg-muted transition-colors relative" title="Chat">
+                    <MessageSquare className="w-5 h-5" />
+                  </button>
+                )}
                 <div className="hidden md:block w-px h-6 bg-border mx-1" />
                 <button
                   onClick={handleLogout}
@@ -148,5 +156,15 @@ export function Header() {
         )}
       </div>
     </header>
+
+      {/* Chat Panel */}
+      {user && !isClient && (
+        <ChatPanel
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          userId={user.id}
+        />
+      )}
+    </>
   )
 }

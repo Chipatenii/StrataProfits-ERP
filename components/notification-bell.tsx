@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, X, CheckCircle, AlertTriangle, Clock } from "lucide-react"
+import { Bell, X, CheckCircle, AlertTriangle, Clock, Calendar, Star, Upload, ClipboardCheck } from "lucide-react"
 import { subscribeToNotifications } from "@/lib/notification-utils"
 import type { Notification } from "@/lib/notification-utils"
 
@@ -16,8 +16,6 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if (!isAdmin) return
-
         // Load initial notifications
         loadNotifications()
 
@@ -79,6 +77,15 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
                 return <AlertTriangle className="w-5 h-5 text-red-600" />
             case "due_date_reminder":
                 return <Clock className="w-5 h-5 text-amber-600" />
+            case "pto_approved":
+            case "pto_rejected":
+                return <Calendar className="w-5 h-5 text-indigo-600" />
+            case "review_published":
+                return <Star className="w-5 h-5 text-pink-600" />
+            case "file_shared":
+                return <Upload className="w-5 h-5 text-violet-600" />
+            case "onboarding_assigned":
+                return <ClipboardCheck className="w-5 h-5 text-teal-600" />
             default:
                 return <Bell className="w-5 h-5 text-blue-600" />
         }
@@ -98,8 +105,6 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
     }
 
     const unreadCount = notifications.filter((n) => !n.is_read).length
-
-    if (!isAdmin) return null
 
     return (
         <div className="relative">
