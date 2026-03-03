@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, FileText, CreditCard, Hash, StickyNote, Trash2, Download } from "lucide-react"
-import { Invoice } from "@/lib/types"
+import { Invoice, OrganizationSettings } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
 
@@ -31,6 +31,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [loadingInvoices, setLoadingInvoices] = useState(true)
     const [previewNumber, setPreviewNumber] = useState("")
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     // Form State
     const [invoiceId, setInvoiceId] = useState("")
@@ -48,6 +49,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
     useEffect(() => {
         if (open) {
             fetchInvoices()
+            fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
             if (initialData) {
                 setInvoiceId(initialData.invoice_id)
                 setAmount(initialData.amount)
@@ -119,7 +121,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
 
             if ((e.nativeEvent as any).submitter?.name === "download") {
                 const invoice = invoices.find(i => i.id === invoiceId)
-                PDFService.generatePaymentPDF(payload as any, invoice?.invoice_number || 'N/A', invoice?.client?.name || 'Customer')
+                PDFService.generatePaymentPDF(payload as any, invoice?.invoice_number || 'N/A', invoice?.client?.name || 'Customer', orgSettings)
             }
 
             onSuccess()

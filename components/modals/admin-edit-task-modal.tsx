@@ -36,6 +36,7 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
         assigned_to: "",
         due_date: "",
         estimated_hours: "",
+        estimated_minutes: "",
         project_id: "",
     })
     const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
@@ -49,6 +50,7 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                 .catch(err => console.error("Failed to load projects", err))
 
             if (task) {
+                const eh = task.estimated_hours
                 setFormData({
                     title: task.title,
                     description: task.description || "",
@@ -56,7 +58,8 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                     priority: task.priority,
                     assigned_to: task.assigned_to || "",
                     due_date: formatDateForInput(task.due_date),
-                    estimated_hours: task.estimated_hours?.toString() || "",
+                    estimated_hours: eh != null ? String(Math.floor(eh)) : "",
+                    estimated_minutes: eh != null ? String(Math.round((eh % 1) * 60)) : "",
                     project_id: task.project_id || "",
                 })
             }
@@ -77,7 +80,7 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                 priority: formData.priority,
                 assigned_to: formData.assigned_to || null,
                 due_date: formData.due_date || null,
-                estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
+                estimated_hours: (formData.estimated_hours || formData.estimated_minutes) ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60)) : null,
                 project_id: formData.project_id || null,
             }
 
@@ -227,20 +230,37 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                                 className="mt-1 bg-card border-border/30"
                             />
                         </div>
-                        <div>
-                            <Label htmlFor="estimatedHours" className="text-foreground font-medium">
-                                Estimated Hours
+                        <div className="col-span-2">
+                            <Label className="text-foreground font-medium">
+                                Estimated Time
                             </Label>
-                            <Input
-                                id="estimatedHours"
-                                type="number"
-                                step="0.5"
-                                min="0"
-                                value={formData.estimated_hours}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_hours: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
-                                placeholder="e.g. 5.5"
-                            />
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Hours</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={formData.estimated_hours}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_hours: e.target.value })}
+                                        className="bg-card border-border/30"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Minutes</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        max="59"
+                                        step="5"
+                                        value={formData.estimated_minutes}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_minutes: e.target.value })}
+                                        className="bg-card border-border/30"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 

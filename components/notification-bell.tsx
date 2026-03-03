@@ -32,8 +32,13 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
     const loadNotifications = async () => {
         try {
             const response = await fetch(`/api/admin/notifications?adminId=${userId}`)
+            if (!response.ok) {
+                // Non-admin users get 403 — silently ignore
+                setNotifications([])
+                return
+            }
             const data = await response.json()
-            setNotifications(data || [])
+            setNotifications(Array.isArray(data) ? data : [])
         } catch (error) {
             console.error("Error loading notifications:", error)
         } finally {

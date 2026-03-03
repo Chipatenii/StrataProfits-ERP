@@ -415,3 +415,18 @@ export interface UserOnboardingProgress {
     user?: UserProfile
 }
 
+export interface OrganizationSettings {
+    id: number
+    name: string
+    logo_url: string | null
+    address: string | null
+    phone: string | null
+    email: string | null
+    website: string | null
+    tax_id: string | null
+    bank_name: string | null
+    bank_account: string | null
+    bank_branch: string | null
+    updated_at: string
+}
+

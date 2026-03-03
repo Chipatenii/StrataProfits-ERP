@@ -1,11 +1,21 @@
-import { Invoice } from "@/lib/types"
+import { Invoice, OrganizationSettings } from "@/lib/types"
 
 interface InvoiceTemplateProps {
     invoice: Invoice
+    organization?: OrganizationSettings | null
 }
 
-export function InvoiceTemplate({ invoice }: InvoiceTemplateProps) {
+export function InvoiceTemplate({ invoice, organization }: InvoiceTemplateProps) {
     if (!invoice) return null
+
+    const companyName = organization?.name || "StrataForge Business Suite"
+    const companyAddress = organization?.address || "Lusaka, Zambia"
+    const companyEmail = organization?.email || "contact@strataforge.com"
+    const companyPhone = organization?.phone || ""
+    const bankName = organization?.bank_name || "FNB Zambia"
+    const bankAccount = organization?.bank_account || "6655443322"
+    const bankBranch = organization?.bank_branch || "Lusaka Main"
+    const taxId = organization?.tax_id || ""
 
     return (
         <div id="printable-invoice" className="hidden print:block print:fixed print:top-0 print:left-0 print:w-full print:h-full print:bg-white print:z-[9999] print:p-8 text-black">
@@ -25,9 +35,14 @@ export function InvoiceTemplate({ invoice }: InvoiceTemplateProps) {
                     <p className="text-gray-500">#{invoice.invoice_number || "DRAFT"}</p>
                 </div>
                 <div className="text-right">
-                    <h2 className="text-2xl font-bold text-blue-600 mb-1">StrataForge Business Suite</h2>
-                    <p className="text-sm text-gray-600">Lusaka, Zambia</p>
-                    <p className="text-sm text-gray-600">contact@strataforge.com</p>
+                    {organization?.logo_url && (
+                        <img src={organization.logo_url} alt="Logo" className="w-16 h-16 object-contain ml-auto mb-2" />
+                    )}
+                    <h2 className="text-2xl font-bold text-blue-600 mb-1">{companyName}</h2>
+                    <p className="text-sm text-gray-600">{companyAddress}</p>
+                    <p className="text-sm text-gray-600">{companyEmail}</p>
+                    {companyPhone && <p className="text-sm text-gray-600">{companyPhone}</p>}
+                    {taxId && <p className="text-sm text-gray-600 mt-1">TPIN: {taxId}</p>}
                 </div>
             </div>
 
@@ -99,9 +114,9 @@ export function InvoiceTemplate({ invoice }: InvoiceTemplateProps) {
             <div className="mt-auto pt-8 border-t border-gray-200 text-center text-gray-500 text-sm">
                 <p>Thank you for doing business with us.</p>
                 <div className="mt-4 flex justify-center gap-8">
-                    <span>Bank: FNB Zambia</span>
-                    <span>Account: 6655443322</span>
-                    <span>Branch: Lusaka Main</span>
+                    <span>Bank: {bankName}</span>
+                    <span>Account: {bankAccount}</span>
+                    <span>Branch: {bankBranch}</span>
                 </div>
             </div>
         </div>

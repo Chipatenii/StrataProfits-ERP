@@ -10,7 +10,7 @@ import {
     Plus, Trash2, Loader2, ChevronUp, ChevronDown,
     User, Calendar, FileText, Tag, StickyNote, Send
 } from "lucide-react"
-import { Client, Invoice } from "@/lib/types"
+import { Client, Invoice, OrganizationSettings } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
 import { APP_CONFIG } from "@/lib/config/constants"
@@ -35,6 +35,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
     const [clients, setClients] = useState<Client[]>([])
     const [loadingClients, setLoadingClients] = useState(true)
     const [previewNumber, setPreviewNumber] = useState("")
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     // Form State
     const [clientId, setClientId] = useState("")
@@ -59,6 +60,8 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
     useEffect(() => {
         if (open) {
             fetchClients()
+            // Fetch organization settings for PDF generation
+            fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
             if (invoiceToEdit) {
                 setClientId(invoiceToEdit.client_id)
                 setCurrency(invoiceToEdit.currency || "ZMW")
@@ -192,7 +195,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
             }
 
             if (isDownload) {
-                PDFService.generateInvoicePDF({ ...payload as any, created_at: new Date().toISOString() })
+                PDFService.generateInvoicePDF({ ...payload as any, created_at: new Date().toISOString() }, orgSettings)
             }
 
             onSuccess()

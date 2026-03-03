@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, User, FileText } from "lucide-react"
 import { Task } from "@/lib/types"
+import { formatDuration } from "@/lib/time-utils"
 
 interface AdminReviewTaskModalProps {
     open: boolean
@@ -79,7 +80,7 @@ export function AdminReviewTaskModal({
                                 <Clock className="w-4 h-4 text-muted-foreground" />
                                 <div>
                                     <p className="text-xs text-muted-foreground">Estimated Hours</p>
-                                    <p className="text-sm font-medium">{task.estimated_hours ? `${task.estimated_hours} hrs` : "Not specified"}</p>
+                                    <p className="text-sm font-medium">{task.estimated_hours ? formatDuration(Math.round(task.estimated_hours * 60)) : "Not specified"}</p>
                                 </div>
                             </div>
                             
@@ -88,7 +89,7 @@ export function AdminReviewTaskModal({
                                     <Clock className="w-4 h-4 text-emerald-600" />
                                     <div>
                                         <p className="text-xs text-emerald-600 font-medium">Time Allocated</p>
-                                        <p className="text-sm font-bold text-emerald-700">{task.time_allocated} hrs</p>
+                                        <p className="text-sm font-bold text-emerald-700">{formatDuration(Math.round(task.time_allocated * 60))}</p>
                                     </div>
                                 </div>
                             )}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, Fragment } from "react"
 import { Download, Loader2 } from "lucide-react"
 import { PDFService } from "@/lib/pdf-service"
+import { OrganizationSettings } from "@/lib/types"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { RecordPayrollModal } from "@/components/modals/record-payroll-modal"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -258,6 +259,7 @@ function WorkforceReports() {
     const [expandedUser, setExpandedUser] = useState<string | null>(null)
     const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
     const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     // Payroll Modal State
     const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false)
@@ -306,6 +308,7 @@ function WorkforceReports() {
 
     useEffect(() => {
         loadReports()
+        fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
     }, [loadReports])
 
     // Real-time subscriptions
@@ -318,7 +321,7 @@ function WorkforceReports() {
             totalHours: totalCompanyHours,
             teamCount: reports.filter((r) => r.days_worked > 0).length,
             reports: reports
-        })
+        }, orgSettings)
     }
 
     if (loading) {

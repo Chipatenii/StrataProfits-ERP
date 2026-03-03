@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Task, UserProfile } from "@/lib/types"
 import { Calendar, Clock, User, Clipboard, CheckCircle2 } from "lucide-react"
 import { CommentsSection } from "@/components/ui/comments-section"
+import { formatDuration } from "@/lib/time-utils"
 
 interface TaskDetailModalProps {
     open: boolean
@@ -90,7 +91,7 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
                                     <Clock className="w-4 h-4" />
                                 </div>
                                 <span className="text-sm font-medium text-foreground">
-                                    {task.estimated_hours ? `${task.estimated_hours} Hours` : "Not estimated"}
+                                    {task.estimated_hours ? formatDuration(Math.round(task.estimated_hours * 60)) : "Not estimated"}
                                 </span>
                             </div>
                         </div>

@@ -30,6 +30,7 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
         priority: "medium",
         due_date: "",
         estimated_hours: "",
+        estimated_minutes: "",
         is_project_related: false,
         project_id: "",
     })
@@ -50,12 +51,14 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
             loadProjects()
 
             if (taskToEdit) {
+                const eh = taskToEdit.estimated_hours
                 setFormData({
                     title: taskToEdit.title || "",
                     description: taskToEdit.description || "",
                     priority: taskToEdit.priority || "medium",
                     due_date: taskToEdit.due_date ? new Date(taskToEdit.due_date).toISOString().split('T')[0] : "",
-                    estimated_hours: taskToEdit.estimated_hours?.toString() || "",
+                    estimated_hours: eh != null ? String(Math.floor(eh)) : "",
+                    estimated_minutes: eh != null ? String(Math.round((eh % 1) * 60)) : "",
                     is_project_related: !!taskToEdit.project_id,
                     project_id: taskToEdit.project_id || "",
                 })
@@ -72,6 +75,7 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
             priority: "medium",
             due_date: "",
             estimated_hours: "",
+            estimated_minutes: "",
             is_project_related: false,
             project_id: "",
         })
@@ -89,7 +93,7 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                 description: formData.description,
                 priority: formData.priority as "low" | "medium" | "high",
                 due_date: formData.due_date || null,
-                estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
+                estimated_hours: (formData.estimated_hours || formData.estimated_minutes) ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60)) : null,
                 is_project_related: formData.is_project_related,
                 project_id: formData.is_project_related && formData.project_id ? formData.project_id : null,
             }
@@ -205,19 +209,36 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                             </select>
                         </div>
                         <div>
-                            <Label htmlFor="estimatedHours" className="text-foreground font-medium">
-                                Est. Hours
+                            <Label className="text-foreground font-medium">
+                                Estimated Time
                             </Label>
-                            <Input
-                                id="estimatedHours"
-                                type="number"
-                                step="0.5"
-                                min="0"
-                                value={formData.estimated_hours}
-                                onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
-                                placeholder="e.g. 2.5"
-                            />
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Hours</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={formData.estimated_hours}
+                                        onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
+                                        className="bg-card border-border/30"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Minutes</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        max="59"
+                                        step="5"
+                                        value={formData.estimated_minutes}
+                                        onChange={(e) => setFormData({ ...formData, estimated_minutes: e.target.value })}
+                                        className="bg-card border-border/30"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 

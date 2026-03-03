@@ -31,16 +31,20 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
     // Default assignee for team member is themselves
     const defaultAssignedTo = userRole === "team_member" ? userId : ""
 
-    const getInitialFormData = () => ({
-        title: taskToEdit?.title ?? "",
-        description: taskToEdit?.description ?? "",
-        status: taskToEdit?.status ?? defaultStatus,
-        priority: (taskToEdit?.priority ?? "medium") as "low" | "medium" | "high",
-        assigned_to: taskToEdit?.assigned_to ?? defaultAssignedTo,
-        due_date: taskToEdit?.due_date ? taskToEdit.due_date.split("T")[0] : "",
-        estimated_hours: taskToEdit?.estimated_hours != null ? String(taskToEdit.estimated_hours) : "",
-        project_id: taskToEdit?.project_id ?? "",
-    })
+    const getInitialFormData = () => {
+        const eh = taskToEdit?.estimated_hours
+        return {
+            title: taskToEdit?.title ?? "",
+            description: taskToEdit?.description ?? "",
+            status: taskToEdit?.status ?? defaultStatus,
+            priority: (taskToEdit?.priority ?? "medium") as "low" | "medium" | "high",
+            assigned_to: taskToEdit?.assigned_to ?? defaultAssignedTo,
+            due_date: taskToEdit?.due_date ? taskToEdit.due_date.split("T")[0] : "",
+            estimated_hours: eh != null ? String(Math.floor(eh)) : "",
+            estimated_minutes: eh != null ? String(Math.round((eh % 1) * 60)) : "",
+            project_id: taskToEdit?.project_id ?? "",
+        }
+    }
 
     const [formData, setFormData] = useState(getInitialFormData)
     const [isLoading, setIsLoading] = useState(false)
@@ -68,6 +72,7 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
             assigned_to: defaultAssignedTo,
             due_date: "",
             estimated_hours: "",
+            estimated_minutes: "",
             project_id: "",
         })
     }
@@ -86,7 +91,7 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
                 priority: formData.priority,
                 assigned_to: formData.assigned_to || null,
                 due_date: formData.due_date || null,
-                estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
+                estimated_hours: (formData.estimated_hours || formData.estimated_minutes) ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60)) : null,
                 project_id: formData.project_id || null,
             }
 
@@ -260,20 +265,37 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
                                 className="mt-1 bg-card border-border/30"
                             />
                         </div>
-                        <div>
-                            <Label htmlFor="estimatedHours" className="text-foreground font-medium">
-                                Estimated Hours
+                        <div className="col-span-2">
+                            <Label className="text-foreground font-medium">
+                                Estimated Time
                             </Label>
-                            <Input
-                                id="estimatedHours"
-                                type="number"
-                                step="0.5"
-                                min="0"
-                                value={formData.estimated_hours}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_hours: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
-                                placeholder="e.g. 5.5"
-                            />
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Hours</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={formData.estimated_hours}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_hours: e.target.value })}
+                                        className="bg-card border-border/30"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Minutes</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        max="59"
+                                        step="5"
+                                        value={formData.estimated_minutes}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_minutes: e.target.value })}
+                                        className="bg-card border-border/30"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 

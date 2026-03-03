@@ -10,7 +10,7 @@ import {
     Plus, Trash2, Loader2, ChevronUp, ChevronDown,
     User, Calendar, FileText, Tag, StickyNote, Send
 } from "lucide-react"
-import { Client } from "@/lib/types"
+import { Client, OrganizationSettings } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
 import { APP_CONFIG } from "@/lib/config/constants"
@@ -35,6 +35,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
     const [clients, setClients] = useState<Client[]>([])
     const [loadingClients, setLoadingClients] = useState(true)
     const [previewNumber, setPreviewNumber] = useState("")
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     // Form State
     const [clientId, setClientId] = useState("")
@@ -58,6 +59,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
     useEffect(() => {
         if (open) {
             fetchClients()
+            fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
             if (initialData) {
                 setClientId(initialData.client_id || "")
                 setCurrency(initialData.currency || "ZMW")
@@ -168,7 +170,7 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
             if (!res.ok) throw new Error("Failed to save quote")
 
             if ((e.nativeEvent as any).submitter?.name === "download") {
-                PDFService.generateQuotePDF({ ...payload as any, created_at: new Date().toISOString() })
+                PDFService.generateQuotePDF({ ...payload as any, created_at: new Date().toISOString() }, orgSettings)
             }
 
             onSuccess()

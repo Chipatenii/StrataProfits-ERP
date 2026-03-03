@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, PartyPopper, Clock } from "lucide-react"
 import { formatDuration, getTimeStatusMessage } from "@/lib/time-utils"
 import { toast } from "sonner"
@@ -23,16 +23,28 @@ export function TaskCompletionModal({
     estimatedHours,
 }: TaskCompletionModalProps) {
     const [notes, setNotes] = useState("")
-    const [timeAllocated, setTimeAllocated] = useState("")
+    const [allocHours, setAllocHours] = useState("0")
+    const [allocMinutes, setAllocMinutes] = useState("0")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showConfetti, setShowConfetti] = useState(false)
 
+    // Auto-populate from timer's spentMinutes when modal opens
+    useEffect(() => {
+        if (isOpen && spentMinutes > 0) {
+            setAllocHours(String(Math.floor(spentMinutes / 60)))
+            setAllocMinutes(String(Math.round(spentMinutes % 60)))
+        }
+    }, [isOpen, spentMinutes])
+
     const handleSubmit = async () => {
-        const timeVal = parseFloat(timeAllocated)
-        if (!timeAllocated || isNaN(timeVal) || timeVal <= 0) {
-            toast.error("Please enter a valid time allocated (hours)")
+        const h = parseInt(allocHours) || 0
+        const m = parseInt(allocMinutes) || 0
+        if (h <= 0 && m <= 0) {
+            toast.error("Please enter the time spent on this task")
             return
         }
+
+        const timeVal = h + m / 60
 
         setIsSubmitting(true)
         setShowConfetti(true)
@@ -45,7 +57,8 @@ export function TaskCompletionModal({
                 setShowConfetti(false)
                 onClose()
                 setNotes("")
-                setTimeAllocated("")
+                setAllocHours("0")
+                setAllocMinutes("0")
             }, 2000)
         } catch (error) {
             console.error("Error completing task:", error)
@@ -139,22 +152,40 @@ export function TaskCompletionModal({
                             </div>
                         </div>
 
-                        {/* Time Allocated */}
+                        {/* Time Allocated — Hours + Minutes */}
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Actual Time Allocated (Hours) <span className="text-red-500">*</span>
+                                Actual Time Spent <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="number"
-                                step="0.25"
-                                min="0.25"
-                                value={timeAllocated}
-                                onChange={(e) => setTimeAllocated(e.target.value)}
-                                placeholder="e.g. 2.5"
-                                className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                                disabled={isSubmitting}
-                                required
-                            />
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Hours</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={allocHours}
+                                        onChange={(e) => setAllocHours(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-muted-foreground mb-1 block">Minutes</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="59"
+                                        step="5"
+                                        value={allocMinutes}
+                                        onChange={(e) => setAllocMinutes(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Completion Notes */}

@@ -1,15 +1,78 @@
 import { jsPDF } from "jspdf"
-import { Invoice, Quote, Payment } from "./types"
+import { Invoice, Quote, Payment, OrganizationSettings } from "./types"
+
+const DEFAULT_ORG: Partial<OrganizationSettings> = {
+    name: "StrataForge Business Suite",
+    email: "contact@strataforge.com",
+    address: "Lusaka, Zambia",
+    bank_name: "FNB Zambia",
+    bank_account: "6655443322",
+    bank_branch: "Lusaka Main",
+}
 
 export class PDFService {
     /**
+     * Helper to add company header to a PDF doc
+     */
+    private static addCompanyHeader(doc: jsPDF, org: Partial<OrganizationSettings>, startY: number = 15): number {
+        const o = { ...DEFAULT_ORG, ...org }
+        let y = startY
+
+        // Company name (right-aligned)
+        doc.setFontSize(11)
+        doc.setFont("helvetica", "bold")
+        doc.setTextColor("#1e293b")
+        doc.text(o.name || "", 190, y, { align: "right" })
+        y += 5
+
+        doc.setFontSize(8)
+        doc.setFont("helvetica", "normal")
+        doc.setTextColor("#64748b")
+        if (o.address) { doc.text(o.address, 190, y, { align: "right" }); y += 4 }
+        if (o.email) { doc.text(o.email, 190, y, { align: "right" }); y += 4 }
+        if (o.phone) { doc.text(o.phone, 190, y, { align: "right" }); y += 4 }
+        if (o.website) { doc.text(o.website, 190, y, { align: "right" }); y += 4 }
+        if (o.tax_id) { doc.text(`TPIN: ${o.tax_id}`, 190, y, { align: "right" }); y += 4 }
+
+        return y
+    }
+
+    /**
+     * Helper to add banking footer to a PDF
+     */
+    private static addBankingFooter(doc: jsPDF, org: Partial<OrganizationSettings>, y: number): void {
+        const o = { ...DEFAULT_ORG, ...org }
+        doc.setFontSize(8)
+        doc.setFont("helvetica", "normal")
+        doc.setTextColor("#94a3b8")
+
+        y += 5
+        doc.line(20, y, 190, y)
+        y += 8
+        doc.text("Thank you for your business.", 105, y, { align: "center" })
+        y += 6
+        if (o.bank_name || o.bank_account) {
+            const bankLine = [
+                o.bank_name ? `Bank: ${o.bank_name}` : "",
+                o.bank_account ? `Account: ${o.bank_account}` : "",
+                o.bank_branch ? `Branch: ${o.bank_branch}` : "",
+            ].filter(Boolean).join("  •  ")
+            doc.text(bankLine, 105, y, { align: "center" })
+        }
+    }
+
+    /**
      * Generate PDF for a Quote
      */
-    static async generateQuotePDF(quote: Quote) {
+    static async generateQuotePDF(quote: Quote, org?: Partial<OrganizationSettings>) {
         const doc = new jsPDF()
-        const primaryColor = "#2563eb" // blue-600
+        const o = { ...DEFAULT_ORG, ...org }
+        const primaryColor = "#2563eb"
 
-        // Header
+        // Company header
+        const headerY = this.addCompanyHeader(doc, o)
+
+        // Title
         doc.setFontSize(22)
         doc.setTextColor(primaryColor)
         doc.text("QUOTE / PROPOSAL", 20, 30)
@@ -84,7 +147,11 @@ export class PDFService {
             doc.text("Notes:", 20, y)
             doc.setFontSize(9)
             doc.text(quote.notes, 20, y + 7, { maxWidth: 170 })
+            y += 15
         }
+
+        // Banking footer
+        this.addBankingFooter(doc, o, y + 10)
 
         doc.save(`Quote_${quote.quote_number || 'Draft'}.pdf`)
     }
@@ -92,9 +159,13 @@ export class PDFService {
     /**
      * Generate PDF for an Invoice
      */
-    static async generateInvoicePDF(invoice: Invoice) {
+    static async generateInvoicePDF(invoice: Invoice, org?: Partial<OrganizationSettings>) {
         const doc = new jsPDF()
+        const o = { ...DEFAULT_ORG, ...org }
         const primaryColor = "#2563eb"
+
+        // Company header
+        this.addCompanyHeader(doc, o)
 
         doc.setFontSize(22)
         doc.setTextColor(primaryColor)
@@ -135,14 +206,21 @@ export class PDFService {
         doc.text("Total Amount:", 140, y)
         doc.text(`${invoice.currency} ${invoice.amount.toLocaleString()}`, 170, y)
 
+        // Banking footer
+        this.addBankingFooter(doc, o, y + 10)
+
         doc.save(`Invoice_${invoice.invoice_number || 'Draft'}.pdf`)
     }
 
     /**
      * Generate PDF for a Payment/Receipt
      */
-    static async generatePaymentPDF(payment: Payment, invoiceNumber: string, clientName: string) {
+    static async generatePaymentPDF(payment: Payment, invoiceNumber: string, clientName: string, org?: Partial<OrganizationSettings>) {
         const doc = new jsPDF()
+        const o = { ...DEFAULT_ORG, ...org }
+
+        // Company header
+        this.addCompanyHeader(doc, o)
 
         doc.setFontSize(22)
         doc.setTextColor("#059669") // emerald-600
@@ -167,6 +245,9 @@ export class PDFService {
         doc.text(`Payment Method: ${payment.method || 'N/A'}`, 25, 107)
         doc.text(`Invoice Reference: ${invoiceNumber}`, 25, 114)
 
+        // Banking footer
+        this.addBankingFooter(doc, o, 130)
+
         doc.save(`Receipt_${payment.receipt_number || 'Payment'}.pdf`)
     }
 
@@ -178,9 +259,10 @@ export class PDFService {
         totalHours: number,
         teamCount: number,
         reports: any[]
-    }) {
+    }, org?: Partial<OrganizationSettings>) {
         const doc = new jsPDF()
-        doc.text(`STRATAFORGE BUSINESS SUITE - MONTHLY REPORT`, 10, 10)
+        const companyName = org?.name || DEFAULT_ORG.name || "StrataForge Business Suite"
+        doc.text(`${companyName.toUpperCase()} - MONTHLY REPORT`, 10, 10)
         doc.text(`Month: ${data.month}`, 10, 20)
         doc.text(`Generated: ${new Date().toLocaleDateString()}`, 10, 30)
 

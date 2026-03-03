@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Invoice } from "@/lib/types"
+import { Invoice, OrganizationSettings } from "@/lib/types"
 import { Loader2, CreditCard, CheckCircle, FileText } from "lucide-react"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
@@ -27,10 +27,12 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
     const [ref, setRef] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [paymentTab, setPaymentTab] = useState(false)
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     useEffect(() => {
         if (open && invoice.id) {
             fetchDetails()
+            fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
         }
     }, [open, invoice])
 
@@ -106,7 +108,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => fullInvoice && PDFService.generateInvoicePDF(fullInvoice)}
+                                onClick={() => fullInvoice && PDFService.generateInvoicePDF(fullInvoice, orgSettings)}
                                 className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
                                 title="Download PDF"
                             >

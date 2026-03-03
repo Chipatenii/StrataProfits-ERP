@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Plus, Search, FileText, Loader2, ArrowUpRight, CheckCircle, AlertCircle } from "lucide-react"
-import { Invoice } from "@/lib/types"
+import { Invoice, OrganizationSettings } from "@/lib/types"
 import { CreateInvoiceModal } from "@/components/modals/create-invoice-modal"
 import { InvoiceDetailsModal } from "@/components/modals/invoice-details-modal"
 import { PDFService } from "@/lib/pdf-service"
@@ -17,9 +17,11 @@ export function InvoicesView() {
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null)
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     useEffect(() => {
         fetchInvoices()
+        fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
     }, [])
 
     const fetchInvoices = async () => {
@@ -156,7 +158,7 @@ export function InvoicesView() {
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation()
-                                            PDFService.generateInvoicePDF(invoice)
+                                            PDFService.generateInvoicePDF(invoice, orgSettings)
                                         }}
                                         className="text-xs flex items-center gap-1 text-blue-600 font-medium"
                                     >

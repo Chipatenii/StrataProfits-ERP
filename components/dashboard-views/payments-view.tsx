@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Plus, Search, Loader2, FileText } from "lucide-react"
-import { Payment } from "@/lib/types"
+import { Payment, OrganizationSettings } from "@/lib/types"
 import { CreateReceiptModal } from "@/components/modals/create-receipt-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,9 +16,11 @@ export function PaymentsView() {
     // Modal states
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null)
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     useEffect(() => {
         fetchPayments()
+        fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
     }, [])
 
     const fetchPayments = async () => {
@@ -129,7 +131,7 @@ export function PaymentsView() {
                                                 <Plus size={16} className="rotate-45" /> {/* Use as an edit icon or placeholder */}
                                             </button>
                                             <button
-                                                onClick={() => PDFService.generatePaymentPDF(payment, payment.invoice_id.slice(0, 8), "Customer")}
+                                                onClick={() => PDFService.generatePaymentPDF(payment, payment.invoice_id.slice(0, 8), "Customer", orgSettings)}
                                                 className="p-1.5 hover:bg-slate-100 rounded text-slate-600 transition-colors"
                                                 title="Download Receipt"
                                             >

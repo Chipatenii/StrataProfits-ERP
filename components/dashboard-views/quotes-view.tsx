@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Quote } from "@/lib/types"
+import { Quote, OrganizationSettings } from "@/lib/types"
 import { Plus, Loader2, FileText, Edit } from "lucide-react"
 import { CreateQuoteModal } from "@/components/modals/create-quote-modal"
 import { PDFService } from "@/lib/pdf-service"
@@ -12,9 +12,11 @@ export function QuotesView() {
 
     const [showCreate, setShowCreate] = useState(false)
     const [editingQuote, setEditingQuote] = useState<Quote | null>(null)
+    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     useEffect(() => {
         fetchQuotes()
+        fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
     }, [])
 
     const fetchQuotes = async () => {
@@ -87,7 +89,7 @@ export function QuotesView() {
                                         </button>
                                     )}
                                     <button
-                                        onClick={() => PDFService.generateQuotePDF(quote)}
+                                        onClick={() => PDFService.generateQuotePDF(quote, orgSettings)}
                                         className="p-2 hover:bg-slate-100 rounded text-slate-600 transition-colors"
                                         title="Download PDF"
                                     >
