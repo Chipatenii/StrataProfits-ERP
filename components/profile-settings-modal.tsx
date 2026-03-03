@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, User, Building2, Upload, X, Globe, Phone, Mail, MapPin, Landmark, CreditCard, Hash } from "lucide-react"
+import { Loader2, User, Building2, Upload, X, Globe, Phone, Mail, MapPin, Landmark, CreditCard, Hash, Smartphone } from "lucide-react"
 import { toast } from "sonner"
 import type { OrganizationSettings } from "@/lib/types"
 
@@ -236,6 +236,9 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
         bank_name: org.bank_name,
         bank_account: org.bank_account,
         bank_branch: org.bank_branch,
+        mobile_money_provider: org.mobile_money_provider,
+        mobile_money_name: org.mobile_money_name,
+        mobile_money_number: org.mobile_money_number,
         logo_url: logoUrl,
       }
 
@@ -568,6 +571,53 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
                       value={org.bank_branch || ""}
                       onChange={(e) => updateOrg("bank_branch", e.target.value)}
                       placeholder="e.g. Lusaka Main"
+                      className="h-11 bg-background"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Money Details */}
+              <div className="border-t border-border pt-4 mt-4 space-y-4">
+                <h3 className="text-sm font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                  <Smartphone size={14} /> Mobile Money
+                </h3>
+                <p className="text-xs text-muted-foreground -mt-2">Mobile money details for receiving payments.</p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="orgMomoProvider">Provider</Label>
+                  <select
+                    id="orgMomoProvider"
+                    value={org.mobile_money_provider || ""}
+                    onChange={(e) => updateOrg("mobile_money_provider", e.target.value)}
+                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Select provider</option>
+                    <option value="Airtel Money">Airtel Money</option>
+                    <option value="MTN MoMo">MTN MoMo</option>
+                    <option value="Zamtel Kwacha">Zamtel Kwacha</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="orgMomoName">Registered Name</Label>
+                    <Input
+                      id="orgMomoName"
+                      value={org.mobile_money_name || ""}
+                      onChange={(e) => updateOrg("mobile_money_name", e.target.value)}
+                      placeholder="Name on account"
+                      className="h-11 bg-background"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="orgMomoNumber" className="flex items-center gap-1.5">
+                      <Phone size={14} /> Phone Number
+                    </Label>
+                    <Input
+                      id="orgMomoNumber"
+                      value={org.mobile_money_number || ""}
+                      onChange={(e) => updateOrg("mobile_money_number", e.target.value)}
+                      placeholder="e.g. 097XXXXXXX"
                       className="h-11 bg-background"
                     />
                   </div>

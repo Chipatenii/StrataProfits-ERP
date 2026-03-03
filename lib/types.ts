@@ -427,6 +427,9 @@ export interface OrganizationSettings {
     bank_name: string | null
     bank_account: string | null
     bank_branch: string | null
+    mobile_money_provider: string | null
+    mobile_money_name: string | null
+    mobile_money_number: string | null
     updated_at: string
 }
 

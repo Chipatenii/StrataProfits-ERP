@@ -58,6 +58,15 @@ export class PDFService {
                 o.bank_branch ? `Branch: ${o.bank_branch}` : "",
             ].filter(Boolean).join("  •  ")
             doc.text(bankLine, 105, y, { align: "center" })
+            y += 5
+        }
+        if (o.mobile_money_provider || o.mobile_money_number) {
+            const momoLine = [
+                o.mobile_money_provider ? `${o.mobile_money_provider}` : "Mobile Money",
+                o.mobile_money_name ? `Name: ${o.mobile_money_name}` : "",
+                o.mobile_money_number ? `Number: ${o.mobile_money_number}` : "",
+            ].filter(Boolean).join("  •  ")
+            doc.text(momoLine, 105, y, { align: "center" })
         }
     }
 
