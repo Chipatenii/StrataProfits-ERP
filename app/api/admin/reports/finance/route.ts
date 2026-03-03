@@ -42,11 +42,21 @@ export async function GET() {
         const currentYear = new Date().getFullYear()
         const startOfYear = `${currentYear}-01-01T00:00:00Z`
 
+        // 1. Revenue
         const { data: revenueData } = await admin.from("payments").select("amount").gte("paid_at", startOfYear)
         const totalRevenue = revenueData?.reduce((sum, p) => sum + p.amount, 0) || 0
 
+        // 2. Expenses (Regular)
         const { data: expenseData } = await admin.from("expenses").select("amount").eq("status", "Paid").gte("updated_at", startOfYear) // Assuming updated_at as paid date approx
-        const totalExpenses = expenseData?.reduce((sum, e) => sum + e.amount, 0) || 0
+        let totalExpenses = expenseData?.reduce((sum, e) => sum + e.amount, 0) || 0
+
+        // 3. Payroll (Team Payments)
+        const { data: payrollData, error: payrollError } = await admin.from("team_payments").select("amount").gte("payment_date", startOfYear)
+        if (payrollError) console.error("Error fetching payroll for YTD", payrollError)
+        const totalPayroll = payrollData?.reduce((sum, p) => sum + p.amount, 0) || 0
+        
+        // Combine expenses and payroll
+        totalExpenses += totalPayroll
 
         const netProfit = totalRevenue - totalExpenses
 
