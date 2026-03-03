@@ -62,7 +62,7 @@ export function AdminTasksView({
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 p-8 md:p-10 text-white shadow-2xl shadow-orange-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -122,7 +122,7 @@ export function AdminTasksView({
                             key={filter}
                             onClick={() => setTaskFilter(filter)}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${taskFilter === filter
-                                ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25"
+                                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
                                 : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                                 }`}
                         >

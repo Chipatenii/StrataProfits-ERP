@@ -92,7 +92,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       `}>
         {/* Premium Branded Header */}
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-500" />
+          <div className="absolute inset-0 bg-primary" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_50%)]" />
           <div className="relative p-4 flex items-center justify-between h-20">
             <div className={`flex items-center gap-3 ${!isSidebarOpen && "md:hidden lg:flex"}`}>
@@ -157,7 +157,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-slate-100 via-slate-50 to-cyan-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/30">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
         {/* Header - Premium */}
         <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg shadow-black/5 dark:shadow-black/20 h-18 flex-shrink-0 z-30">
           <div className="h-full px-4 md:px-6 py-3 flex items-center justify-between gap-4">

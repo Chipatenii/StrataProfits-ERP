@@ -41,7 +41,7 @@ export function ReportsView() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-600 p-8 md:p-10 text-white shadow-2xl shadow-violet-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-violet-500/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -61,13 +61,13 @@ export function ReportsView() {
                 <TabsList className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 h-auto">
                     <TabsTrigger
                         value="workforce"
-                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
+                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
                     >
                         Workforce & Payroll
                     </TabsTrigger>
                     <TabsTrigger
                         value="financial"
-                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
+                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
                     >
                         Financial Statements
                     </TabsTrigger>
@@ -214,7 +214,7 @@ function FinancialReports() {
                                             <span className="font-semibold text-foreground shrink-0">ZMW {client.total.toLocaleString()}</span>
                                         </div>
                                         <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500" style={{ width: `${(client.total / maxRevenue) * 100}%` }} />
+                                            <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${(client.total / maxRevenue) * 100}%` }} />
                                         </div>
                                         <p className="text-[11px] text-muted-foreground mt-0.5">{client.count} invoice{client.count !== 1 ? "s" : ""}</p>
                                     </div>

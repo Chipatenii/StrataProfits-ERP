@@ -122,7 +122,7 @@ export function OnboardingTab({ isAdmin }: OnboardingTabProps) {
                     </div>
                     <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500"
+                            className="h-full bg-primary rounded-full transition-all duration-500"
                             style={{ width: `${progressPct}%` }}
                         />
                     </div>

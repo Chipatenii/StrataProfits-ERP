@@ -341,7 +341,7 @@ export function VASOPs() {
         <div className="space-y-8 animate-fade-in">
 
             {/* Hero */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 p-8 md:p-10 text-white shadow-2xl shadow-indigo-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-indigo-500/30">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">

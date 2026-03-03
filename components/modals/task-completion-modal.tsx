@@ -89,7 +89,7 @@ export function TaskCompletionModal({
                     )}
 
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white relative">
+                    <div className="bg-primary p-6 text-white relative">
                         <button
                             onClick={onClose}
                             className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-lg transition-colors"
@@ -184,7 +184,7 @@ export function TaskCompletionModal({
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
-                                className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 px-4 py-3 rounded-lg bg-primary text-white hover:bg-emerald-600 transition-all font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? "Completing..." : "Complete Task"}
                             </button>

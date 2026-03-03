@@ -156,7 +156,7 @@ export function VAFinance({ userName, userRole }: VAFinanceProps) {
 
       {/* Header with greeting */}
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">
           {userName?.substring(0, 2).toUpperCase() || "OM"}
         </div>
         <div>

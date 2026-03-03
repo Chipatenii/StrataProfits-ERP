@@ -152,7 +152,7 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
             {/* Panel */}
             <div className="fixed right-0 top-0 bottom-0 w-full sm:w-[420px] bg-white dark:bg-slate-950 z-50 shadow-2xl flex flex-col animate-slide-in-right">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-indigo-500 to-violet-600 text-white">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-primary text-white">
                     {activeChannel ? (
                         <button onClick={() => setActiveChannel(null)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                             <ChevronLeft className="w-5 h-5" />
@@ -214,7 +214,7 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                                         onClick={() => setActiveChannel(ch)}
                                         className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors flex items-start gap-3"
                                     >
-                                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white shrink-0 mt-0.5">
+                                        <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white shrink-0 mt-0.5">
                                             {ch.is_dm ? <Users className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
                                         </div>
                                         <div className="flex-1 min-w-0">

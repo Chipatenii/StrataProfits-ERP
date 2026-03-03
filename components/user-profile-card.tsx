@@ -17,7 +17,7 @@ export function UserProfileCard({ fullName, email, role, avatarUrl, compact = fa
   if (compact) {
     return (
       <div className="flex items-center gap-3 bg-blue-50/50 p-1.5 pr-3 rounded-full md:rounded-xl md:p-3 md:bg-white md:border md:border-gray-200 md:shadow-sm">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white shadow-sm">
           {avatarUrl ? (
             <img src={avatarUrl || "/placeholder.svg"} alt={fullName} className="w-full h-full rounded-full object-cover" />
           ) : (
@@ -35,7 +35,7 @@ export function UserProfileCard({ fullName, email, role, avatarUrl, compact = fa
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-md">
+        <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-md">
           {avatarUrl ? (
             <img
               src={avatarUrl || "/placeholder.svg"}

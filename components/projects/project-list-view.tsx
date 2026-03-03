@@ -48,7 +48,7 @@ export function ProjectListView({ onSelectProject }: ProjectListViewProps) {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-8 md:p-10 text-white shadow-2xl shadow-blue-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-blue-500/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -112,9 +112,9 @@ export function ProjectListView({ onSelectProject }: ProjectListViewProps) {
                             className="group block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 shadow-lg shadow-black/5 dark:shadow-black/20 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 p-6 cursor-pointer relative overflow-hidden"
                         >
                             {/* Accent Bar */}
-                            <div className={`absolute top-0 left-0 right-0 h-1.5 ${project.status === 'active' ? 'bg-gradient-to-r from-emerald-500 to-green-500' :
-                                    project.status === 'completed' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
-                                        'bg-gradient-to-r from-gray-400 to-gray-500'
+                            <div className={`absolute top-0 left-0 right-0 h-1.5 ${project.status === 'active' ? 'bg-emerald-500' :
+                                    project.status === 'completed' ? 'bg-blue-500' :
+                                        'bg-slate-400'
                                 }`} />
 
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pt-2">

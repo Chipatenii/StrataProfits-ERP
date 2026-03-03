@@ -52,7 +52,7 @@ export default async function ClientPortalPage() {
             <Header />
             <div className="max-w-7xl mx-auto space-y-8 animate-fade-in p-6 pt-10">
             {/* Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 to-slate-900 p-8 md:p-10 text-white shadow-2xl">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-8 md:p-10 text-white shadow-2xl">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">

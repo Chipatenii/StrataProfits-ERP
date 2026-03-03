@@ -13,7 +13,7 @@ export function FinanceView() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-500 via-emerald-600 to-teal-600 p-8 md:p-10 text-white shadow-2xl shadow-emerald-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -33,13 +33,13 @@ export function FinanceView() {
                 <TabsList className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 h-auto">
                     <TabsTrigger
                         value="overview"
-                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/25"
+                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25"
                     >
                         Overview
                     </TabsTrigger>
                     <TabsTrigger
                         value="expenses"
-                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/25"
+                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25"
                     >
                         Expenses
                     </TabsTrigger>
@@ -111,7 +111,7 @@ function FinanceOverview() {
         <div className="space-y-6">
             {/* Action Header */}
             <div className="flex items-center justify-end">
-                <Button onClick={() => setShowReceiptModal(true)} className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/25 rounded-xl px-6">
+                <Button onClick={() => setShowReceiptModal(true)} className="bg-primary hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/25 rounded-xl px-6">
                     <Plus className="w-4 h-4 mr-2" />
                     Create Receipt
                 </Button>
@@ -123,7 +123,7 @@ function FinanceOverview() {
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
                     <div className="flex items-center justify-between mb-4">
                         <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                        <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl text-white shadow-lg shadow-emerald-500/25">
+                        <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/25">
                             <TrendingUp size={20} />
                         </div>
                     </div>
@@ -140,7 +140,7 @@ function FinanceOverview() {
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
                     <div className="flex items-center justify-between mb-4">
                         <p className="text-sm font-medium text-muted-foreground">Total Expenses</p>
-                        <div className="p-3 bg-gradient-to-br from-red-500 to-rose-500 rounded-2xl text-white shadow-lg shadow-red-500/25">
+                        <div className="p-3 bg-red-500 rounded-2xl text-white shadow-lg shadow-red-500/25">
                             <TrendingDown size={20} />
                         </div>
                     </div>
@@ -157,7 +157,7 @@ function FinanceOverview() {
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
                     <div className="flex items-center justify-between mb-4">
                         <p className="text-sm font-medium text-muted-foreground">Net Profit</p>
-                        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl text-white shadow-lg shadow-blue-500/25">
+                        <div className="p-3 bg-blue-500 rounded-2xl text-white shadow-lg shadow-blue-500/25">
                             <Wallet size={20} />
                         </div>
                     </div>
@@ -235,7 +235,7 @@ function FinanceOverview() {
                                 data.top_projects.map((proj: any, i: number) => (
                                     <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-emerald-500/25">
+                                            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-emerald-500/25">
                                                 {i + 1}
                                             </div>
                                             <div>
@@ -259,7 +259,7 @@ function FinanceOverview() {
                 {/* More Insights */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 flex items-center justify-center p-12 text-center">
                     <div>
-                        <div className="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <TrendingUp className="w-8 h-8 text-slate-500 dark:text-slate-400" />
                         </div>
                         <h3 className="font-bold text-lg text-foreground mb-2">More Insights Coming Soon</h3>

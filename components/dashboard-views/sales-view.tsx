@@ -11,7 +11,7 @@ export function SalesView() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-8 md:p-10 text-white shadow-2xl shadow-pink-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-accent p-8 md:p-10 text-white shadow-2xl shadow-pink-500/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -31,25 +31,25 @@ export function SalesView() {
                 <TabsList className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 h-auto flex-wrap">
                     <TabsTrigger
                         value="pipeline"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
                     >
                         Pipeline
                     </TabsTrigger>
                     <TabsTrigger
                         value="invoices"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
                     >
                         Invoices
                     </TabsTrigger>
                     <TabsTrigger
                         value="quotes"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
                     >
                         Quotes
                     </TabsTrigger>
                     <TabsTrigger
                         value="payments"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
                     >
                         Payments
                     </TabsTrigger>

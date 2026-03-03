@@ -72,7 +72,7 @@ export function ClientsView() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-8 md:p-10 text-white shadow-2xl shadow-blue-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -166,10 +166,10 @@ export function ClientsView() {
                             {/* Client Header */}
                             <div className="flex items-start gap-4 mb-4 pr-8">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg
-                                    ${client.type === 'dev' ? 'bg-gradient-to-br from-blue-500 to-cyan-500 shadow-blue-500/30' :
-                                        client.type === 'design' ? 'bg-gradient-to-br from-purple-500 to-pink-500 shadow-purple-500/30' :
-                                            client.type === 'marketing' ? 'bg-gradient-to-br from-pink-500 to-rose-500 shadow-pink-500/30' :
-                                                'bg-gradient-to-br from-slate-500 to-slate-600 shadow-slate-500/30'}`}
+                                    ${client.type === 'dev' ? 'bg-blue-500 shadow-blue-500/30' :
+                                        client.type === 'design' ? 'bg-purple-500 shadow-purple-500/30' :
+                                            client.type === 'marketing' ? 'bg-pink-500 shadow-pink-500/30' :
+                                                'bg-slate-500 shadow-slate-500/30'}`}
                                 >
                                     <Users className="w-6 h-6" />
                                 </div>
@@ -232,7 +232,7 @@ export function ClientsView() {
                                 </div>
 
                                 {client.value_tier === 'Premium' && (
-                                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-semibold">
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-semibold">
                                         <Sparkles className="w-3 h-3" />
                                         Premium
                                     </div>

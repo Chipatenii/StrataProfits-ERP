@@ -131,7 +131,7 @@ export function MeetingsView() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 p-8 md:p-10 text-white shadow-2xl shadow-blue-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
 
@@ -236,7 +236,7 @@ export function MeetingsView() {
                                     {/* Top row: date + content + badges */}
                                     <div className="flex gap-4 items-start w-full">
                                         {/* Date Box */}
-                                        <div className="flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-500 text-white rounded-2xl p-3 min-w-[70px] h-min shrink-0 shadow-lg shadow-blue-500/25">
+                                        <div className="flex flex-col items-center justify-center bg-primary text-white rounded-2xl p-3 min-w-[70px] h-min shrink-0 shadow-lg shadow-primary/25">
                                             <span className="text-xs font-bold uppercase">
                                                 {new Date(meeting.date_time_start).toLocaleDateString(undefined, { month: "short" })}
                                             </span>

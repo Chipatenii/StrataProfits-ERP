@@ -131,7 +131,7 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
                     {/* Notifications Panel */}
                     <div className="absolute right-0 mt-2 w-96 max-h-[32rem] bg-white rounded-lg shadow-xl border border-border z-50 overflow-hidden">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-blue-50 to-blue-100">
+                        <div className="flex items-center justify-between p-4 border-b border-border bg-blue-50">
                             <h3 className="font-semibold text-lg">Notifications</h3>
                             <div className="flex items-center gap-2">
                                 {unreadCount > 0 && (

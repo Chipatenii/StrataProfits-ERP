@@ -65,7 +65,7 @@ export default function SetupPage() {
 
   if (checkingAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
           <p className="text-slate-600">Checking setup status...</p>
@@ -75,7 +75,7 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm border border-slate-200">
           <div className="text-center mb-8">
@@ -101,7 +101,7 @@ export default function SetupPage() {
             <button
               onClick={handleCreateAdmin}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
             >
               {loading ? "Creating Admin User..." : "Create Admin User"}
             </button>
@@ -121,7 +121,7 @@ export default function SetupPage() {
           {adminExists && (
             <button
               onClick={() => (window.location.href = "/dashboard")}
-              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
             >
               Go to Dashboard
             </button>

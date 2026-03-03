@@ -143,7 +143,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 p-8 md:p-10 text-white shadow-2xl shadow-violet-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -181,7 +181,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                     {/* OVERDUE WARNING */}
                     {overdue.length > 0 && (
-                        <div className="relative overflow-hidden bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 border border-red-200 dark:border-red-800/50 rounded-3xl p-6 shadow-xl shadow-red-500/10">
+                        <div className="relative overflow-hidden bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-3xl p-6 shadow-xl shadow-red-500/10">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl" />
                             <div className="relative">
                                 <div className="flex items-center gap-3 mb-4">
@@ -221,7 +221,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                         </div>
 
                         {dueToday.length === 0 ? (
-                            <div className="p-8 text-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                            <div className="p-8 text-center bg-slate-50 dark:bg-slate-800 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                                 <Star className="w-10 h-10 text-amber-400 mx-auto mb-3" />
                                 <p className="text-muted-foreground font-medium">No tasks specifically due today.</p>
                                 <p className="text-sm text-muted-foreground mt-1">Great job staying on top of things! 🎉</p>
@@ -232,7 +232,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="group relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/50 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800"
+                                        className="group relative bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800"
                                     >
                                         <div className="min-w-0">
                                             <h4 className="font-bold text-lg text-foreground truncate">{t.title}</h4>
@@ -268,7 +268,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px] border border-amber-100 dark:border-amber-900/50"
+                                        className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px] border border-amber-100 dark:border-amber-900/50"
                                     >
                                         <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
                                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white shadow-lg shadow-amber-500/25">
@@ -292,7 +292,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                         </div>
 
                         {todaysMeetings.length === 0 ? (
-                            <div className="p-6 text-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/50 rounded-2xl">
+                            <div className="p-6 text-center bg-slate-50 dark:bg-slate-800 rounded-2xl">
                                 <CalendarIcon className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                                 <p className="text-sm text-muted-foreground">No meetings scheduled for today.</p>
                             </div>
@@ -300,8 +300,8 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                             <div className="relative border-l-2 border-violet-200 dark:border-violet-800 ml-3 space-y-6 pl-6 py-2">
                                 {todaysMeetings.map(m => (
                                     <div key={m.id} className="relative group">
-                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 ring-4 ring-white dark:ring-slate-900 shadow-lg"></div>
-                                        <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 rounded-2xl p-4 border border-violet-100 dark:border-violet-900/50 group-hover:shadow-md transition-shadow">
+                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-violet-500 ring-4 ring-white dark:ring-slate-900 shadow-lg"></div>
+                                        <div className="bg-violet-50 dark:bg-violet-950/30 rounded-2xl p-4 border border-violet-100 dark:border-violet-900/50 group-hover:shadow-md transition-shadow">
                                             <p className="text-xs font-bold text-violet-600 dark:text-violet-400 mb-1">
                                                 {new Date(m.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
@@ -315,7 +315,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                     </div>
 
                     {/* Time Tracking Widget */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/25">
+                    <div className="relative overflow-hidden bg-emerald-500 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/25">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 mb-3">

@@ -15,7 +15,7 @@ export function TeamView({ members, tasks, onEditMember, onDeleteMember }: TeamV
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 p-8 md:p-10 text-white shadow-2xl shadow-purple-500/30">
+            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-purple-500/30">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -68,11 +68,11 @@ export function TeamView({ members, tasks, onEditMember, onDeleteMember }: TeamV
                         return (
                             <div key={member.id} className="group bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
                                 {/* Top Accent */}
-                                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-violet-500 to-fuchsia-500" />
+                                <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary" />
 
                                 <div className="flex items-start justify-between mb-6 pt-2">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-xl font-bold text-slate-600 dark:text-slate-300 shadow-inner">
+                                        <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl font-bold text-slate-600 dark:text-slate-300 shadow-inner">
                                             {member.full_name?.charAt(0) || "?"}
                                         </div>
                                         <div>

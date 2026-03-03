@@ -203,17 +203,17 @@
     @apply bg-card/80 dark:bg-card/60 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/[0.03] dark:shadow-black/[0.2] rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-black/[0.05] dark:hover:shadow-black/[0.3] hover:-translate-y-0.5 active:scale-[0.99];
   }
 
-  /* Premium Gradient Cards */
+  /* Premium Solid Cards */
   .gradient-card-primary {
-    @apply bg-gradient-to-br from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 text-white shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/10 rounded-2xl;
+    @apply bg-primary text-primary-foreground shadow-lg shadow-primary/25 dark:shadow-primary/10 rounded-2xl;
   }
 
   .gradient-card-accent {
-    @apply bg-gradient-to-br from-rose-500 to-orange-500 dark:from-rose-600 dark:to-orange-600 text-white shadow-lg shadow-rose-500/25 dark:shadow-rose-500/10 rounded-2xl;
+    @apply bg-accent text-accent-foreground shadow-lg shadow-rose-500/25 dark:shadow-rose-500/10 rounded-2xl;
   }
 
   .gradient-card-secondary {
-    @apply bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-800 text-white shadow-lg shadow-slate-500/25 dark:shadow-slate-500/10 rounded-2xl;
+    @apply bg-secondary text-secondary-foreground shadow-lg shadow-slate-500/25 dark:shadow-slate-500/10 rounded-2xl;
   }
 
   /* Premium Buttons */
@@ -292,7 +292,7 @@
 
   /* Avatar */
   .avatar {
-    @apply relative inline-flex items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-white font-semibold overflow-hidden;
+    @apply relative inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold overflow-hidden;
   }
 
   .avatar-sm {
