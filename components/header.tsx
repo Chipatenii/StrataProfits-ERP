@@ -12,6 +12,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -24,7 +25,7 @@ export function Header() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setUser(user)
-      // Check if admin
+      // Check if admin or client
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
@@ -32,6 +33,7 @@ export function Header() {
         .single()
 
       setIsAdmin(profile?.role === "admin")
+      setIsClient(profile?.role === "client")
     }
   }
 
@@ -40,7 +42,9 @@ export function Header() {
     router.push("/auth/login")
   }
 
-  const navItems = [
+  const navItems = isClient ? [
+    { label: "Portal", href: "/client-portal", icon: LayoutDashboard },
+  ] : [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     ...(isAdmin ? [
       { label: "Reports", href: "/reports", icon: FileText },

@@ -106,6 +106,11 @@ const ROLE_PERMISSIONS: Record<UserProfile["role"], Permission[]> = {
         "sops:read",
         "dashboard:my_day",
     ],
+    client: [
+        "projects:read",
+        "invoices:read",
+        "quotes:read",
+    ],
 }
 
 export function hasPermission(role: UserProfile["role"], permission: Permission): boolean {

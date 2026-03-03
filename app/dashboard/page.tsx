@@ -21,6 +21,10 @@ export default async function DashboardPage() {
   const admin = await createAdminClient()
   const { data: profile } = await admin.from("profiles").select("role, full_name").eq("id", user.id).single()
 
+  if (profile?.role === 'client') {
+    redirect("/client-portal")
+  }
+
   if (profile?.role === 'virtual_assistant') {
     return (
       <VADashboard

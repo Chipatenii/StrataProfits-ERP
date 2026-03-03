@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Search, Globe, Facebook, Instagram, Phone, Mail, MapPin, Sparkles, Building2, UserPlus } from "lucide-react"
+import { Users, Search, Globe, Facebook, Instagram, Phone, Mail, MapPin, Sparkles, Building2, UserPlus, Key } from "lucide-react"
 import { Client } from "@/lib/types"
 import { AdminCreateClientModal } from "@/components/modals/admin-create-client-modal"
 import { Edit } from "lucide-react"
@@ -44,6 +44,26 @@ export function ClientsView() {
     const handleModalClose = (open: boolean) => {
         setShowCreateModal(open)
         if (!open) setEditingClient(null)
+    }
+
+    const handleInvite = async (clientId: string) => {
+        if (!confirm("Are you sure you want to invite this client to the portal? They will receive an email to set their password.")) return;
+        
+        try {
+            const response = await fetch(`/api/admin/clients/${clientId}/invite`, {
+                method: "POST"
+            });
+            const data = await response.json();
+            
+            if (!response.ok) {
+                alert(`Error: ${data.error}`);
+            } else {
+                alert("Invitation sent successfully!");
+            }
+        } catch (error) {
+            console.error("Error inviting client:", error);
+            alert("An unexpected error occurred.");
+        }
     }
 
     const activeClients = clients.filter(c => c.status === 'Active').length
@@ -123,13 +143,25 @@ export function ClientsView() {
                             key={client.id}
                             className="group relative bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
                         >
-                            {/* Edit Button */}
-                            <button
-                                onClick={() => handleEditClick(client)}
-                                className="absolute top-4 right-4 p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-colors"
-                            >
-                                <Edit className="w-4 h-4" />
-                            </button>
+                            <div className="absolute top-4 right-4 flex items-center gap-1">
+                                {/* Invite Button */}
+                                <button
+                                    onClick={() => handleInvite(client.id)}
+                                    className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-colors"
+                                    title="Invite to Client Portal"
+                                >
+                                    <Key className="w-4 h-4" />
+                                </button>
+
+                                {/* Edit Button */}
+                                <button
+                                    onClick={() => handleEditClick(client)}
+                                    className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-colors"
+                                    title="Edit Client"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                </button>
+                            </div>
 
                             {/* Client Header */}
                             <div className="flex items-start gap-4 mb-4 pr-8">

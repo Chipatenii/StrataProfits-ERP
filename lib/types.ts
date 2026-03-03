@@ -75,10 +75,11 @@ export interface UserProfile {
     id: string
     full_name: string
     email: string
-    role: "admin" | "team_member" | "virtual_assistant" | "developer" | "social_media_manager" | "book_keeper" | "marketing" | "sales" | "graphic_designer"
+    role: "admin" | "team_member" | "virtual_assistant" | "developer" | "social_media_manager" | "book_keeper" | "marketing" | "sales" | "graphic_designer" | "client"
     user_id?: string // For backward compatibility if needed, though id usually equals auth.uid
     hourly_rate?: number | null
     avatar_url?: string | null
+    client_id?: string | null // For portal users
 }
 
 export interface Invoice {
@@ -325,3 +326,14 @@ export interface Stats {
         totalEarnings: number
     } | null
 }
+
+export interface EntityComment {
+    id: string
+    entity_type: "task" | "project" | "deal" | "meeting"
+    entity_id: string
+    author_user_id: string
+    content: string
+    created_at: string
+    author?: UserProfile
+}
+

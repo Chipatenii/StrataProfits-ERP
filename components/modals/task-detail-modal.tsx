@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Task, UserProfile } from "@/lib/types"
 import { Calendar, Clock, User, Clipboard, CheckCircle2 } from "lucide-react"
+import { CommentsSection } from "@/components/ui/comments-section"
 
 interface TaskDetailModalProps {
     open: boolean
@@ -134,6 +135,10 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
                             </div>
                         </div>
                     )}
+                    {/* Comments Section */}
+                    <div className="pt-4 mt-6 border-t border-border">
+                        <CommentsSection entityType="task" entityId={task.id} />
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

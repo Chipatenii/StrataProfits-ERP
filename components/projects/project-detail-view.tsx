@@ -10,6 +10,7 @@ import { AddMemberModal } from "./add-member-modal"
 import { CreateDeliverableModal } from "./create-deliverable-modal"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { useRouter } from "next/navigation"
+import { CommentsSection } from "@/components/ui/comments-section"
 
 import { APP_CONFIG } from "@/lib/config"
 
@@ -25,7 +26,7 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
     const [loading, setLoading] = useState(true)
     const [showAddMember, setShowAddMember] = useState(false)
     const [showAddDeliverable, setShowAddDeliverable] = useState(false)
-    const [activeTab, setActiveTab] = useState<"tasks" | "members" | "deliverables">("tasks")
+    const [activeTab, setActiveTab] = useState<"tasks" | "members" | "deliverables" | "comments">("tasks")
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
@@ -281,6 +282,12 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                             Deliverables
                         </button>
                     )}
+                    <button
+                        onClick={() => setActiveTab("comments")}
+                        className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'comments' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Comments
+                    </button>
                 </div>
 
                 {activeTab === "tasks" && !deliverablesEnabled && (
@@ -575,6 +582,12 @@ export function ProjectDetailView({ projectId, onBack }: { projectId: string; on
                                 ))}
                             </div>
                         )}
+                    </div>
+                )}
+
+                {activeTab === "comments" && (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden p-6 max-w-3xl">
+                        <CommentsSection entityType="project" entityId={projectId} />
                     </div>
                 )}
             </div>
