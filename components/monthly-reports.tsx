@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Download, Loader2 } from "lucide-react"
 import jsPDF from "jspdf"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { RecordPayrollModal } from "@/components/modals/record-payroll-modal"
 
 interface TeamMemberReport {
   user_id: string
@@ -16,6 +17,16 @@ interface TeamMemberReport {
   days_worked: number
   average_hours_per_day: number
   estimated_payroll: number
+  total_paid?: number
+  remaining_balance?: number
+  payments?: Array<{
+    id: string
+    payment_date: string
+    amount: number
+    payment_method: string
+    reference: string
+    notes?: string
+  }>
   tasks: Array<{
     title: string
     hours: number
@@ -34,6 +45,10 @@ export function MonthlyReports() {
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
   const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
+  
+  // Payroll Modal State
+  const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false)
+  const [memberToPay, setMemberToPay] = useState<{ id: string, name: string, estimatedPayroll: number } | null>(null)
 
   const loadReports = useCallback(async () => {
     setLoading(true)
@@ -278,6 +293,8 @@ export function MonthlyReports() {
                     <th className="px-6 py-3 text-left text-sm font-semibold">Days Worked</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold">Avg Hours/Day</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold">Est. Payroll</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Balance</th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -300,14 +317,56 @@ export function MonthlyReports() {
                           <td className="px-6 py-4 font-semibold text-accent">{report.total_hours.toFixed(2)}</td>
                           <td className="px-6 py-4">{report.days_worked}</td>
                           <td className="px-6 py-4">{report.average_hours_per_day.toFixed(2)}</td>
-                          <td className="px-6 py-4 font-medium text-green-600">ZMW {report.estimated_payroll.toFixed(2)}</td>
+                          <td className="px-6 py-4 font-medium text-muted-foreground">ZMW {report.estimated_payroll.toFixed(2)}</td>
+                          <td className="px-6 py-4 font-bold text-accent">ZMW {(report.remaining_balance || 0).toFixed(2)}</td>
+                          <td className="px-6 py-4 text-right">
+                              <button
+                                  onClick={(e) => {
+                                      e.stopPropagation()
+                                      setMemberToPay({
+                                          id: report.user_id,
+                                          name: report.full_name,
+                                          estimatedPayroll: report.remaining_balance || report.estimated_payroll
+                                      })
+                                      setIsPayrollModalOpen(true)
+                                  }}
+                                  className="text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-sm transition-colors"
+                              >
+                                  Record Payment
+                              </button>
+                          </td>
                         </tr>
                         {expandedUser === report.user_id && (
                           <tr className="bg-muted/30">
-                            <td colSpan={5} className="px-6 py-4">
-                              <div className="space-y-2">
-                                <h4 className="font-semibold text-sm mb-2">Task Breakdown</h4>
-                                {report.tasks && report.tasks.length > 0 ? (
+                            <td colSpan={8} className="px-6 py-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                  <div className="flex items-center justify-between">
+                                      <h4 className="font-semibold text-sm">Payment History</h4>
+                                      <span className="text-xs text-muted-foreground">Total Paid: ZMW {(report.total_paid || 0).toFixed(2)}</span>
+                                  </div>
+                                  {report.payments && report.payments.length > 0 ? (
+                                      <div className="grid gap-2">
+                                          {report.payments.map((payment) => (
+                                              <div key={payment.id} className="flex items-center justify-between text-sm bg-white p-3 rounded-lg border border-border">
+                                                  <div>
+                                                      <span className="font-semibold text-green-600">ZMW {payment.amount.toFixed(2)}</span>
+                                                      <p className="text-xs text-muted-foreground mt-0.5">{new Date(payment.payment_date).toLocaleDateString()}</p>
+                                                  </div>
+                                                  <div className="text-right">
+                                                      <span className="capitalize text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-700">{payment.payment_method.replace('_', ' ')}</span>
+                                                      {payment.reference && <p className="text-xs text-muted-foreground mt-0.5">Ref: {payment.reference}</p>}
+                                                  </div>
+                                              </div>
+                                          ))}
+                                      </div>
+                                  ) : (
+                                      <p className="text-sm text-muted-foreground p-4 bg-white rounded-lg border border-dashed text-center">No past payments recorded for this period.</p>
+                                  )}
+                                </div>
+                                <div className="space-y-4">
+                                  <h4 className="font-semibold text-sm mb-2">Task Breakdown</h4>
+                                  {report.tasks && report.tasks.length > 0 ? (
                                   <div className="grid gap-2">
                                     {report.tasks.map((task, idx) => (
                                       <div key={idx} className="flex items-center justify-between text-sm bg-white/50 p-2 rounded">
@@ -329,6 +388,7 @@ export function MonthlyReports() {
                                 ) : (
                                   <p className="text-sm text-muted-foreground">No specific task data available.</p>
                                 )}
+                                </div>
                               </div>
                             </td>
                           </tr>
@@ -342,6 +402,16 @@ export function MonthlyReports() {
           </div>
         </div>
       </main>
+
+      {/* Record Payroll Modal */}
+      <RecordPayrollModal
+        open={isPayrollModalOpen}
+        onOpenChange={setIsPayrollModalOpen}
+        onSuccess={loadReports}
+        member={memberToPay}
+        periodStart={`${selectedMonth}-01`}
+        periodEnd={`${selectedMonth}-${new Date(Number.parseInt(selectedMonth.split("-")[0]), Number.parseInt(selectedMonth.split("-")[1]), 0).getDate()}`}
+      />
     </div>
   )
 }

@@ -98,6 +98,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Get payments for the date range
+    const { data: teamPayments } = await admin
+      .from("team_payments")
+      .select("*")
+      .gte("period_start", startDate)
+      .lte("period_end", endDate)
+
     // Calculate final metrics
     const finalReports: any[] = []
     reportMap.forEach((report) => {
@@ -117,6 +124,10 @@ export async function POST(request: NextRequest) {
       const hourlyRate = member?.hourly_rate || 0
       const estimatedPayroll = Math.round((totalHours * hourlyRate) * 100) / 100
 
+      // Get payments for this user
+      const userPayments = teamPayments?.filter((p: any) => p.user_id === report.user_id).sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()) || []
+      const totalPaid = userPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+
       finalReports.push({
         user_id: report.user_id,
         full_name: report.full_name,
@@ -127,6 +138,9 @@ export async function POST(request: NextRequest) {
         days_worked: userDaysWorked,
         average_hours_per_day: averagePerDay,
         estimated_payroll: estimatedPayroll,
+        total_paid: totalPaid,
+        remaining_balance: Math.max(0, estimatedPayroll - totalPaid),
+        payments: userPayments,
         tasks: tasksArray,
       })
     })

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Fragment } from "react"
 import { Download, Loader2 } from "lucide-react"
 import { PDFService } from "@/lib/pdf-service"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { RecordPayrollModal } from "@/components/modals/record-payroll-modal"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface TeamMemberReport {
@@ -16,6 +17,16 @@ interface TeamMemberReport {
     days_worked: number
     average_hours_per_day: number
     estimated_payroll: number
+    total_paid?: number
+    remaining_balance?: number
+    payments?: Array<{
+        id: string
+        payment_date: string
+        amount: number
+        payment_method: string
+        reference: string
+        notes?: string
+    }>
     tasks: Array<{
         title: string
         hours: number
@@ -248,6 +259,10 @@ function WorkforceReports() {
     const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
     const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
 
+    // Payroll Modal State
+    const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false)
+    const [memberToPay, setMemberToPay] = useState<{ id: string, name: string, estimatedPayroll: number } | null>(null)
+
     const loadReports = useCallback(async () => {
         setLoading(true)
         try {
@@ -315,7 +330,8 @@ function WorkforceReports() {
     }
 
     return (
-        <div className="space-y-6">
+        <Fragment>
+            <div className="space-y-6">
             {/* Header & Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -410,7 +426,9 @@ function WorkforceReports() {
                                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Total Hours</th>
                                 <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">Days</th>
                                 <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">Daily Avg</th>
-                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Payroll</th>
+                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Est. Payroll</th>
+                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Balance</th>
+                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
@@ -434,14 +452,55 @@ function WorkforceReports() {
                                             <td className="px-4 py-4 font-semibold text-accent">{report.total_hours.toFixed(1)}</td>
                                             <td className="px-4 py-4 hidden sm:table-cell">{report.days_worked}</td>
                                             <td className="px-4 py-4 hidden sm:table-cell">{report.average_hours_per_day.toFixed(1)}</td>
-                                            <td className="px-4 py-4 font-medium text-green-600">ZMW {report.estimated_payroll.toFixed(0)}</td>
+                                            <td className="px-4 py-4 font-medium text-muted-foreground">ZMW {report.estimated_payroll.toFixed(0)}</td>
+                                            <td className="px-4 py-4 font-bold text-accent">ZMW {(report.remaining_balance || 0).toFixed(0)}</td>
+                                            <td className="px-4 py-4 text-right">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setMemberToPay({
+                                                            id: report.user_id,
+                                                            name: report.full_name,
+                                                            estimatedPayroll: report.remaining_balance || report.estimated_payroll
+                                                        })
+                                                        setIsPayrollModalOpen(true)
+                                                    }}
+                                                    className="text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-xs md:text-sm transition-colors whitespace-nowrap"
+                                                >
+                                                    Pay
+                                                </button>
+                                            </td>
                                         </tr>
                                         {expandedUser === report.user_id && (
                                             <tr className="bg-muted/20 shadow-inner">
-                                                <td colSpan={5} className="px-4 py-4">
-                                                    <div className="space-y-3 pl-2 sm:pl-4 border-l-2 border-accent/30">
-                                                        <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Top Tasks</h4>
-                                                        {report.tasks && report.tasks.length > 0 ? (
+                                                <td colSpan={7} className="px-4 py-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-2 sm:pl-4 border-l-2 border-accent/30">
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Payment History</h4>
+                                                                <span className="text-xs text-muted-foreground">Total: ZMW {(report.total_paid || 0).toFixed(0)}</span>
+                                                            </div>
+                                                            {report.payments && report.payments.length > 0 ? (
+                                                                <div className="grid gap-2">
+                                                                    {report.payments.map((payment) => (
+                                                                        <div key={payment.id} className="flex items-center justify-between text-xs sm:text-sm bg-background p-2 rounded border border-border/50">
+                                                                            <div>
+                                                                                <span className="font-semibold text-green-600">ZMW {payment.amount.toFixed(0)}</span>
+                                                                                <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(payment.payment_date).toLocaleDateString()}</p>
+                                                                            </div>
+                                                                            <div className="text-right">
+                                                                                <span className="capitalize text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{payment.payment_method.replace('_', ' ')}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-xs text-muted-foreground italic bg-background p-3 rounded border border-dashed border-border/50 text-center">No past payments recorded.</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Top Tasks</h4>
+                                                            {report.tasks && report.tasks.length > 0 ? (
                                                             <div className="grid gap-2">
                                                                 {report.tasks.slice(0, 5).map((task, idx) => (
                                                                     <div key={idx} className="flex items-center justify-between text-xs sm:text-sm bg-background p-2 rounded border border-border/50">
@@ -463,6 +522,7 @@ function WorkforceReports() {
                                                         ) : (
                                                             <p className="text-sm text-muted-foreground">No specific task data available.</p>
                                                         )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -474,6 +534,17 @@ function WorkforceReports() {
                     </table>
                 </div>
             </div>
+
+            {/* Record Payroll Modal */}
+            <RecordPayrollModal
+                open={isPayrollModalOpen}
+                onOpenChange={setIsPayrollModalOpen}
+                onSuccess={loadReports}
+                member={memberToPay}
+                periodStart={`${selectedMonth}-01`}
+                periodEnd={`${selectedMonth}-${new Date(Number.parseInt(selectedMonth.split("-")[0]), Number.parseInt(selectedMonth.split("-")[1]), 0).getDate()}`}
+            />
         </div>
+        </Fragment>
     )
 }
