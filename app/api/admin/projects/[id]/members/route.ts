@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { addProjectMemberSchema } from "@/lib/schemas"
 import { type NextRequest, NextResponse } from "next/server"
+import { getEmailForUser, sendProjectMemberEmail } from "@/lib/email"
 
 export async function POST(
     request: NextRequest,
@@ -44,6 +45,45 @@ export async function POST(
             .single()
 
         if (error) throw error
+
+        // Fire-and-forget: send email notification to the new member
+        ;(async () => {
+          try {
+            const recipientEmail = await getEmailForUser(validation.data.userId)
+            if (!recipientEmail) return
+
+            // Fetch the new member's name
+            const { data: memberProfile } = await admin
+              .from("profiles")
+              .select("full_name")
+              .eq("id", validation.data.userId)
+              .single()
+
+            // Fetch the project name
+            const { data: project } = await admin
+              .from("projects")
+              .select("name")
+              .eq("id", projectId)
+              .single()
+
+            // Fetch the person who added them
+            const { data: adderProfile } = await admin
+              .from("profiles")
+              .select("full_name")
+              .eq("id", user.id)
+              .single()
+
+            await sendProjectMemberEmail({
+              recipientEmail,
+              recipientName: memberProfile?.full_name ?? "Team Member",
+              projectName: project?.name ?? "Unnamed Project",
+              role: validation.data.role,
+              addedByName: adderProfile?.full_name ?? null,
+            })
+          } catch (emailErr) {
+            console.error("[Project Members POST] Email notification failed:", emailErr)
+          }
+        })()
 
         return NextResponse.json(member)
     } catch (error) {

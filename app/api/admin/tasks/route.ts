@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { APP_CONFIG } from "@/lib/config"
 import { createTaskSchema } from "@/lib/schemas"
+import { getEmailForUser, sendTaskAssignedEmail } from "@/lib/email"
 
 // Roles that can have tasks assigned to them (not admin, not VA)
 const ASSIGNABLE_ROLES = ['team_member', 'developer', 'social_media_manager', 'book_keeper', 'marketing', 'sales', 'graphic_designer']
@@ -188,6 +189,51 @@ export async function POST(request: NextRequest) {
       .select()
 
     if (error) throw error
+
+    // Fire-and-forget: send email notification to the assignee
+    if (taskData.assigned_to) {
+      (async () => {
+        try {
+          const recipientEmail = await getEmailForUser(taskData.assigned_to!)
+          if (!recipientEmail) return
+
+          // Fetch assignee name
+          const { data: assigneeProfile } = await admin
+            .from("profiles")
+            .select("full_name")
+            .eq("id", taskData.assigned_to)
+            .single()
+
+          // Fetch assigner (creator) name
+          const { data: assignerProfile } = await admin
+            .from("profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .single()
+
+          // Fetch project name if task is linked to a project
+          let projectName: string | null = null
+          if (taskData.project_id) {
+            const { data: project } = await admin
+              .from("projects")
+              .select("name")
+              .eq("id", taskData.project_id)
+              .single()
+            projectName = project?.name ?? null
+          }
+
+          await sendTaskAssignedEmail({
+            recipientEmail,
+            recipientName: assigneeProfile?.full_name ?? "Team Member",
+            taskTitle: taskData.title ?? "Untitled Task",
+            projectName,
+            assignedByName: assignerProfile?.full_name ?? null,
+          })
+        } catch (emailErr) {
+          console.error("[Tasks POST] Email notification failed:", emailErr)
+        }
+      })()
+    }
 
     return NextResponse.json(task)
   } catch (error) {
