@@ -69,7 +69,6 @@ export function AdminDashboard({
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
-  const [editingMember, setEditingMember] = useState<UserProfile | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
 
   // Confirmation Modal State
@@ -90,14 +89,6 @@ export function AdminDashboard({
   // Review Modal State
   const [reviewingTask, setReviewingTask] = useState<Task | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   const loadData = useCallback(async () => {
     try {
@@ -175,33 +166,7 @@ export function AdminDashboard({
     })
   }
 
-  const handleDeleteMember = async (memberId: string) => {
-    setConfirmConfig({
-      isOpen: true,
-      title: "Delete Team Member",
-      description: "Are you sure you want to delete this team member? This action cannot be undone and will remove all their data.",
-      variant: "destructive",
-      confirmText: "Delete Member",
-      action: async () => {
-        try {
-          const response = await fetch(`/api/admin/members/${memberId}`, {
-            method: "DELETE",
-          })
 
-          if (response.ok) {
-            toast.success("Member deleted successfully")
-            loadData()
-          } else {
-            toast.error("Failed to delete member")
-          }
-        } catch (error) {
-          console.error("Error deleting member:", error)
-          toast.error("An error occurred")
-        }
-        setConfirmConfig(prev => ({ ...prev, isOpen: false }))
-      }
-    })
-  }
 
   // Review Actions
   const handleVerifyTask = async (task: Task) => {
@@ -513,27 +478,9 @@ export function AdminDashboard({
             />
           )}
 
-          {/* Team View */}
+          {/* Team View — self-sufficient, manages own data & modals */}
           {activeView === "team" && (
-            <TeamView
-              members={members}
-              tasks={tasks}
-              onEditMember={setEditingMember}
-              onDeleteMember={handleDeleteMember}
-            />
-          )}
-
-          {/* Edit Member Modal */}
-          {editingMember && (
-            <ProfileSettingsModal
-              userId={editingMember.id}
-              isAdmin={true}
-              onClose={() => setEditingMember(null)}
-              onSuccess={() => {
-                setEditingMember(null)
-                loadData()
-              }}
-            />
+            <TeamView userId={userId} />
           )}
 
           {/* Edit Task Modal */}
