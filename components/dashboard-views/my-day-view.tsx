@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from "react"
 import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon, Zap, Star, Play, Pause } from "lucide-react"
 import { Task, Meeting, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
+import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { Timer } from "@/components/timer"
-import { getTimeBasedGreeting } from "@/lib/time-utils"
+import { getTimeBasedGreeting, calculateTimeSpent } from "@/lib/time-utils"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
@@ -23,10 +24,12 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
     const [members, setMembers] = useState<UserProfile[]>([])
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-    const [activeLogId, setActiveLogId] = useState<string | null>(null)
+    const [timeLogs, setTimeLogs] = useState<any[]>([])
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
     const [activeClockIn, setActiveClockIn] = useState<string | null>(null)
     const [isClockedIn, setIsClockedIn] = useState(false)
+    const [showCompleteModal, setShowCompleteModal] = useState(false)
+    const [completingTask, setCompletingTask] = useState<Task | null>(null)
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)
@@ -76,8 +79,8 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 .select('*')
                 .eq('user_id', userId)
                 .gte('clock_in', today)
+            setTimeLogs(logs || [])
             const activeLog = (logs || []).find((l: any) => !l.clock_out)
-            setActiveLogId(activeLog?.id || null)
             setActiveTaskId(activeLog?.task_id || null)
             setActiveClockIn(activeLog?.clock_in || null)
             setIsClockedIn(!!activeLog)
@@ -88,42 +91,90 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
         }
     }, [userId, supabase])
 
-    const handleTimerToggle = useCallback(async () => {
+    const handleTaskStartStop = useCallback(async (taskId: string) => {
         try {
-            if (isClockedIn && activeLogId) {
-                // Clock out
+            const activeLog = timeLogs.find((log) => !log.clock_out)
+
+            if (activeLog?.task_id === taskId) {
+                // Stop tracking current task
                 const clockOut = new Date().toISOString()
-                const durationMinutes = Math.round(
-                    (new Date(clockOut).getTime() - new Date(activeClockIn!).getTime()) / 60000
-                )
-                await supabase
-                    .from('time_logs')
-                    .update({ clock_out: clockOut, duration_minutes: durationMinutes })
-                    .eq('id', activeLogId)
+                const clockIn = new Date(activeLog.clock_in)
+                const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
+
+                setTimeLogs(prev => prev.map(log =>
+                    log.id === activeLog.id ? { ...log, clock_out: clockOut, duration_minutes: durationMinutes } : log
+                ))
                 setIsClockedIn(false)
-                setActiveLogId(null)
                 setActiveTaskId(null)
                 setActiveClockIn(null)
-                toast.success('Clocked out successfully')
+
+                await supabase.from("time_logs").update({ clock_out: clockOut, duration_minutes: durationMinutes }).eq("id", activeLog.id)
+                toast.success('Timer stopped')
             } else {
-                // Clock in
+                // Stop previous if exists
+                if (activeLog) {
+                    const clockOut = new Date().toISOString()
+                    const clockIn = new Date(activeLog.clock_in)
+                    const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
+                    await supabase.from("time_logs").update({ clock_out: clockOut, duration_minutes: durationMinutes }).eq("id", activeLog.id)
+                }
+
+                // Start new log
                 const now = new Date().toISOString()
-                const { data, error } = await supabase
-                    .from('time_logs')
-                    .insert({ user_id: userId, clock_in: now })
-                    .select()
-                    .single()
-                if (error) throw error
+                setActiveTaskId(taskId)
                 setIsClockedIn(true)
-                setActiveLogId(data.id)
                 setActiveClockIn(now)
-                toast.success('Clocked in — timer running!')
+
+                const { data, error } = await supabase.from("time_logs").insert({
+                    user_id: userId,
+                    task_id: taskId,
+                    clock_in: now,
+                }).select().single()
+                
+                if (error) throw error
+                setTimeLogs(prev => [...prev.filter(l => l.id !== activeLog?.id), ...(activeLog ? [{...activeLog, clock_out: new Date().toISOString(), duration_minutes: 0}] : []), data])
+                toast.success('Timer started for task')
             }
         } catch (e: any) {
             console.error(e)
             toast.error('Failed to toggle timer')
+            loadData() // revert optimistic UI on fail
         }
-    }, [isClockedIn, activeLogId, activeClockIn, userId, supabase])
+    }, [timeLogs, userId, supabase, loadData])
+
+    const handleTaskComplete = async (notes: string, timeAllocated: number) => {
+        if (!completingTask) return
+
+        try {
+            if (activeTaskId === completingTask.id) {
+                await handleTaskStartStop(completingTask.id)
+            }
+
+            const response = await fetch(`/api/admin/tasks?id=${completingTask.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    status: "completed",
+                    completion_notes: notes,
+                    time_allocated: timeAllocated,
+                    completed_at: new Date().toISOString()
+                })
+            })
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.error || "Failed to complete task")
+            }
+
+            setShowCompleteModal(false)
+            setCompletingTask(null)
+            loadData()
+            toast.success("Task completed successfully!")
+        } catch (e: any) {
+            console.error("Task completion error:", e)
+            toast.error(e.message || "Failed to complete task.")
+        }
+    }
 
     useEffect(() => { loadData() }, [loadData])
 
@@ -228,28 +279,71 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {dueToday.map(t => (
+                                {dueToday.map(t => {
+                                    const isTaskActive = activeTaskId === t.id
+                                    const previousLogs = timeLogs.filter(l => l.task_id === t.id && l.clock_out)
+                                    const initialSeconds = previousLogs.reduce((acc, log) => acc + (log.duration_minutes || 0) * 60, 0)
+                                    
+                                    return (
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="group relative bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800"
+                                        className={`group relative p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all border ${isTaskActive ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800' : 'bg-slate-50 dark:bg-slate-800 border-transparent hover:border-emerald-200 dark:hover:border-emerald-800'}`}
                                     >
-                                        <div className="min-w-0">
-                                            <h4 className="font-bold text-lg text-foreground truncate">{t.title}</h4>
-                                            <p className="text-sm text-muted-foreground">{t.project_id ? "Project Task" : "General Task"}</p>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h4 className="font-bold text-lg text-foreground truncate">{t.title}</h4>
+                                                {isTaskActive && (
+                                                    <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded-full font-bold animate-pulse">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                        TRACKING
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-muted-foreground mr-2">{t.project_id ? "Project Task" : "General Task"}</p>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${t.priority === 'high'
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {isTaskActive && (
+                                                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm mr-2">
+                                                    <Timer
+                                                        isActive={isTaskActive}
+                                                        startTime={activeClockIn}
+                                                        initialSeconds={initialSeconds}
+                                                        estimatedHours={t.estimated_hours || undefined}
+                                                    />
+                                                </div>
+                                            )}
+                                            <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${t.priority === 'high'
                                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
                                                 : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
                                                 {t.priority}
                                             </span>
-                                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
-                                                {t.estimated_hours ? `${t.estimated_hours}h` : 'No est.'}
-                                            </span>
+                                            
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleTaskStartStop(t.id)
+                                                }}
+                                                className={`p-2 rounded-xl transition-all ${isTaskActive
+                                                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
+                                                    : "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                                                }`}
+                                            >
+                                                {isTaskActive ? <Pause size={18} /> : <Play size={18} />}
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setCompletingTask(t)
+                                                    setShowCompleteModal(true)
+                                                }}
+                                                className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-all"
+                                            >
+                                                <CheckCircle size={18} />
+                                            </button>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         )}
                     </div>
@@ -264,18 +358,55 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                 <h3 className="text-xl font-bold text-foreground">High Priority Backlog</h3>
                             </div>
                             <div className="space-y-3">
-                                {highPriority.map(t => (
+                                {highPriority.map(t => {
+                                    const isTaskActive = activeTaskId === t.id
+                                    const previousLogs = timeLogs.filter(l => l.task_id === t.id && l.clock_out)
+                                    const initialSeconds = previousLogs.reduce((acc, log) => acc + (log.duration_minutes || 0) * 60, 0)
+
+                                    return (
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px] border border-amber-100 dark:border-amber-900/50"
+                                        className={`p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px] border ${isTaskActive ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800' : 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50'}`}
                                     >
-                                        <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
-                                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white shadow-lg shadow-amber-500/25">
-                                            High
-                                        </span>
+                                        <div className="flex items-center gap-2 truncate mr-2">
+                                            <span className="font-medium text-foreground truncate">{t.title}</span>
+                                            {isTaskActive && (
+                                                <span className="flex shrink-0 items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] rounded-full font-bold animate-pulse mt-0.5">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                    ON
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white shadow-md shadow-amber-500/25">
+                                                High
+                                            </span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleTaskStartStop(t.id)
+                                                }}
+                                                className={`p-1.5 rounded-lg transition-all ${isTaskActive
+                                                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
+                                                    : "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                                                }`}
+                                            >
+                                                {isTaskActive ? <Pause size={16} /> : <Play size={16} />}
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setCompletingTask(t)
+                                                    setShowCompleteModal(true)
+                                                }}
+                                                className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-all"
+                                            >
+                                                <CheckCircle size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         </div>
                     )}
@@ -328,24 +459,29 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                                         <span className="text-xs text-emerald-100 font-medium">Currently tracking</span>
                                     </div>
-                                    <div className="text-2xl font-mono font-bold">
+                                    <div className="text-2xl font-mono font-bold flex items-center gap-3">
                                         <Timer isActive={true} startTime={activeClockIn} />
+                                        {activeTaskId && (
+                                            <button 
+                                                onClick={() => handleTaskStartStop(activeTaskId)}
+                                                className="bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors"
+                                            >
+                                                <Pause className="w-4 h-4 text-white" />
+                                            </button>
+                                        )}
                                     </div>
+                                    {activeTaskId && (
+                                        <p className="text-xs text-emerald-100 mt-2 truncate">
+                                            Task: {tasks.find(t => t.id === activeTaskId)?.title || 'Unknown'}
+                                        </p>
+                                    )}
                                 </div>
                             ) : (
-                                <p className="text-emerald-100/80 text-sm mb-3">Track your time to stay productive and earn more.</p>
+                                <div className="mb-3">
+                                    <p className="text-emerald-100/90 text-sm font-medium">No active timer running.</p>
+                                    <p className="text-emerald-100/70 text-xs mt-1">Start a timer from a specific task in your task list to track productivity.</p>
+                                </div>
                             )}
-                            <button
-                                onClick={handleTimerToggle}
-                                className={`mt-1 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all border ${
-                                    isClockedIn
-                                        ? 'bg-white/30 border-white/40 hover:bg-white/40'
-                                        : 'bg-white/20 border-white/20 hover:bg-white/30'
-                                }`}
-                            >
-                                {isClockedIn ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                                {isClockedIn ? 'Stop Timer' : 'Start Timer'}
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -356,6 +492,17 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 task={selectedTaskDetail}
                 members={members}
                 onOpenChange={setIsDetailModalOpen}
+            />
+            <TaskCompletionModal
+                isOpen={showCompleteModal}
+                onClose={() => {
+                    setShowCompleteModal(false)
+                    setCompletingTask(null)
+                }}
+                onComplete={handleTaskComplete}
+                taskTitle={completingTask?.title || ""}
+                spentMinutes={completingTask ? calculateTimeSpent(timeLogs, completingTask.id) : 0}
+                estimatedHours={completingTask?.estimated_hours || undefined}
             />
         </div>
     )

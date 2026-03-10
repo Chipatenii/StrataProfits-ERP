@@ -20,7 +20,7 @@ import { AdminCreateTaskModal } from "./modals/admin-create-task-modal"
 import { AdminReviewTaskModal } from "./modals/admin-review-task-modal"
 import { ConfirmModal } from "./modals/confirm-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
-import { approveTask, rejectTask, verifyTask } from "@/app/actions/tasks"
+import { approveTask, rejectTask, verifyTask, rejectCompletedTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
 import { getFormattedDate } from "@/lib/time-utils"
 
@@ -34,6 +34,7 @@ import { FinanceView } from "@/components/dashboard-views/finance-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
 import { FilesView } from "@/components/dashboard-views/files-view"
 import { HRView } from "@/components/dashboard-views/hr-view"
+import { TeamPerformanceView } from "@/components/dashboard-views/team-performance-view"
 
 import { Task, UserProfile } from "@/lib/types"
 import { VAFinance } from "@/components/dashboard-views/va-finance"
@@ -63,7 +64,7 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales" | "files" | "hr">("overview")
+  const [activeView, setActiveView] = useState<"my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales" | "files" | "hr" | "performance">("overview")
 
   const [stats, setStats] = useState<any>(null) // Stats type in lib/types might differ from local usage, safe with any for now or check
   const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("all")
@@ -205,6 +206,35 @@ export function AdminDashboard({
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const handleRejectCompletedTask = async (task: Task) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Return Task for Rework",
+      description: "Are you sure you want to return this task for rework? This will invalidate the time logs for this task until resubmitted.",
+      variant: "destructive",
+      confirmText: "Return for Rework",
+      action: async () => {
+        setIsProcessing(true)
+        try {
+          const result = await rejectCompletedTask(task.id)
+          if (result.success) {
+            toast.success("Task returned for rework")
+            setReviewingTask(null)
+            loadData()
+          } else {
+            toast.error("Failed to return task")
+          }
+        } catch (error) {
+          console.error("Error returning task:", error)
+          toast.error("An error occurred")
+        } finally {
+          setIsProcessing(false)
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+        }
+      }
+    })
   }
 
   const handleRejectTask = async (task: Task) => {
@@ -478,6 +508,10 @@ export function AdminDashboard({
             />
           )}
 
+          {activeView === "performance" && (
+            <TeamPerformanceView />
+          )}
+
           {/* Team View — self-sufficient, manages own data & modals */}
           {activeView === "team" && (
             <TeamView userId={userId} />
@@ -515,6 +549,7 @@ export function AdminDashboard({
               onApprove={handleApproveTask}
               onReject={handleRejectTask}
               onVerify={handleVerifyTask}
+              onRejectCompletion={handleRejectCompletedTask}
               isProcessing={isProcessing}
             />
           )}

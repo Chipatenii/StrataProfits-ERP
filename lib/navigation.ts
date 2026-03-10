@@ -1,4 +1,4 @@
-import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, Book, ClipboardCheck, Sun, Cloud, Briefcase } from "lucide-react"
+import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, Book, ClipboardCheck, Sun, Cloud, Briefcase, Activity } from "lucide-react"
 import { Permission, hasPermission } from "./permissions"
 import { UserProfile } from "./types"
 
@@ -23,6 +23,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     { id: "meetings", label: "Meetings", icon: FileText, requiredPermission: "meetings:read" },
     { id: "sops", label: "SOPs", icon: Book, requiredPermission: "sops:read" },
     { id: "team", label: "Team", icon: Users, requiredPermission: "users:read" },
+    { id: "performance", label: "Performance", icon: Activity, requiredPermission: "reports:read" },
 ]
 
 export function getNavItemsForRole(role: UserProfile["role"]): NavItem[] {

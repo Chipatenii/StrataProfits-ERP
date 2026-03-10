@@ -13,6 +13,7 @@ interface AdminReviewTaskModalProps {
     onApprove: (task: Task) => void
     onReject: (task: Task) => void
     onVerify?: (task: Task) => void
+    onRejectCompletion?: (task: Task) => void
     isProcessing: boolean
 }
 
@@ -23,6 +24,7 @@ export function AdminReviewTaskModal({
     onApprove,
     onReject,
     onVerify,
+    onRejectCompletion,
     isProcessing
 }: AdminReviewTaskModalProps) {
     if (!task) return null
@@ -132,6 +134,16 @@ export function AdminReviewTaskModal({
                                 className="flex-1 sm:flex-none bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                             >
                                 Reject
+                            </Button>
+                        )}
+                        {canVerify && onRejectCompletion && (
+                            <Button
+                                variant="destructive"
+                                onClick={() => onRejectCompletion(task)}
+                                disabled={isProcessing}
+                                className="flex-1 sm:flex-none bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                                Return for Rework
                             </Button>
                         )}
                         {canVerify ? (

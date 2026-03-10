@@ -149,6 +149,48 @@ export async function verifyTask(taskId: string) {
         return { error: "Failed to verify task" }
     }
 
+    // Approve the time logs associated with this task
+    await admin
+        .from("time_logs")
+        .update({ is_approved: true })
+        .eq("task_id", taskId)
+
+    revalidatePath("/dashboard")
+    return { success: true }
+}
+
+export async function rejectCompletedTask(taskId: string, reason?: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: "Unauthorized" }
+
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    if (profile?.role !== "admin") {
+        return { error: "Forbidden" }
+    }
+
+    const admin = await createAdminClient()
+
+    const { error } = await admin
+        .from("tasks")
+        .update({
+            status: "in_progress",
+            completion_notes: reason ? `Rejected: ${reason}` : "Rejected: Needs rework"
+        })
+        .eq("id", taskId)
+
+    if (error) {
+        console.error("Error rejecting completed task:", error)
+        return { error: "Failed to reject task completion" }
+    }
+
+    // Invalidate the time logs associated with this task so far
+    await admin
+        .from("time_logs")
+        .update({ is_approved: false, billable: false })
+        .eq("task_id", taskId)
+
     revalidatePath("/dashboard")
     return { success: true }
 }
