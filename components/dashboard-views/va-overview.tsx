@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import useSWR from "swr"
 import { AlertCircle, Clock } from "lucide-react"
 import { Task, Invoice, Meeting, UserProfile } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
@@ -13,14 +14,22 @@ interface VAOverviewProps {
 }
 
 export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) {
-    const [tasks, setTasks] = useState<Task[]>([])
-    const [overdueInvoices, setOverdueInvoices] = useState<Invoice[]>([])
-    const [meetings, setMeetings] = useState<Meeting[]>([])
     const [stats, setStats] = useState({ leads: 0, proposals: 0 })
     const [currentTime, setCurrentTime] = useState<Date | null>(null)
-    const [members, setMembers] = useState<UserProfile[]>([])
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+    const fetcher = (url: string) => fetch(url).then(r => r.json())
+    const { data: tasksRaw = [] } = useSWR<Task[]>(`/api/tasks?assignee_id=${userId}&status=pending`, fetcher)
+    const tasks = Array.isArray(tasksRaw) ? tasksRaw.slice(0, 5) : []
+
+    const { data: overdueInvoices = [] } = useSWR<Invoice[]>('/api/invoices?status=overdue', fetcher)
+    const { data: dealsData = [] } = useSWR<any[]>('/api/admin/deals', fetcher)
+    
+    // Ensure we trigger meeting fetch correctly
+    const todayStr = new Date().toISOString().split('T')[0]
+    const { data: meetings = [] } = useSWR<Meeting[]>(`/api/meetings?date=${todayStr}`, fetcher)
+    const { data: members = [] } = useSWR<UserProfile[]>('/api/admin/members', fetcher)
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)
@@ -35,56 +44,14 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     }, [])
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch tasks
-                const tasksRes = await fetch(`/api/tasks?assignee_id=${userId}&status=pending`)
-                if (tasksRes.ok) {
-                    const data = await tasksRes.json()
-                    if (Array.isArray(data)) setTasks(data.slice(0, 5))
-                }
-
-                // Fetch overdue invoices
-                const invoicesRes = await fetch('/api/invoices?status=overdue')
-                if (invoicesRes.ok) {
-                    const data = await invoicesRes.json()
-                    if (Array.isArray(data)) setOverdueInvoices(data)
-                }
-
-                // Fetch pipeline stats
-                const dealsRes = await fetch('/api/admin/deals')
-                if (dealsRes.ok) {
-                    const data = await dealsRes.json()
-                    if (Array.isArray(data)) {
-                        const now = new Date();
-                        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                        const newLeads = data.filter((d: any) => new Date(d.created_at) > oneWeekAgo).length;
-                        const proposals = data.filter((d: any) => d.stage === 'Proposal').length;
-                        setStats({ leads: newLeads, proposals });
-                    }
-                }
-
-                // Fetch today's meetings
-                const today = new Date().toISOString().split('T')[0]
-                const meetingsRes = await fetch(`/api/meetings?date=${today}`)
-                if (meetingsRes.ok) {
-                    const data = await meetingsRes.json()
-                    if (Array.isArray(data)) setMeetings(data)
-                }
-
-                // Fetch members for detail modal
-                const membersRes = await fetch('/api/admin/members')
-                if (membersRes.ok) {
-                    const data = await membersRes.json()
-                    if (Array.isArray(data)) setMembers(data)
-                }
-            } catch (error) {
-                console.error("Error fetching VA overview data:", error)
-            }
+        if (Array.isArray(dealsData)) {
+            const now = new Date()
+            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            const newLeads = dealsData.filter((d: { created_at: string, stage: string }) => new Date(d.created_at) > oneWeekAgo).length
+            const proposals = dealsData.filter((d: { created_at: string, stage: string }) => d.stage === 'Proposal').length
+            setStats({ leads: newLeads, proposals })
         }
-
-        fetchData()
-    }, [userId])
+    }, [dealsData])
 
     return (
         <div className="space-y-6">

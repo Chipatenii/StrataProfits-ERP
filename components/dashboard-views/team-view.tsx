@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useMemo } from "react"
+import useSWR from "swr"
 import { Users, Mail, Phone, Clock, Edit, Trash2, Search, UserPlus, Briefcase, CheckCircle2, ListTodo, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UserProfile, Task } from "@/lib/types"
@@ -82,10 +83,6 @@ function TeamSkeleton() {
 
 export function TeamView({ userId }: TeamViewProps) {
     // --- State ---
-    const [members, setMembers] = useState<UserProfile[]>([])
-    const [tasks, setTasks] = useState<Task[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
     const [search, setSearch] = useState("")
     const [roleFilter, setRoleFilter] = useState("all")
     const [editingMember, setEditingMember] = useState<UserProfile | null>(null)
@@ -103,37 +100,19 @@ export function TeamView({ userId }: TeamViewProps) {
         action: () => { },
     })
 
-    // --- Data Fetching ---
-    const loadData = useCallback(async (isInitial = false) => {
-        if (isInitial) {
-            setLoading(true)
-            setError(null)
-        }
-        try {
-            const [membersRes, tasksRes] = await Promise.all([
-                fetch("/api/admin/members"),
-                fetch("/api/admin/tasks"),
-            ])
+    const fetcher = (url: string) => fetch(url).then(r => { if (!r.ok) throw new Error(); return r.json() })
+    const { data: membersRaw = [], isLoading: isLoadingMembers, error: membersError, mutate: mutateMembers } = useSWR("/api/admin/members", fetcher)
+    const { data: tasksRaw = [], isLoading: isLoadingTasks, error: tasksError, mutate: mutateTasks } = useSWR("/api/admin/tasks", fetcher)
 
-            if (!membersRes.ok) throw new Error("Failed to fetch team members")
-            if (!tasksRes.ok) throw new Error("Failed to fetch tasks")
+    const members = Array.isArray(membersRaw) ? membersRaw : []
+    const tasks = Array.isArray(tasksRaw) ? tasksRaw : []
+    const loading = isLoadingMembers || isLoadingTasks
+    const error = membersError?.message || tasksError?.message || null
 
-            const membersData = await membersRes.json()
-            const tasksData = await tasksRes.json()
-
-            setMembers(Array.isArray(membersData) ? membersData : [])
-            setTasks(Array.isArray(tasksData) ? tasksData : [])
-        } catch (err: any) {
-            console.error("TeamView load error:", err)
-            if (isInitial) setError(err.message || "Failed to load team data")
-        } finally {
-            if (isInitial) setLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        loadData(true)
-    }, [loadData])
+    const loadData = (showLoading = true) => {
+        mutateMembers()
+        mutateTasks()
+    }
 
     // Real-time subscriptions
     useRealtimeSubscription("profiles", () => loadData(false))

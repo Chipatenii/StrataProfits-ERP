@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import { Plus, Search, FileText, Loader2, ArrowUpRight, CheckCircle, AlertCircle } from "lucide-react"
 import { Invoice, OrganizationSettings } from "@/lib/types"
 import { CreateInvoiceModal } from "@/components/modals/create-invoice-modal"
@@ -8,8 +9,6 @@ import { InvoiceDetailsModal } from "@/components/modals/invoice-details-modal"
 import { PDFService } from "@/lib/pdf-service"
 
 export function InvoicesView() {
-    const [invoices, setInvoices] = useState<Invoice[]>([])
-    const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "sent" | "paid" | "overdue">("all")
 
@@ -17,27 +16,10 @@ export function InvoicesView() {
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null)
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
-    const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
-
-    useEffect(() => {
-        fetchInvoices()
-        fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
-    }, [])
-
-    const fetchInvoices = async () => {
-        try {
-            setLoading(true)
-            const res = await fetch("/api/invoices")
-            if (res.ok) {
-                const data = await res.json()
-                setInvoices(data)
-            }
-        } catch (error) {
-            console.error("Failed to fetch invoices", error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    
+    const fetcher = (url: string) => fetch(url).then(res => res.json());
+    const { data: invoices = [], isLoading: loading, mutate: fetchInvoices } = useSWR<Invoice[]>("/api/invoices", fetcher)
+    const { data: orgSettings = {} } = useSWR<Partial<OrganizationSettings>>("/api/organization", (url: string) => fetch(url).then(r => r.ok ? r.json() : {}))
 
     const filteredInvoices = invoices.filter(inv => {
         const matchesSearch =

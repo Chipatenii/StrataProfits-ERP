@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import { TrendingUp, TrendingDown, Wallet, FileText, Plus, DollarSign } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -57,27 +58,11 @@ export function FinanceView() {
 }
 
 function FinanceOverview() {
-    const [loading, setLoading] = useState(true)
-    const [data, setData] = useState<any>(null)
     const [fiscalYear, setFiscalYear] = useState("this-year")
     const [showReceiptModal, setShowReceiptModal] = useState(false)
 
-    useEffect(() => {
-        fetchReport()
-    }, [])
-
-    const fetchReport = async () => {
-        try {
-            const res = await fetch("/api/admin/reports/finance")
-            if (res.ok) {
-                setData(await res.json())
-            }
-        } catch (error) {
-            console.error("Failed to fetch finance report", error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const fetcher = (url: string) => fetch(url).then(res => res.json())
+    const { data: data, isLoading: loading, mutate: fetchReport } = useSWR("/api/admin/reports/finance", fetcher)
 
     const formatCurrency = (amount: number) => {
         return `K${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -102,7 +87,7 @@ function FinanceOverview() {
         )
     }
 
-    const cashflowData = data.cashflow?.map((item: any) => ({
+    const cashflowData = data.cashflow?.map((item: { month: string, net_cash: number }) => ({
         month: new Date(item.month).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }),
         amount: item.net_cash
     })) || []
@@ -232,7 +217,7 @@ function FinanceOverview() {
                     <div className="p-4">
                         <div className="space-y-3">
                             {data.top_projects && data.top_projects.length > 0 ? (
-                                data.top_projects.map((proj: any, i: number) => (
+                                data.top_projects.map((proj: { client_name: string, project_name: string, net_profit: number }, i: number) => (
                                     <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-emerald-500/25">

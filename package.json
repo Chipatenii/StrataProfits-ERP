@@ -59,6 +59,7 @@
     "recharts": "2.15.4",
     "resend": "^4.8.0",
     "sonner": "latest",
+    "swr": "^2.4.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",

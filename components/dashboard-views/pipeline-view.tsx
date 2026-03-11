@@ -1,46 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import { Plus, DollarSign, Calendar } from "lucide-react"
 import type { Deal } from "@/lib/types"
 import { CreateDealModal } from "@/components/modals/create-deal-modal"
 import { AttachmentList } from "@/components/attachment-list"
 
 export function PipelineView() {
-  const [deals, setDeals] = useState<Deal[]>([])
-  const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [dealToEdit, setDealToEdit] = useState<Deal | null>(null)
 
-  // Mobile: Active stage state for accordion-like behavior or tabs? 
-  // For "Stacked Cards", we usually mean stacking the columns.
-  // We'll stack them vertically on mobile.
-
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchDeals()
-  }, [])
-
-  const fetchDeals = async () => {
-    setError(null)
-    try {
-      const response = await fetch("/api/admin/deals")
-      if (response.ok) {
-        const data = await response.json()
-        setDeals(data)
-      } else {
-        const errText = await response.text()
-        console.error("Failed to load deals:", response.status, errText)
-        setError(`Failed to load deals: ${response.status} ${response.statusText}`)
-      }
-    } catch (error: any) {
-      console.error("Error loading deals:", error)
-      setError(error.message || "Failed to load deals")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const fetcher = (url: string) => fetch(url).then(res => {
+      if (!res.ok) return res.text().then(t => { throw new Error(t) })
+      return res.json()
+  })
+  const { data: deals = [], error: swrError, isLoading: loading, mutate: fetchDeals } = useSWR<Deal[]>("/api/admin/deals", fetcher)
+  const error = swrError ? (swrError as Error).message : null
 
   const stages = ["NewLead", "Qualified", "ProposalSent", "Negotiation", "Won", "Lost"]
 

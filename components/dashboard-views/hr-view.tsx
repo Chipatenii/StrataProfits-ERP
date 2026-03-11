@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Briefcase, Calendar, Star, ClipboardList } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { TimeOffTab } from "@/components/hr/time-off-tab"
@@ -10,7 +11,7 @@ import { UserProfile } from "@/lib/types"
 
 type HRTab = "time-off" | "reviews" | "onboarding"
 
-const TABS: { id: HRTab; label: string; icon: any }[] = [
+const TABS: { id: HRTab; label: string; icon: React.ElementType }[] = [
     { id: "time-off", label: "Time Off", icon: Calendar },
     { id: "reviews", label: "Reviews", icon: Star },
     { id: "onboarding", label: "Onboarding", icon: ClipboardList },
@@ -20,7 +21,10 @@ export function HRView() {
     const supabase = createClient()
     const [activeTab, setActiveTab] = useState<HRTab>("time-off")
     const [isAdmin, setIsAdmin] = useState(false)
-    const [members, setMembers] = useState<UserProfile[]>([])
+
+    const fetcher = (url: string) => fetch(url).then(res => res.json())
+    const { data: membersRaw = [] } = useSWR(isAdmin ? "/api/admin/members" : null, fetcher)
+    const members = Array.isArray(membersRaw) ? membersRaw : []
 
     useEffect(() => {
         async function load() {
@@ -34,15 +38,6 @@ export function HRView() {
                 .single()
 
             setIsAdmin(profile?.role === "admin")
-
-            // Admins need the members list for performance reviews
-            if (profile?.role === "admin") {
-                const res = await fetch("/api/admin/members")
-                if (res.ok) {
-                    const data = await res.json()
-                    setMembers(Array.isArray(data) ? data : [])
-                }
-            }
         }
         load()
     }, [supabase])

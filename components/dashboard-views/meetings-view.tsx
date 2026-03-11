@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
+import useSWR from "swr"
 import { Plus, Video, MapPin, User, Clock, Phone, CalendarDays, Edit2, Trash2, Search, Link2 } from "lucide-react"
 import { Meeting } from "@/lib/types"
 import { CreateMeetingModal } from "@/components/modals/create-meeting-modal"
@@ -36,32 +37,18 @@ function computeDuration(start: string, end: string | null): string | null {
 }
 
 export function MeetingsView() {
-    const [meetings, setMeetings] = useState<Meeting[]>([])
-    const [loading, setLoading] = useState(true)
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
     const [search, setSearch] = useState("")
     const [activeTab, setActiveTab] = useState<FilterTab>("All")
     const [deletingId, setDeletingId] = useState<string | null>(null)
 
-    useEffect(() => { fetchMeetings() }, [])
-
-    const fetchMeetings = async () => {
-        try {
-            const response = await fetch("/api/meetings")
-            if (response.ok) {
-                setMeetings(await response.json())
-            }
-        } catch (error) {
-            console.error("Error loading meetings:", error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const fetcher = (url: string) => fetch(url).then(r => r.json())
+    const { data: meetings = [], isLoading: loading, mutate: fetchMeetings } = useSWR<Meeting[]>("/api/meetings", fetcher)
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
         // Optimistic update
-        setMeetings(prev => prev.map(m => m.id === id ? { ...m, status: newStatus as Meeting["status"] } : m))
+        fetchMeetings(meetings.map(m => m.id === id ? { ...m, status: newStatus as Meeting["status"] } : m), false)
 
         try {
             const response = await fetch("/api/meetings", {
@@ -86,7 +73,7 @@ export function MeetingsView() {
                 onClick: async () => {
                     setDeletingId(meeting.id)
                     // Optimistic remove
-                    setMeetings(prev => prev.filter(m => m.id !== meeting.id))
+                    fetchMeetings(meetings.filter(m => m.id !== meeting.id), false)
                     try {
                         const res = await fetch(`/api/meetings?id=${meeting.id}`, { method: "DELETE" })
                         if (!res.ok) throw new Error()

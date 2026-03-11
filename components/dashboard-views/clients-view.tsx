@@ -1,35 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import { Users, Search, Globe, Facebook, Instagram, Phone, Mail, MapPin, Sparkles, Building2, UserPlus, Key } from "lucide-react"
 import { Client } from "@/lib/types"
 import { AdminCreateClientModal } from "@/components/modals/admin-create-client-modal"
 import { Edit } from "lucide-react"
 
 export function ClientsView() {
-    const [clients, setClients] = useState<Client[]>([])
-    const [loading, setLoading] = useState(true)
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [editingClient, setEditingClient] = useState<Client | null>(null)
 
-    useEffect(() => {
-        fetchClients()
-    }, [])
-
-    const fetchClients = async () => {
-        try {
-            const response = await fetch("/api/admin/clients")
-            if (response.ok) {
-                const data = await response.json()
-                setClients(data)
-            }
-        } catch (error) {
-            console.error("Error loading clients:", error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const fetcher = (url: string) => fetch(url).then(res => res.json());
+    const { data: clients = [], isLoading: loading, mutate: fetchClients } = useSWR<Client[]>("/api/admin/clients", fetcher)
 
     const filteredClients = clients.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

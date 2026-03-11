@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import useSWR from "swr"
 import {
     Book, Plus, Search, FileText, Pencil, Trash2, Tag, Link2,
     Clock, ChevronDown, X, MoreVertical, Check, ExternalLink,
@@ -211,8 +212,6 @@ function SOPCard({
 
 export function VASOPs() {
     const supabase = createClient()
-    const [sops, setSops] = useState<SOP[]>([])
-    const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
     const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
     const [tagFilter, setTagFilter] = useState<string | null>(null)
@@ -241,15 +240,9 @@ export function VASOPs() {
         })
     }, [supabase])
 
-    // ── Fetch ──
-    const fetchSOPs = useCallback(async () => {
-        try {
-            const res = await fetch("/api/sops")
-            if (res.ok) setSops(await res.json())
-        } catch (e) { console.error(e) } finally { setLoading(false) }
-    }, [])
-
-    useEffect(() => { fetchSOPs() }, [fetchSOPs])
+    const fetcher = (url: string) => fetch(url).then(r => r.json())
+    const { data: sopsData = [], isLoading: loading, mutate: fetchSOPs } = useSWR<SOP[]>("/api/sops", fetcher)
+    const sops = Array.isArray(sopsData) ? sopsData : []
 
     // ── Derived ──
     const allCategories = Array.from(new Set(sops.map(s => s.category || "General"))).sort()
@@ -318,7 +311,8 @@ export function VASOPs() {
             toast.success(editingSOP ? "SOP updated" : "SOP created")
             setIsFormOpen(false)
             fetchSOPs()
-        } catch (e: any) {
+        } catch (error) {
+            const e = error as Error;
             toast.error(e.message || "Failed to save SOP")
         } finally { setSaving(false) }
     }
@@ -331,7 +325,8 @@ export function VASOPs() {
             setDeletingId(null)
             if (selectedSOP?.id === id) setSelectedSOP(null)
             fetchSOPs()
-        } catch (e: any) {
+        } catch (error) {
+            const e = error as Error;
             toast.error(e.message || "Failed to delete")
         }
     }

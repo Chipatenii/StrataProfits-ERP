@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
+import useSWR from "swr"
 import { Plus, CheckCircle, Clock, Pause, Play } from "lucide-react"
 import { Task, UserProfile, TimeLog } from "@/lib/types"
 import { createClient } from "@/lib/supabase/client"
@@ -26,98 +27,72 @@ export function TeamTasksView({
     onDataChange,
 }: TeamTasksViewProps) {
     const supabase = createClient()
-    const [tasks, setTasks] = useState<Task[]>([])
     const [taskFilter, setTaskFilter] = useState<"all" | "active" | "completed">("active")
-    const [loading, setLoading] = useState(true)
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
     const [showCompleteModal, setShowCompleteModal] = useState(false)
     const [completingTask, setCompletingTask] = useState<Task | null>(null)
-    const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
-    const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
-    const [members, setMembers] = useState<UserProfile[]>([])
-    const [assignableMembers, setAssignableMembers] = useState<{ id: string; full_name: string }[]>([])
     const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-    const [userRole, setUserRole] = useState<string | null>(null)
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)
         setIsDetailModalOpen(true)
     }
 
-    const loadData = useCallback(async (isInitial = false) => {
-        if (isInitial) setLoading(true)
-        try {
-            // Check role first — roles determine which data source to use
-            const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single()
-            const role = profile?.role
-            setUserRole(role)
+    const fetchTeamTasksData = async () => {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single()
+        const role = profile?.role
 
-            let tasksData: Task[] = []
-            if (role === 'admin' || role === 'virtual_assistant') {
-                // Use the secure API endpoint which applies server-side isolation:
-                // - Admin gets all tasks
-                // - VA gets only tasks assigned_to them OR created_by them
-                const res = await fetch('/api/admin/tasks')
-                if (!res.ok) throw new Error('Failed to fetch tasks')
-                tasksData = await res.json()
-            } else {
-                // Regular team members: filter client-side to own tasks
-                const { data, error: tasksError } = await supabase
-                    .from("tasks")
-                    .select("*")
-                    .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
-                    .order("created_at", { ascending: false })
-                if (tasksError) throw tasksError
-                tasksData = data || []
-            }
-
-            // @ts-ignore
-            setTasks(tasksData)
-
-            // Fetch today's time logs
-            const today = new Date().toISOString().split("T")[0]
-            const { data: logsData, error: logsError } = await supabase
-                .from("time_logs")
+        let tasksData: Task[] = []
+        if (role === 'admin' || role === 'virtual_assistant') {
+            const res = await fetch('/api/admin/tasks')
+            if (res.ok) tasksData = await res.json()
+        } else {
+            const { data } = await supabase.from("tasks")
                 .select("*")
-                .eq("user_id", userId)
-                .gte("clock_in", today)
-
-            if (logsError) throw logsError
-            if (logsData) {
-                // @ts-ignore
-                setTimeLogs(logsData)
-                const activeLog = logsData.find((log) => !log.clock_out)
-                setActiveTaskId(activeLog?.task_id || null)
-            }
-
-            // Fetch members for detail modal
-            const { data: membersData } = await supabase.from("profiles").select("*")
-            if (membersData) setMembers(membersData as UserProfile[])
-
-            // For VA: also build a filtered list of assignable team members for the task creation modal
-            if (role === 'virtual_assistant' && membersData) {
-                const filtered = (membersData as UserProfile[])
-                    .filter(m => ASSIGNABLE_ROLES.includes(m.role as string))
-                    .map(m => ({ id: m.id || (m as any).user_id, full_name: m.full_name || 'Unknown' }))
-                setAssignableMembers(filtered)
-            }
-        } catch (error: any) {
-            console.error("Failed to load team tasks:", error.message || error)
-        } finally {
-            if (isInitial) setLoading(false)
+                .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
+                .order("created_at", { ascending: false })
+            tasksData = data || []
         }
-    }, [userId, supabase])
 
-    useEffect(() => {
-        loadData(true)
-    }, [loadData])
+        const today = new Date().toISOString().split("T")[0]
+        const { data: logsData } = await supabase
+            .from("time_logs")
+            .select("*")
+            .eq("user_id", userId)
+            .gte("clock_in", today)
+
+        const { data: membersData } = await supabase.from("profiles").select("*")
+        let assignableMembers: { id: string; full_name: string }[] = []
+        if (role === 'virtual_assistant' && membersData) {
+            assignableMembers = (membersData as UserProfile[])
+                .filter(m => ASSIGNABLE_ROLES.includes(m.role as string))
+                .map(m => ({ id: m.id || (m as any).user_id, full_name: m.full_name || 'Unknown' }))
+        }
+
+        return {
+            role,
+            tasks: tasksData,
+            timeLogs: logsData || [],
+            members: (membersData as UserProfile[]) || [],
+            assignableMembers
+        }
+    }
+
+    const { data: teamData, isLoading: loading, mutate } = useSWR(['team-tasks', userId], fetchTeamTasksData)
+
+    const tasks = teamData?.tasks || []
+    const timeLogs = teamData?.timeLogs || []
+    const members = teamData?.members || []
+    const assignableMembers = teamData?.assignableMembers || []
+    const userRole = teamData?.role || null
+    const activeTaskId = teamData?.timeLogs.find((log: any) => !log.clock_out)?.task_id || null
 
     const refreshData = useCallback(() => {
-        loadData(false)
+        mutate()
         onDataChange?.()
-    }, [loadData, onDataChange])
+    }, [mutate, onDataChange])
 
     useRealtimeSubscription("tasks", refreshData)
     useRealtimeSubscription("time_logs", refreshData)
@@ -143,10 +118,7 @@ export function TeamTasksView({
                 const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
 
                 // Optimistic update
-                setTimeLogs(prev => prev.map(log =>
-                    log.id === activeLog.id ? { ...log, clock_out: clockOut, duration_minutes: durationMinutes } : log
-                ))
-                setActiveTaskId(null)
+                mutate({ ...teamData, timeLogs: (teamData?.timeLogs || []).map((log: any) => log.id === activeLog.id ? { ...log, clock_out: clockOut, duration_minutes: durationMinutes } : log) } as any, false)
 
                 await supabase.from("time_logs").update({ clock_out: clockOut, duration_minutes: durationMinutes }).eq("id", activeLog.id)
             } else {
@@ -160,7 +132,7 @@ export function TeamTasksView({
 
                 // Start new
                 const now = new Date().toISOString()
-                setActiveTaskId(taskId)
+                mutate({ ...teamData, timeLogs: [...(teamData?.timeLogs || []), { user_id: userId, task_id: taskId, clock_in: now } as any] } as any, false)
                 await supabase.from("time_logs").insert({
                     user_id: userId,
                     task_id: taskId,
@@ -170,7 +142,7 @@ export function TeamTasksView({
             refreshData()
         } catch (e) {
             console.error("Timer toggle error:", e)
-            loadData(false)
+            mutate() // Revalidate on error
         }
     }
 
@@ -201,7 +173,8 @@ export function TeamTasksView({
             setShowCompleteModal(false)
             setCompletingTask(null)
             refreshData()
-        } catch (e: any) {
+        } catch (error) {
+            const e = error as Error;
             console.error("Task completion error:", e)
             alert(e.message || "Failed to complete task.")
         }

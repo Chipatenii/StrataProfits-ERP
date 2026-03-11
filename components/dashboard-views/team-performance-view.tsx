@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import { Activity, Clock, Crown, TrendingUp, TrendingDown, AlertCircle, BarChart, CheckCircle2 } from "lucide-react"
 import { Loader2 } from "lucide-react"
 
@@ -27,24 +28,8 @@ interface PerformanceStats {
 }
 
 export function TeamPerformanceView() {
-  const [stats, setStats] = useState<PerformanceStats | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const res = await fetch('/api/admin/performance')
-        if (res.ok) {
-          setStats(await res.json())
-        }
-      } catch (e) {
-        console.error("Error loading performance stats", e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadStats()
-  }, [])
+  const fetcher = (url: string) => fetch(url).then(r => r.json())
+  const { data: stats, isLoading: loading } = useSWR<PerformanceStats>('/api/admin/performance', fetcher)
 
   if (loading) {
     return (
@@ -87,9 +72,9 @@ export function TeamPerformanceView() {
           <div className="grid sm:grid-cols-3 gap-4">
             {topPerformers.map((user, idx) => (
               <div key={user.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/50 dark:border-slate-800 shadow-xl shadow-black/5 dark:shadow-black/20 relative overflow-hidden group">
-                {idx === 0 && <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600" />}
-                {idx === 1 && <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-300 to-slate-400" />}
-                {idx === 2 && <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-700" />}
+                {idx === 0 && <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />}
+                {idx === 1 && <div className="absolute top-0 left-0 w-full h-1 bg-slate-400" />}
+                {idx === 2 && <div className="absolute top-0 left-0 w-full h-1 bg-orange-500" />}
                 
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl rounded-tr-sm rounded-bl-sm">

@@ -1,11 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import useSWR from "swr"
 import { ClipboardList, Users, Folder, AlertCircle, DollarSign, Wallet, ArrowUpRight, Sparkles, Target } from "lucide-react"
 import type { Invoice, Deal, Project } from "@/lib/types"
 
+interface OverviewStats {
+    leaderboard?: { name: string; totalHours: number }[];
+    bestPerformer?: { name: string; completedTasks: number; totalHours: number; totalEarnings: number } | null;
+}
+
 interface OverviewViewProps {
-    stats: any
+    stats: OverviewStats;
     taskStats: {
         total: number
         active: number
@@ -22,58 +28,49 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
     const [financeStats, setFinanceStats] = useState({ revenueYTD: 0, outstanding: 0, outstandingCount: 0 })
     const [activeProjectsCount, setActiveProjectsCount] = useState(0)
 
+    const fetcher = (url: string) => fetch(url).then(res => res.json())
+    const { data: invoicesData } = useSWR<Invoice[]>('/api/invoices', fetcher)
+    const { data: dealsData } = useSWR<Deal[]>('/api/admin/deals', fetcher)
+    const { data: paymentsData } = useSWR<{ payment_date: string, amount: number }[]>('/api/payments', fetcher)
+    const { data: projectsData } = useSWR<Project[]>('/api/admin/projects', fetcher)
+
     useEffect(() => {
-        fetch('/api/invoices')
-            .then(res => res.json())
-            .then((data: Invoice[]) => {
-                if (Array.isArray(data)) {
-                    const overdue = data.filter(inv => inv.status === 'overdue')
-                    const outstanding = data.filter(inv => inv.status === 'sent' || inv.status === 'overdue')
-                    const outstandingAmount = outstanding.reduce((acc, inv) => acc + (inv.amount || 0), 0)
-                    setOverdueInvoices(overdue)
-                    setFinanceStats(prev => ({
-                        ...prev,
-                        outstanding: outstandingAmount,
-                        outstandingCount: outstanding.length
-                    }))
-                }
-            })
-            .catch(console.error)
+        if (Array.isArray(invoicesData)) {
+            const overdue = invoicesData.filter(inv => inv.status === 'overdue')
+            const outstanding = invoicesData.filter(inv => inv.status === 'sent' || inv.status === 'overdue')
+            const outstandingAmount = outstanding.reduce((acc, inv) => acc + (inv.amount || 0), 0)
+            setOverdueInvoices(overdue)
+            setFinanceStats(prev => ({
+                ...prev,
+                outstanding: outstandingAmount,
+                outstandingCount: outstanding.length
+            }))
+        }
+    }, [invoicesData])
 
-        fetch('/api/admin/deals')
-            .then(res => res.json())
-            .then((data: Deal[]) => {
-                if (Array.isArray(data)) {
-                    const activeDeals = data.filter(d => d.stage !== 'Won' && d.stage !== 'Lost')
-                    const value = activeDeals.reduce((acc, d) => acc + (d.estimated_value || 0), 0)
-                    setPipelineStats({ count: activeDeals.length, value })
-                }
-            })
-            .catch(console.error)
+    useEffect(() => {
+        if (Array.isArray(dealsData)) {
+            const activeDeals = dealsData.filter(d => d.stage !== 'Won' && d.stage !== 'Lost')
+            const value = activeDeals.reduce((acc, d) => acc + (d.estimated_value || 0), 0)
+            setPipelineStats({ count: activeDeals.length, value })
+        }
+    }, [dealsData])
 
-        fetch('/api/payments')
-            .then(res => res.json())
-            .then((data: any[]) => {
-                if (Array.isArray(data)) {
-                    const currentYear = new Date().getFullYear()
-                    const ytdPayments = data.filter(p => new Date(p.payment_date).getFullYear() === currentYear)
-                    const revenue = ytdPayments.reduce((acc, p) => acc + (p.amount || 0), 0)
-                    setFinanceStats(prev => ({ ...prev, revenueYTD: revenue }))
-                }
-            })
-            .catch(console.error)
+    useEffect(() => {
+        if (Array.isArray(paymentsData)) {
+            const currentYear = new Date().getFullYear()
+            const ytdPayments = paymentsData.filter(p => new Date(p.payment_date).getFullYear() === currentYear)
+            const revenue = ytdPayments.reduce((acc, p) => acc + (p.amount || 0), 0)
+            setFinanceStats(prev => ({ ...prev, revenueYTD: revenue }))
+        }
+    }, [paymentsData])
 
-        fetch('/api/admin/projects')
-            .then(res => res.json())
-            .then((data: Project[]) => {
-                if (Array.isArray(data)) {
-                    const activeCount = data.filter(p => p.status === 'active').length
-                    setActiveProjectsCount(activeCount)
-                }
-            })
-            .catch(console.error)
-
-    }, [])
+    useEffect(() => {
+        if (Array.isArray(projectsData)) {
+            const activeCount = projectsData.filter(p => p.status === 'active').length
+            setActiveProjectsCount(activeCount)
+        }
+    }, [projectsData])
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -252,7 +249,7 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 text-center">
                             <p className="text-3xl font-bold text-foreground">
                                 {stats?.leaderboard ?
-                                    Math.round(stats.leaderboard.reduce((acc: any, curr: any) => acc + curr.totalHours, 0)) + 'h'
+                                    Math.round(stats.leaderboard.reduce((acc: number, curr: { totalHours: number }) => acc + curr.totalHours, 0)) + 'h'
                                     : '-'}
                             </p>
                             <p className="text-sm text-muted-foreground mt-1">Hours Logged</p>

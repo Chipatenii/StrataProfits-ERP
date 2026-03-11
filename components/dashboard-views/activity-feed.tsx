@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import {
     Activity, FileText, Upload, Calendar, Star, ClipboardCheck,
     DollarSign, Users, FolderKanban, Loader2, Filter
@@ -17,7 +18,7 @@ interface ActivityItem {
     user?: { id: string; full_name: string; avatar_url: string | null; role: string }
 }
 
-const ENTITY_CONFIG: Record<string, { icon: any; color: string }> = {
+const ENTITY_CONFIG: Record<string, { icon: React.ElementType; color: string }> = {
     task: { icon: ClipboardCheck, color: "text-blue-500 bg-blue-50 dark:bg-blue-900/30" },
     invoice: { icon: DollarSign, color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30" },
     file: { icon: Upload, color: "text-violet-500 bg-violet-50 dark:bg-violet-900/30" },
@@ -32,22 +33,13 @@ const ENTITY_CONFIG: Record<string, { icon: any; color: string }> = {
 const FILTERS = ["all", "task", "invoice", "file", "time_off", "review", "project"]
 
 export function ActivityFeed({ limit = 25 }: { limit?: number }) {
-    const [activities, setActivities] = useState<ActivityItem[]>([])
-    const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState("all")
 
-    const fetchActivities = useCallback(async () => {
-        setLoading(true)
-        try {
-            const params = new URLSearchParams({ limit: String(limit) })
-            if (filter !== "all") params.set("entity_type", filter)
-            const res = await fetch(`/api/activity?${params}`)
-            if (res.ok) setActivities(await res.json())
-        } catch (e) { console.error(e) }
-        finally { setLoading(false) }
-    }, [filter, limit])
-
-    useEffect(() => { fetchActivities() }, [fetchActivities])
+    const params = new URLSearchParams({ limit: String(limit) })
+    if (filter !== "all") params.set("entity_type", filter)
+    
+    const fetcher = (url: string) => fetch(url).then(res => res.json());
+    const { data: activities = [], isLoading: loading } = useSWR<ActivityItem[]>(`/api/activity?${params}`, fetcher)
 
     const formatRelativeTime = (dateStr: string) => {
         const diff = Date.now() - new Date(dateStr).getTime()

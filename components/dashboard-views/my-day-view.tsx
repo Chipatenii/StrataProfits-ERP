@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
+import useSWR from "swr"
 import { Sun, CheckCircle, Clock, AlertCircle, Calendar as CalendarIcon, Zap, Star, Play, Pause } from "lucide-react"
-import { Task, Meeting, UserProfile } from "@/lib/types"
+import { Task, Meeting, UserProfile, TimeLog } from "@/lib/types"
 import { TaskDetailModal } from "@/components/modals/task-detail-modal"
 import { TaskCompletionModal } from "@/components/modals/task-completion-modal"
 import { Timer } from "@/components/timer"
@@ -18,78 +19,66 @@ interface MyDayViewProps {
 
 export function MyDayView({ userId, userName }: MyDayViewProps) {
     const supabase = createClient()
-    const [tasks, setTasks] = useState<Task[]>([])
-    const [meetings, setMeetings] = useState<Meeting[]>([])
-    const [loading, setLoading] = useState(true)
-    const [members, setMembers] = useState<UserProfile[]>([])
-    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-    const [timeLogs, setTimeLogs] = useState<any[]>([])
-    const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
-    const [activeClockIn, setActiveClockIn] = useState<string | null>(null)
-    const [isClockedIn, setIsClockedIn] = useState(false)
     const [showCompleteModal, setShowCompleteModal] = useState(false)
     const [completingTask, setCompletingTask] = useState<Task | null>(null)
+    const [selectedTaskDetail, setSelectedTaskDetail] = useState<Task | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)
         setIsDetailModalOpen(true)
     }
 
-    const loadData = useCallback(async () => {
-        try {
-            setLoading(true)
-            const [tasksRes, meetingsRes, membersRes] = await Promise.all([
-                // Use user-scoped endpoint: tasks assigned to or created by this user
-                fetch(`/api/tasks?assignee_id=${userId}`),
-                fetch(`/api/meetings`),
-                fetch(`/api/admin/members`)
-            ])
+    const fetchMyDayData = async () => {
+        const [tasksRes, meetingsRes, membersRes] = await Promise.all([
+            fetch(`/api/tasks?assignee_id=${userId}`),
+            fetch(`/api/meetings`),
+            fetch(`/api/admin/members`)
+        ])
 
-            if (tasksRes.ok) {
-                const allTasks: Task[] = await tasksRes.json()
-                const myTasks = Array.isArray(allTasks)
-                    ? allTasks.filter(t => t.status !== 'completed' && t.status !== 'verified')
-                    : []
-                setTasks(myTasks)
-            } else {
-                // Fallback to admin endpoint
-                const fallback = await fetch(`/api/admin/tasks`)
-                if (fallback.ok) {
-                    const allTasks: Task[] = await fallback.json()
-                    const myTasks = allTasks.filter(t => t.assigned_to === userId && t.status !== 'completed')
-                    setTasks(myTasks)
-                }
+        let myTasks: Task[] = []
+        if (tasksRes.ok) {
+            const allTasks: Task[] = await tasksRes.json()
+            myTasks = Array.isArray(allTasks) ? allTasks.filter(t => t.status !== 'completed' && t.status !== 'verified') : []
+        } else {
+            const fallback = await fetch(`/api/admin/tasks`)
+            if (fallback.ok) {
+                const allTasks: Task[] = await fallback.json()
+                myTasks = allTasks.filter((t: any) => t.assigned_to === userId && t.status !== 'completed')
             }
-
-            if (meetingsRes.ok) {
-                const allMeetings: Meeting[] = await meetingsRes.json()
-                setMeetings(allMeetings)
-            }
-
-            if (membersRes.ok) {
-                const allMembers: UserProfile[] = await membersRes.json()
-                setMembers(allMembers)
-            }
-
-            // Load current time-log state
-            const today = new Date().toISOString().split('T')[0]
-            const { data: logs } = await supabase
-                .from('time_logs')
-                .select('*')
-                .eq('user_id', userId)
-                .gte('clock_in', today)
-            setTimeLogs(logs || [])
-            const activeLog = (logs || []).find((l: any) => !l.clock_out)
-            setActiveTaskId(activeLog?.task_id || null)
-            setActiveClockIn(activeLog?.clock_in || null)
-            setIsClockedIn(!!activeLog)
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setLoading(false)
         }
-    }, [userId, supabase])
+
+        let fetchedMeetings: Meeting[] = []
+        if (meetingsRes.ok) fetchedMeetings = await meetingsRes.json()
+
+        let fetchedMembers: UserProfile[] = []
+        if (membersRes.ok) fetchedMembers = await membersRes.json()
+
+        const today = new Date().toISOString().split('T')[0]
+        const { data: logs } = await supabase
+            .from('time_logs')
+            .select('*')
+            .eq('user_id', userId)
+            .gte('clock_in', today)
+
+        return {
+            tasks: myTasks || [],
+            meetings: fetchedMeetings || [],
+            members: fetchedMembers || [],
+            timeLogs: logs || []
+        }
+    }
+
+    const { data: dayData, isLoading: loading, mutate } = useSWR(['my-day-data', userId], fetchMyDayData)
+
+    const tasks = dayData?.tasks || []
+    const meetings = dayData?.meetings || []
+    const members = dayData?.members || []
+    const timeLogs = dayData?.timeLogs || []
+    const activeLog = timeLogs.find((l: TimeLog) => !l.clock_out)
+    const activeTaskId = activeLog?.task_id || null
+    const activeClockIn = activeLog?.clock_in || null
+    const isClockedIn = !!activeLog
 
     const handleTaskStartStop = useCallback(async (taskId: string) => {
         try {
@@ -101,12 +90,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 const clockIn = new Date(activeLog.clock_in)
                 const durationMinutes = Math.round((new Date(clockOut).getTime() - clockIn.getTime()) / 60000)
 
-                setTimeLogs(prev => prev.map(log =>
-                    log.id === activeLog.id ? { ...log, clock_out: clockOut, duration_minutes: durationMinutes } : log
-                ))
-                setIsClockedIn(false)
-                setActiveTaskId(null)
-                setActiveClockIn(null)
+                mutate({ ...dayData, timeLogs: (dayData?.timeLogs || []).map((log: any) => log.id === activeLog.id ? { ...log, clock_out: clockOut, duration_minutes: durationMinutes } : log) } as any, false)
 
                 await supabase.from("time_logs").update({ clock_out: clockOut, duration_minutes: durationMinutes }).eq("id", activeLog.id)
                 toast.success('Timer stopped')
@@ -121,9 +105,11 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
                 // Start new log
                 const now = new Date().toISOString()
-                setActiveTaskId(taskId)
-                setIsClockedIn(true)
-                setActiveClockIn(now)
+
+                // Optimistic SWR update
+                const newLog = { id: Date.now().toString(), user_id: userId, task_id: taskId, clock_in: now }
+                const updatedLogs = [...(dayData?.timeLogs || []).filter((l: any) => l.id !== activeLog?.id), ...(activeLog ? [{...activeLog, clock_out: new Date().toISOString(), duration_minutes: 0}] : []), newLog]
+                mutate({ ...dayData, timeLogs: updatedLogs } as any, false)
 
                 const { data, error } = await supabase.from("time_logs").insert({
                     user_id: userId,
@@ -132,15 +118,17 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 }).select().single()
                 
                 if (error) throw error
-                setTimeLogs(prev => [...prev.filter(l => l.id !== activeLog?.id), ...(activeLog ? [{...activeLog, clock_out: new Date().toISOString(), duration_minutes: 0}] : []), data])
+                // Real update
+                mutate({ ...dayData, timeLogs: [...(dayData?.timeLogs || []).filter((l: any) => l.id !== activeLog?.id && l.id !== newLog.id), ...(activeLog ? [{...activeLog, clock_out: new Date().toISOString(), duration_minutes: 0}] : []), data] } as any, false)
                 toast.success('Timer started for task')
             }
-        } catch (e: any) {
+        } catch (error) {
+            const e = error as Error;
             console.error(e)
             toast.error('Failed to toggle timer')
-            loadData() // revert optimistic UI on fail
+            mutate() // revert optimistic UI on fail
         }
-    }, [timeLogs, userId, supabase, loadData])
+    }, [timeLogs, userId, supabase, mutate])
 
     const handleTaskComplete = async (notes: string, timeAllocated: number) => {
         if (!completingTask) return
@@ -168,15 +156,14 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
 
             setShowCompleteModal(false)
             setCompletingTask(null)
-            loadData()
+            mutate()
             toast.success("Task completed successfully!")
-        } catch (e: any) {
+        } catch (error) {
+            const e = error as Error;
             console.error("Task completion error:", e)
             toast.error(e.message || "Failed to complete task.")
         }
     }
-
-    useEffect(() => { loadData() }, [loadData])
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-12 gap-4">
@@ -501,7 +488,7 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 }}
                 onComplete={handleTaskComplete}
                 taskTitle={completingTask?.title || ""}
-                spentMinutes={completingTask ? calculateTimeSpent(timeLogs, completingTask.id) : 0}
+                spentMinutes={completingTask ? calculateTimeSpent(timeLogs as any[], completingTask.id) : 0}
                 estimatedHours={completingTask?.estimated_hours || undefined}
             />
         </div>

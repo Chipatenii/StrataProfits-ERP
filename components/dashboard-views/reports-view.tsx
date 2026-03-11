@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback, Fragment } from "react"
+import useSWR from "swr"
 import { Download, Loader2 } from "lucide-react"
 import { PDFService } from "@/lib/pdf-service"
 import { OrganizationSettings } from "@/lib/types"
@@ -89,8 +90,6 @@ import { toast } from "sonner"
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Users as UsersIcon, PieChart } from "lucide-react"
 
 function FinancialReports() {
-    const [data, setData] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
     const [dateRange, setDateRange] = useState(() => {
         const now = new Date()
         return {
@@ -99,22 +98,17 @@ function FinancialReports() {
         }
     })
 
-    const loadData = useCallback(async () => {
-        setLoading(true)
-        try {
-            const params = new URLSearchParams({
-                type: "all",
-                start_date: dateRange.start,
-                end_date: dateRange.end,
-            })
-            const res = await fetch(`/api/reports/financial?${params}`)
-            if (res.ok) setData(await res.json())
-            else toast.error("Failed to load financial data")
-        } catch { toast.error("Network error") }
-        finally { setLoading(false) }
-    }, [dateRange])
+    const fetcher = (url: string) => fetch(url).then(r => { if(!r.ok) throw new Error(); return r.json() })
+    const params = new URLSearchParams({
+        type: "all",
+        start_date: dateRange.start,
+        end_date: dateRange.end,
+    })
+    const { data, error, isLoading: loading } = useSWR(`/api/reports/financial?${params}`, fetcher)
 
-    useEffect(() => { loadData() }, [loadData])
+    useEffect(() => {
+        if (error) toast.error("Failed to load financial data")
+    }, [error])
 
     if (loading) return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -206,7 +200,7 @@ function FinancialReports() {
                         <p className="text-sm text-muted-foreground text-center py-6">No client revenue data yet.</p>
                     ) : (
                         <div className="space-y-3">
-                            {revenueByClient.slice(0, 8).map((client: any, idx: number) => {
+                            {revenueByClient.slice(0, 8).map((client: { name: string, total: number, count: number }, idx: number) => {
                                 const maxRevenue = revenueByClient[0]?.total || 1
                                 return (
                                     <div key={idx}>
@@ -234,7 +228,7 @@ function FinancialReports() {
                     <p className="text-sm text-muted-foreground text-center py-6">No expense data yet.</p>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {(expenseBreakdown.categories || []).map((cat: any) => (
+                        {(expenseBreakdown.categories || []).map((cat: { name: string, amount: number, percentage: number }) => (
                             <div key={cat.name} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                                 <div className={`w-3 h-3 rounded-full shrink-0 ${CATEGORY_COLORS[cat.name] || "bg-slate-400"}`} />
                                 <div className="flex-1 min-w-0">
@@ -251,65 +245,59 @@ function FinancialReports() {
 }
 
 function WorkforceReports() {
-    const [reports, setReports] = useState<TeamMemberReport[]>([])
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
-    const [loading, setLoading] = useState(true)
-    const [totalCompanyHours, setTotalCompanyHours] = useState(0)
-    const [totalEstimatedPayroll, setTotalEstimatedPayroll] = useState(0)
-    const [expandedUser, setExpandedUser] = useState<string | null>(null)
-    const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
-    const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
     const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
     // Payroll Modal State
     const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false)
     const [memberToPay, setMemberToPay] = useState<{ id: string, name: string, estimatedPayroll: number } | null>(null)
 
-    const loadReports = useCallback(async () => {
-        setLoading(true)
-        try {
-            const [year, month] = selectedMonth.split("-")
-            const startDate = `${year}-${month}-01`
-            const endDate = new Date(Number.parseInt(year), Number.parseInt(month), 0).toISOString().split("T")[0]
+    const fetcherPost = ([url, body]: [string, any]) => fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    }).then(r => r.json())
+    const orgFetcher = (url: string) => fetch(url).then((r: Response) => r.ok ? r.json() : {})
 
-            const response = await fetch("/api/admin/reports", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ startDate, endDate }),
-            })
+    const { data: orgSettingsData = {} } = useSWR<Partial<OrganizationSettings>>("/api/organization", orgFetcher)
 
-            const { reports: fetchedReports, totalCompanyHours: totalHours, totalEstimatedPayroll: totalPayroll } = await response.json()
+    const [year, month] = selectedMonth.split("-")
+    const startDate = `${year}-${month}-01`
+    const endDate = new Date(Number.parseInt(year), Number.parseInt(month), 0).toISOString().split("T")[0]
 
-            setReports(fetchedReports || [])
-            setTotalCompanyHours(totalHours || 0)
-            setTotalEstimatedPayroll(totalPayroll || 0)
+    const { data: reportData, isLoading: loading, mutate: loadReports } = useSWR(
+        ["/api/admin/reports", { startDate, endDate }],
+        fetcherPost
+    )
 
-            // Find top performer and least productive
-            if (fetchedReports && fetchedReports.length > 0) {
-                const top = fetchedReports.reduce((prev: TeamMemberReport, current: TeamMemberReport) =>
-                    (current.total_hours > prev.total_hours) ? current : prev
-                )
-                setTopPerformer(top)
+    const reports = reportData?.reports || []
+    const totalCompanyHours = reportData?.totalCompanyHours || 0
+    const totalEstimatedPayroll = reportData?.totalEstimatedPayroll || 0
 
-                const least = fetchedReports.reduce((prev: TeamMemberReport, current: TeamMemberReport) =>
-                    (current.total_hours < prev.total_hours && current.total_hours > 0) ? current : prev
-                )
-                setLeastProductive(least)
-            } else {
-                setTopPerformer(null)
-                setLeastProductive(null)
-            }
-        } catch (error) {
-            console.error("Error loading reports:", error)
-        } finally {
-            setLoading(false)
-        }
-    }, [selectedMonth])
+    const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
+    const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
+    const [expandedUser, setExpandedUser] = useState<string | null>(null)
 
     useEffect(() => {
-        loadReports()
-        fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
-    }, [loadReports])
+        if (reports && reports.length > 0) {
+            const top = reports.reduce((prev: TeamMemberReport, current: TeamMemberReport) =>
+                (current.total_hours > prev.total_hours) ? current : prev
+            )
+            setTopPerformer(top)
+
+            const least = reports.reduce((prev: TeamMemberReport, current: TeamMemberReport) =>
+                (current.total_hours < prev.total_hours && current.total_hours > 0) ? current : prev
+            )
+            setLeastProductive(least)
+        } else {
+            setTopPerformer(null)
+            setLeastProductive(null)
+        }
+    }, [reports])
+
+    useEffect(() => {
+        setOrgSettings(orgSettingsData)
+    }, [orgSettingsData])
 
     // Real-time subscriptions
     useRealtimeSubscription("tasks", loadReports)
@@ -319,7 +307,7 @@ function WorkforceReports() {
         PDFService.generateWorkforceReportPDF({
             month: selectedMonth,
             totalHours: totalCompanyHours,
-            teamCount: reports.filter((r) => r.days_worked > 0).length,
+            teamCount: reports.filter((r: any) => r.days_worked > 0).length,
             reports: reports
         }, orgSettings)
     }
@@ -366,13 +354,13 @@ function WorkforceReports() {
                     </div>
                     <div className="p-4 bg-background/50 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">Team Count</p>
-                        <p className="text-2xl font-bold text-primary">{reports.filter((r) => r.days_worked > 0).length}</p>
+                        <p className="text-2xl font-bold text-primary">{reports.filter((r: any) => r.days_worked > 0).length}</p>
                     </div>
                     <div className="p-4 bg-background/50 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">Avg Hours/Person</p>
                         <p className="text-2xl font-bold text-primary">
                             {reports.length > 0
-                                ? (Math.round((reports.reduce((acc, r) => acc + r.total_hours, 0) / reports.length) * 100) / 100).toFixed(1)
+                                ? (Math.round((reports.reduce((acc: number, r: any) => acc + r.total_hours, 0) / reports.length) * 100) / 100).toFixed(1)
                                 : "0"}
                         </p>
                     </div>
@@ -442,7 +430,7 @@ function WorkforceReports() {
                                     </td>
                                 </tr>
                             ) : (
-                                reports.map((report) => (
+                                reports.map((report: any) => (
                                     <Fragment key={report.user_id}>
                                         <tr
                                             className="hover:bg-muted/20 transition-colors cursor-pointer"
@@ -485,7 +473,7 @@ function WorkforceReports() {
                                                             </div>
                                                             {report.payments && report.payments.length > 0 ? (
                                                                 <div className="grid gap-2">
-                                                                    {report.payments.map((payment) => (
+                                                                    {report.payments.map((payment: any) => (
                                                                         <div key={payment.id} className="flex items-center justify-between text-xs sm:text-sm bg-background p-2 rounded border border-border/50">
                                                                             <div>
                                                                                 <span className="font-semibold text-green-600">ZMW {payment.amount.toFixed(0)}</span>
@@ -505,7 +493,7 @@ function WorkforceReports() {
                                                             <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Top Tasks</h4>
                                                             {report.tasks && report.tasks.length > 0 ? (
                                                             <div className="grid gap-2">
-                                                                {report.tasks.slice(0, 5).map((task, idx) => (
+                                                                {report.tasks.slice(0, 5).map((task: any, idx: number) => (
                                                                     <div key={idx} className="flex items-center justify-between text-xs sm:text-sm bg-background p-2 rounded border border-border/50">
                                                                         <span className="font-medium truncate mr-2">{task.title}</span>
                                                                         <div className="flex items-center gap-2 shrink-0">

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
+import useSWR from "swr"
 import { Plus, FileText, Loader2, ChevronDown, TrendingUp, TrendingDown, RefreshCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -28,41 +29,24 @@ interface VAFinanceProps {
 }
 
 export function VAFinance({ userName, userRole }: VAFinanceProps) {
-  const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [expenses, setExpenses] = useState<any[]>([])
-  const [payments, setPayments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [fiscalYear, setFiscalYear] = useState("this-month")
-  const [clients, setClients] = useState<any[]>([])
   const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null)
 
-  useEffect(() => {
-    fetchAllData()
-  }, [])
+  const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-  const fetchAllData = async () => {
-    setLoading(true)
-    try {
-      const [invoicesRes, clientsRes, expensesRes, paymentsRes] = await Promise.all([
-        fetch("/api/invoices"),
-        fetch("/api/admin/clients"),
-        fetch("/api/expenses"),
-        fetch("/api/payments").catch(() => ({ ok: false })),
-      ])
+  const { data: invoices = [], isLoading: loadingInvoices, mutate: mutateInvoices } = useSWR<Invoice[]>("/api/invoices", fetcher)
+  const { data: clients = [], mutate: mutateClients } = useSWR<any[]>("/api/admin/clients", fetcher)
+  const { data: expenses = [], mutate: mutateExpenses } = useSWR<any[]>("/api/expenses", fetcher)
+  const { data: payments = [], mutate: mutatePayments } = useSWR<any[]>("/api/payments", fetcher)
 
-      if (invoicesRes.ok) setInvoices(await invoicesRes.json())
-      if (clientsRes.ok) setClients(await clientsRes.json())
-      if (expensesRes.ok) setExpenses(await expensesRes.json())
-      if (paymentsRes && 'json' in paymentsRes && paymentsRes.ok) {
-        const paymentsData = await paymentsRes.json()
-        setPayments(Array.isArray(paymentsData) ? paymentsData : [])
-      }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
+  const loading = loadingInvoices
+
+  const fetchAllData = () => {
+      mutateInvoices()
+      mutateClients()
+      mutateExpenses()
+      mutatePayments()
   }
 
   // Calculate financial summary
