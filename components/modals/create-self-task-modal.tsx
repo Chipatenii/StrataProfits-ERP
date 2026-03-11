@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createSelfCreatedTask } from "@/app/actions/tasks"
 import { toast } from "sonner"
+import { EstimatedTimeInput } from "@/components/ui/estimated-time-input"
 
 interface CreateSelfTaskModalProps {
     open: boolean
@@ -200,38 +201,12 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                                 <option value="high">High</option>
                             </select>
                         </div>
-                        <div>
-                            <Label className="text-foreground font-medium">
-                                Estimated Time
-                            </Label>
-                            <div className="grid grid-cols-2 gap-2 mt-1">
-                                <div>
-                                    <label className="text-xs text-muted-foreground mb-1 block">Hours</label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        step="1"
-                                        value={formData.estimated_hours}
-                                        onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
-                                        className="bg-card border-border/30"
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-muted-foreground mb-1 block">Minutes</label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="59"
-                                        step="5"
-                                        value={formData.estimated_minutes}
-                                        onChange={(e) => setFormData({ ...formData, estimated_minutes: e.target.value })}
-                                        className="bg-card border-border/30"
-                                        placeholder="0"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        <EstimatedTimeInput
+                            hours={formData.estimated_hours}
+                            minutes={formData.estimated_minutes}
+                            onHoursChange={(v) => setFormData({ ...formData, estimated_hours: v })}
+                            onMinutesChange={(v) => setFormData({ ...formData, estimated_minutes: v })}
+                        />
                     </div>
 
                     <div>

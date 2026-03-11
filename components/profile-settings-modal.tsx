@@ -17,12 +17,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, User, Building2, Upload, X, Globe, Phone, Mail, MapPin, Landmark, CreditCard, Hash, Smartphone } from "lucide-react"
 import { toast } from "sonner"
-import type { OrganizationSettings } from "@/lib/types"
+import type { OrganizationSettings, UserProfile } from "@/lib/types"
 
 interface ProfileSettingsModalProps {
   userId: string
   isAdmin: boolean
-  initialProfile?: any
+  initialProfile?: UserProfile | null
   onClose: () => void
   onSuccess: () => void
 }
@@ -164,7 +164,7 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
       }
 
       if (isAdmin) {
-        const adminBody: any = {}
+        const adminBody: { role?: string; hourly_rate?: number } = {}
         if (role) adminBody.role = role
         if (hourlyRate) adminBody.hourly_rate = Number.parseFloat(hourlyRate)
         if (Object.keys(adminBody).length > 0) {
@@ -226,7 +226,7 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
         logoUrl = urlData.publicUrl
       }
 
-      const payload: Record<string, any> = {
+      const payload: Partial<OrganizationSettings> & { logo_url: string | null } = {
         name: org.name,
         email: org.email,
         phone: org.phone,
@@ -393,6 +393,20 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
                   </div>
                 </div>
               )}
+
+              {/* Timezone */}
+              <div className="space-y-2">
+                <Label htmlFor="timezone">Timezone</Label>
+                <select
+                  id="timezone"
+                  value={initialProfile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  disabled
+                >
+                  <option>{initialProfile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}</option>
+                </select>
+                <p className="text-xs text-muted-foreground">Auto-detected from your browser. Timezone support coming soon.</p>
+              </div>
 
               {message && activeTab === "personal" && (
                 <div

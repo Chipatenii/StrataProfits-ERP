@@ -2,6 +2,7 @@
 
 import { User } from "lucide-react"
 import { getRoleBadgeStyles, formatRoleName } from "@/lib/utils/role-styles"
+import { AvailabilityIndicator } from "./ui/availability-indicator"
 
 interface UserProfileCardProps {
   fullName: string
@@ -9,9 +10,10 @@ interface UserProfileCardProps {
   role: string
   avatarUrl?: string
   compact?: boolean
+  userId?: string
 }
 
-export function UserProfileCard({ fullName, email, role, avatarUrl, compact = false }: UserProfileCardProps) {
+export function UserProfileCard({ fullName, email, role, avatarUrl, compact = false, userId }: UserProfileCardProps) {
   const badgeStyles = getRoleBadgeStyles(role)
 
   if (compact) {
@@ -25,7 +27,10 @@ export function UserProfileCard({ fullName, email, role, avatarUrl, compact = fa
           )}
         </div>
         <div className="hidden md:block">
-          <h3 className="text-sm font-semibold text-gray-900 leading-none">{fullName}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-900 leading-none">{fullName}</h3>
+            {userId && <AvailabilityIndicator userId={userId} />}
+          </div>
           <p className={`text-xs mt-0.5 font-medium ${badgeStyles.text}`}>{formatRoleName(role)}</p>
         </div>
       </div>
@@ -47,7 +52,10 @@ export function UserProfileCard({ fullName, email, role, avatarUrl, compact = fa
           )}
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900">{fullName}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900">{fullName}</h3>
+            {userId && <AvailabilityIndicator userId={userId} showText={true} />}
+          </div>
           <p className="text-sm text-gray-500">{email}</p>
           <div className="mt-2">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${badgeStyles.badge}`}>

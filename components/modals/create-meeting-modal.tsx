@@ -85,7 +85,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                 location: meetingToEdit.location || "",
                 agenda: meetingToEdit.agenda || "",
                 meeting_notes: meetingToEdit.meeting_notes || "",
-                meeting_link: (meetingToEdit as any).meeting_link || "",
+                meeting_link: meetingToEdit.meeting_link || "",
                 assigned_to_user_id: meetingToEdit.assigned_to_user_id || "",
             })
         } else {

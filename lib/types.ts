@@ -80,6 +80,7 @@ export interface UserProfile {
     hourly_rate?: number | null
     avatar_url?: string | null
     client_id?: string | null // For portal users
+    timezone?: string | null // For remote-first timezone awareness
 }
 
 export interface Invoice {
@@ -276,6 +277,7 @@ export interface Meeting {
     status: "Proposed" | "Approved" | "Completed" | "Cancelled"
     agenda: string | null
     meeting_notes: string | null
+    meeting_link?: string | null
     created_at: string
     updated_at: string
     client?: Client
@@ -434,3 +436,17 @@ export interface OrganizationSettings {
     updated_at: string
 }
 
+// ─── Remote-First Features ─────────────────────────────────────────────────────
+
+export interface DailyCheckIn {
+    id: string
+    user_id: string
+    date: string
+    what_i_did: string
+    what_im_doing: string
+    blockers: string | null
+    created_at: string
+    updated_at: string
+    // Joined relations
+    user?: UserProfile
+}

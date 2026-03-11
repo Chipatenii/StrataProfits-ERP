@@ -99,13 +99,13 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
     const getNotificationColor = (type: Notification["type"]) => {
         switch (type) {
             case "task_completed":
-                return "bg-green-50 border-green-200 hover:bg-green-100"
+                return "bg-green-50 border-green-200 hover:bg-green-100 dark:bg-green-950/30 dark:border-green-800 dark:hover:bg-green-900/40"
             case "time_exceeded":
-                return "bg-red-50 border-red-200 hover:bg-red-100"
+                return "bg-red-50 border-red-200 hover:bg-red-100 dark:bg-red-950/30 dark:border-red-800 dark:hover:bg-red-900/40"
             case "due_date_reminder":
-                return "bg-amber-50 border-amber-200 hover:bg-amber-100"
+                return "bg-amber-50 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/30 dark:border-amber-800 dark:hover:bg-amber-900/40"
             default:
-                return "bg-blue-50 border-blue-200 hover:bg-blue-100"
+                return "bg-blue-50 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/30 dark:border-blue-800 dark:hover:bg-blue-900/40"
         }
     }
 
@@ -134,9 +134,9 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
                     {/* Notifications Panel */}
-                    <div className="absolute right-0 mt-2 w-96 max-h-[32rem] bg-white rounded-lg shadow-xl border border-border z-50 overflow-hidden">
+                    <div className="absolute right-0 mt-2 w-96 max-h-[32rem] bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-border dark:border-slate-700 z-50 overflow-hidden">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-border bg-blue-50">
+                        <div className="flex items-center justify-between p-4 border-b border-border bg-blue-50 dark:bg-slate-800">
                             <h3 className="font-semibold text-lg">Notifications</h3>
                             <div className="flex items-center gap-2">
                                 {unreadCount > 0 && (
@@ -167,7 +167,7 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
                                     {notifications.map((notification) => (
                                         <div
                                             key={notification.id}
-                                            className={`p-4 transition-colors cursor-pointer ${notification.is_read ? "bg-white opacity-60" : getNotificationColor(notification.type)
+                                            className={`p-4 transition-colors cursor-pointer ${notification.is_read ? "bg-white dark:bg-slate-900 opacity-60" : getNotificationColor(notification.type)
                                                 }`}
                                             onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
                                         >

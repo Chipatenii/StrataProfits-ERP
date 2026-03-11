@@ -16,6 +16,9 @@ import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
 import { APP_CONFIG } from "@/lib/config/constants"
 import { LineItem, LineItemsTable } from "./shared-line-items"
+import { formatCurrency } from "@/lib/format"
+import { SectionHeading } from "@/components/ui/section-heading"
+import { TotalsRow } from "@/components/ui/totals-row"
 
 interface CreateInvoiceModalProps {
     open: boolean
@@ -191,7 +194,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
         }
     }
 
-    const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const fmt = formatCurrency
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -486,23 +489,4 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
     )
 }
 
-// ── Helpers ───────────────────────────────────────────────
 
-function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string }) {
-    return (
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground/70">
-            <span className="text-primary">{icon}</span>
-            {title}
-            <div className="flex-1 h-px bg-border/50 ml-1" />
-        </div>
-    )
-}
-
-function TotalsRow({ label, value, dimmed }: { label: string; value: string; dimmed?: boolean }) {
-    return (
-        <div className="flex justify-between items-center text-sm">
-            <span className={dimmed ? "text-muted-foreground" : "text-foreground/80"}>{label}</span>
-            <span className={`tabular-nums font-medium ${dimmed ? "text-muted-foreground" : ""}`}>{value}</span>
-        </div>
-    )
-}

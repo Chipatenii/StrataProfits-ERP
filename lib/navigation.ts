@@ -1,4 +1,4 @@
-import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, Book, ClipboardCheck, Sun, Cloud, Briefcase, Activity } from "lucide-react"
+import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, Book, ClipboardCheck, Sun, Cloud, Briefcase, Activity, MessageSquare } from "lucide-react"
 import { Permission, hasPermission } from "./permissions"
 import { UserProfile } from "./types"
 
@@ -16,6 +16,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     { id: "sales", label: "Sales", icon: Receipt, requiredPermission: "invoices:read" }, // Consolidation of Invoices, Quotes, Payments, & Pipeline
     { id: "projects", label: "Projects", icon: FolderKanban, requiredPermission: "projects:read" },
     { id: "tasks", label: "Tasks", icon: ClipboardCheck, requiredPermission: "tasks:read" },
+    { id: "checkins", label: "Check-ins", icon: MessageSquare, requiredPermission: "tasks:read" },
     { id: "finance", label: "Finance", icon: DollarSign, requiredPermission: "reports:finance" }, // Includes Expenses
     { id: "reports", label: "Reports", icon: LayoutDashboard, requiredPermission: "reports:finance" },
     { id: "files", label: "Drive", icon: Cloud, requiredPermission: "files:read" },

@@ -8,15 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, FileText, CreditCard, Hash, StickyNote, Trash2, Download } from "lucide-react"
-import { Invoice, OrganizationSettings } from "@/lib/types"
+import { Invoice, OrganizationSettings, Payment } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
+import { SectionHeading } from "@/components/ui/section-heading"
 
 interface CreateReceiptModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
-    initialData?: any
+    initialData?: (Payment & { notes?: string }) | null
 }
 
 const PAYMENT_METHODS = [
@@ -147,7 +149,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
         }
     }
 
-    const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const fmt = formatCurrency
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -369,14 +371,4 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
     )
 }
 
-// ── Helpers ───────────────────────────────────────────────
 
-function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string }) {
-    return (
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground/70">
-            <span className="text-primary">{icon}</span>
-            {title}
-            <div className="flex-1 h-px bg-border/50 ml-1" />
-        </div>
-    )
-}
