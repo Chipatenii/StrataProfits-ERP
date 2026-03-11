@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,8 +19,11 @@ interface InvoiceDetailsModalProps {
 }
 
 export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: InvoiceDetailsModalProps) {
-    const [loading, setLoading] = useState(true)
-    const [fullInvoice, setFullInvoice] = useState<Invoice | null>(null)
+    const { data: fullInvoiceData, isLoading, mutate } = useSWR(
+        open && invoice.id ? `/api/invoices?id=${invoice.id}` : null
+    )
+    const fullInvoice: Invoice | null = fullInvoiceData || null
+    const loading = isLoading && !fullInvoiceData
 
     // Payment Form
     const [amount, setAmount] = useState("")
@@ -31,25 +35,9 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
 
     useEffect(() => {
         if (open && invoice.id) {
-            fetchDetails()
             fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
         }
     }, [open, invoice])
-
-    const fetchDetails = async () => {
-        try {
-            setLoading(true)
-            const res = await fetch(`/api/invoices?id=${invoice.id}`)
-            if (res.ok) {
-                const data = await res.json()
-                setFullInvoice(data)
-            }
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setLoading(false)
-        }
-    }
 
     const handlePayment = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -79,7 +67,7 @@ export function InvoiceDetailsModal({ invoice, open, onOpenChange, onUpdate }: I
             setPaymentTab(false)
             setAmount("")
             setRef("")
-            fetchDetails() // Reload details to see new balance/status
+            mutate() // Reload details to see new balance/status
             onUpdate() // Refresh parent list
             toast.success("Payment recorded successfully")
         } catch (error) {

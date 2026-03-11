@@ -1,18 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Client } from "@/lib/types"
+import { Client, Deal } from "@/lib/types"
 import { toast } from "sonner"
 
 interface CreateDealModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
-    initialData?: any
+    initialData?: Deal | null
 }
 
 export function CreateDealModal({ open, onOpenChange, onSuccess, initialData }: CreateDealModalProps) {
@@ -25,12 +26,12 @@ export function CreateDealModal({ open, onOpenChange, onSuccess, initialData }: 
         probability: "20",
         expected_close_date: "",
     })
-    const [clients, setClients] = useState<Client[]>([])
+    const { data: clientsData } = useSWR(open ? "/api/admin/clients" : null)
+    const clients: Client[] = clientsData || []
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         if (open) {
-            fetchClients() // Reuse client fetch
             if (initialData) {
                 setFormData({
                     title: initialData.title || "",
@@ -54,15 +55,6 @@ export function CreateDealModal({ open, onOpenChange, onSuccess, initialData }: 
             }
         }
     }, [open, initialData])
-
-    const fetchClients = async () => {
-        try {
-            const res = await fetch("/api/admin/clients")
-            if (res.ok) setClients(await res.json())
-        } catch (error) {
-            console.warn("Failed to load clients for deal modal:", error)
-        }
-    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

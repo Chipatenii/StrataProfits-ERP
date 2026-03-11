@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,16 +49,12 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
 
     const [formData, setFormData] = useState(getInitialFormData)
     const [isLoading, setIsLoading] = useState(false)
-    const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
+    const { data: projectsData } = useSWR(open ? "/api/admin/projects" : null)
+    const projects: { id: string; name: string }[] = projectsData || []
 
-    // Fetch projects when modal opens; re-populate form if editing
+    // Re-populate form if editing
     useEffect(() => {
         if (open) {
-            fetch("/api/admin/projects")
-                .then(res => res.json())
-                .then(data => setProjects(data || []))
-                .catch(err => console.error("Failed to load projects", err))
-
             setFormData(getInitialFormData())
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

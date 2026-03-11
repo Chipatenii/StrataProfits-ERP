@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,21 +36,12 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
         project_id: "",
     })
     const [isLoading, setIsLoading] = useState(false)
-    const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
+    const { data: projectsData } = useSWR(open ? "/api/projects" : null)
+    const projects: { id: string; name: string }[] = projectsData || []
 
     // Load projects on open so user can select if they toggle project related
     useEffect(() => {
         if (open) {
-            const loadProjects = async () => {
-                try {
-                    const response = await fetch("/api/projects")
-                    if (response.ok) setProjects(await response.json())
-                } catch (error) {
-                    console.warn("Failed to load projects for task modal:", error)
-                }
-            }
-            loadProjects()
-
             if (taskToEdit) {
                 const eh = taskToEdit.estimated_hours
                 setFormData({

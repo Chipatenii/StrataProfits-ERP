@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { Expense } from "@/lib/types"
 
 interface CreateExpenseModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
-    initialData?: any
+    initialData?: Expense | null
 }
 
 export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData }: CreateExpenseModalProps) {

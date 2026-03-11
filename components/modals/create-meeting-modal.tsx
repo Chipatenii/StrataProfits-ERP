@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,9 +47,13 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
         meeting_link: "",
         assigned_to_user_id: "",
     })
-    const [clients, setClients] = useState<Client[]>([])
-    const [projects, setProjects] = useState<Project[]>([])
-    const [members, setMembers] = useState<UserProfile[]>([])
+    const { data: clientsData } = useSWR(open ? "/api/admin/clients" : null)
+    const { data: projectsData } = useSWR(open ? "/api/admin/projects" : null)
+    const { data: membersData } = useSWR(open ? "/api/admin/members" : null)
+
+    const clients: Client[] = clientsData || []
+    const projects: Project[] = projectsData || []
+    const members: UserProfile[] = Array.isArray(membersData) ? membersData : membersData?.members ?? []
     const [isLoading, setIsLoading] = useState(false)
 
     const isEditing = !!meetingToEdit
@@ -61,15 +66,12 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
 
     // Filtered projects by selected client
     const filteredProjects = useMemo(
-        () => projects.filter(p => !formData.client_id || (p as any).client_id === formData.client_id),
+        () => projects.filter(p => !formData.client_id || p.client_id === formData.client_id),
         [projects, formData.client_id]
     )
 
     useEffect(() => {
         if (!open) return
-        fetchClients()
-        fetchProjects()
-        fetchMembers()
 
         if (meetingToEdit) {
             setFormData({
@@ -95,37 +97,6 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
             })
         }
     }, [open, meetingToEdit])
-
-    const fetchClients = async () => {
-        try {
-            const res = await fetch("/api/admin/clients")
-            if (res.ok) setClients(await res.json())
-        } catch (error) {
-            console.warn("Failed to load clients:", error)
-        }
-    }
-
-    const fetchProjects = async () => {
-        try {
-            const res = await fetch("/api/admin/projects")
-            if (res.ok) setProjects(await res.json())
-        } catch (error) {
-            console.warn("Failed to load projects:", error)
-        }
-    }
-
-    const fetchMembers = async () => {
-        try {
-            const res = await fetch("/api/admin/members")
-            if (res.ok) {
-                const data = await res.json()
-                // API may return an array directly or wrapped
-                setMembers(Array.isArray(data) ? data : data.members ?? [])
-            }
-        } catch (error) {
-            console.warn("Failed to load members:", error)
-        }
-    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

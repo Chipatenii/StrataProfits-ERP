@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,16 +40,12 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
         estimated_minutes: "",
         project_id: "",
     })
-    const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
+    const { data: projectsData } = useSWR(open ? "/api/admin/projects" : null)
+    const projects: { id: string; name: string }[] = projectsData || []
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         if (open) {
-            fetch("/api/admin/projects")
-                .then(res => res.json())
-                .then(data => setProjects(data || []))
-                .catch(err => console.error("Failed to load projects", err))
-
             if (task) {
                 const eh = task.estimated_hours
                 setFormData({

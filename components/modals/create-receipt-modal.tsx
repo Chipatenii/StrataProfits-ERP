@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,8 +29,8 @@ const PAYMENT_METHODS = [
 
 export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData }: CreateReceiptModalProps) {
     const [loading, setLoading] = useState(false)
-    const [invoices, setInvoices] = useState<Invoice[]>([])
-    const [loadingInvoices, setLoadingInvoices] = useState(true)
+    const { data: invoicesData, isLoading: loadingInvoices } = useSWR(open ? "/api/invoices" : null)
+    const invoices: Invoice[] = invoicesData || []
     const [previewNumber, setPreviewNumber] = useState("")
     const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
@@ -48,7 +49,6 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
 
     useEffect(() => {
         if (open) {
-            fetchInvoices()
             fetch("/api/organization").then(r => r.ok ? r.json() : {}).then(setOrgSettings).catch(() => {})
             if (initialData) {
                 setInvoiceId(initialData.invoice_id)
@@ -74,18 +74,6 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
             }
         }
     }, [open, initialData])
-
-    const fetchInvoices = async () => {
-        setLoadingInvoices(true)
-        try {
-            const res = await fetch("/api/invoices")
-            if (res.ok) setInvoices(await res.json())
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setLoadingInvoices(false)
-        }
-    }
 
     const handleInvoiceSelect = (id: string) => {
         setInvoiceId(id)

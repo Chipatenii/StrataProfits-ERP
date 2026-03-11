@@ -294,6 +294,7 @@ export interface Expense {
     description: string | null
     receipt_url: string | null
     status: "Pending" | "Approved" | "Rejected" | "Paid"
+    date?: string
     created_at: string
     updated_at: string
 }
