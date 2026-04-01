@@ -36,10 +36,15 @@ export async function getClientById(id: string) {
 }
 
 export async function getClientMetrics() {
-    // This could fetch related counts or sums if needed
-    // For now returning basic placeholders or implementing specialized aggregations
+    const supabase = await createClient()
+
+    const [{ count: activeProjects }, { count: pendingInvoices }] = await Promise.all([
+        supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("invoices").select("*", { count: "exact", head: true }).in("status", ["draft", "sent", "overdue"]),
+    ])
+
     return {
-        activeProjects: 0,
-        pendingInvoices: 0
+        activeProjects: activeProjects ?? 0,
+        pendingInvoices: pendingInvoices ?? 0,
     }
 }

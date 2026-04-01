@@ -94,21 +94,21 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
     if (profile?.role !== 'admin') return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-    // Delete from profiles table (auth user will remain but inactive)
-    const { error: profileError } = await admin.from("profiles").delete().eq("id", memberId)
-
-    if (profileError) {
-      console.error("Supabase delete error:", profileError)
-      throw profileError
-    }
-
-    // Delete from auth.users to allow re-registration
+    // Delete auth user first. If this fails, no partial state is left.
     const { error: authError } = await admin.auth.admin.deleteUser(memberId)
 
     if (authError) {
       console.error("Auth delete error:", authError)
-      // Note: We don't throw here because the profile is already deleted,
-      // but we log it. In a transaction this would be better.
+      throw authError
+    }
+
+    // Auth delete cascades to profiles via FK (on delete cascade), but we
+    // explicitly delete to be safe and get a clear error if it fails.
+    const { error: profileError } = await admin.from("profiles").delete().eq("id", memberId)
+
+    if (profileError) {
+      // Profile may already be gone via cascade — log but don't fail the request.
+      console.error("Profile delete error (may be cascaded already):", profileError)
     }
 
     return NextResponse.json({ success: true })

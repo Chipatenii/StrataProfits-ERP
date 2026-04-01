@@ -89,10 +89,11 @@ export interface Invoice {
     project_id?: string | null // Added for ERP
     amount: number
     currency: string
-    status: "draft" | "sent" | "paid" | "overdue"
+    status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
     due_date: string | null
     created_at: string
     invoice_number?: string
+    created_by_user_id?: string | null
     // Joined fields
     client?: Client | null
     project?: { name: string } | null

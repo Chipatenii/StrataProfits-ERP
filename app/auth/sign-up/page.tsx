@@ -30,7 +30,10 @@ export default function SignUpPage() {
     }
 
     try {
-      const safeRole = ["marketing", "sales"].includes(role) ? "team_member" : role
+      // Only allow safe, low-privilege roles at self-registration.
+      // Elevated roles (virtual_assistant, book_keeper, etc.) must be assigned by an admin.
+      const ALLOWED_SELF_SIGNUP_ROLES = ["team_member", "developer", "graphic_designer", "social_media_manager"]
+      const safeRole = ALLOWED_SELF_SIGNUP_ROLES.includes(role) ? role : "team_member"
 
       const { error } = await supabase.auth.signUp({
         email,
@@ -137,10 +140,6 @@ export default function SignUpPage() {
                   <option value="developer">Developer</option>
                   <option value="graphic_designer">Graphic Designer</option>
                   <option value="social_media_manager">Social Media Manager</option>
-                  <option value="virtual_assistant">Virtual Assistant</option>
-                  <option value="bookkeeper">Bookkeeper</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="sales">Sales</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50 pointer-events-none" />
               </div>

@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 export function useRealtimeSubscription(table: string, callback: () => void, filter?: string) {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const callbackRef = useRef(callback)
 

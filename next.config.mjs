@@ -4,7 +4,7 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    unoptimized: true,
+    // Image optimization enabled — remove `unoptimized` to allow Next.js WebP/AVIF conversion
   },
 
 }

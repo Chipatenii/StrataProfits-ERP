@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
             .from("invoices")
             .insert({
                 ...invoiceData,
-                // created_by: perm.user.id // If column exists, otherwise reliance on RLS or audit logs
+                created_by_user_id: perm.user.id,
             })
             .select()
             .single()
@@ -166,9 +166,9 @@ export async function POST(request: NextRequest) {
                 .insert(itemsWithId)
 
             if (itemsError) {
-                // In a real postgres function this would roll back. 
-                // Here we log the orphan issue. 
-                console.error("Failed to insert items for invoice " + invoice.id, itemsError)
+                // Compensating rollback: delete the orphaned invoice header so we don't leave partial data
+                await admin.from("invoices").delete().eq("id", invoice.id)
+                console.error("Failed to insert items for invoice " + invoice.id + " — invoice rolled back", itemsError)
                 throw itemsError
             }
         }

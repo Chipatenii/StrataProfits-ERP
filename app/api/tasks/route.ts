@@ -74,6 +74,17 @@ export async function PATCH(request: NextRequest) {
 
         const admin = await createAdminClient()
 
+        // Verify the caller owns this task or is an admin/VA
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+        const userRole = profile?.role
+
+        if (userRole !== 'admin' && userRole !== 'virtual_assistant') {
+            const { data: task } = await admin.from("tasks").select("assigned_to, created_by").eq("id", id).single()
+            if (!task || (task.assigned_to !== user.id && task.created_by !== user.id)) {
+                return NextResponse.json({ error: "Forbidden: You can only update your own tasks" }, { status: 403 })
+            }
+        }
+
         const { data, error } = await admin
             .from("tasks")
             .update(updates)
