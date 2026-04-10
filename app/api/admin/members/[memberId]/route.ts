@@ -57,7 +57,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { role, hourly_rate } = validation.data
 
-    const updateData: Record<string, unknown> = {}
+    interface MemberUpdates {
+      role?: typeof validation.data.role
+      hourly_rate?: number
+    }
+    const updateData: MemberUpdates = {}
     if (role) updateData.role = role
     if (hourly_rate !== undefined) updateData.hourly_rate = hourly_rate
 

@@ -99,7 +99,12 @@ export async function PATCH(
     const { name, parent_id } = body
 
     // We only allow updating name or parent_id (moving)
-    const updates: Record<string, unknown> = {
+    interface FileUpdates {
+      name?: string
+      parent_id?: string | null
+      updated_at: string
+    }
+    const updates: FileUpdates = {
         updated_at: new Date().toISOString()
     }
 
