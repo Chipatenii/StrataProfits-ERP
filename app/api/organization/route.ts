@@ -4,9 +4,9 @@ import { createClient } from "@/lib/supabase/server"
 export async function GET(request: Request) {
     try {
         const supabase = await createClient()
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { user } } = await supabase.auth.getUser()
 
-        if (!session) {
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
@@ -21,17 +21,18 @@ export async function GET(request: Request) {
         }
 
         return NextResponse.json(data || {})
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Internal server error"
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }
 
 export async function PATCH(request: Request) {
     try {
         const supabase = await createClient()
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { user } } = await supabase.auth.getUser()
 
-        if (!session) {
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
@@ -39,7 +40,7 @@ export async function PATCH(request: Request) {
         const { data: profile } = await supabase
             .from("profiles")
             .select("role")
-            .eq("id", session.user.id)
+            .eq("id", user.id)
             .single()
 
         if (!profile || profile.role !== "admin") {
@@ -47,7 +48,7 @@ export async function PATCH(request: Request) {
         }
 
         const body = await request.json()
-        
+
         // Remove id if present to prevent updating primary key
         if ('id' in body) {
             delete body.id
@@ -66,7 +67,8 @@ export async function PATCH(request: Request) {
         }
 
         return NextResponse.json(data)
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Internal server error"
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

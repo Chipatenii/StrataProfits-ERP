@@ -28,14 +28,14 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
     try {
       setLoading(true)
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        setCurrentUserId(session.user.id)
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        setCurrentUserId(user.id)
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", session.user.id)
+          .eq("id", user.id)
           .single()
         if (profile) setCurrentUserRole(profile.role)
       }

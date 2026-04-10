@@ -1,15 +1,3 @@
-export const APP_CONFIG = {
-  PAGINATION: {
-    NOTIFICATIONS_LIMIT: 50,
-    DEFAULT_SINGLE_RECORD: 1,
-  },
-  REPORTS: {
-    FINANCE_SUMMARY_LIMIT: 5,
-    FINANCE_HISTORY_LIMIT: 6,
-    MONTHS_LIMIT: 12,
-  },
-  FINANCE: {
-    DEFAULT_TAX_RATE: Number(process.env.NEXT_PUBLIC_DEFAULT_TAX_RATE) || 0,
-    DEFAULT_DISCOUNT_RATE: Number(process.env.NEXT_PUBLIC_DEFAULT_DISCOUNT_RATE) || 0,
-  }
-};
+// Re-export from the canonical config to avoid breaking any existing imports.
+// All new code should import from "@/lib/config" directly.
+export { APP_CONFIG } from "@/lib/config"

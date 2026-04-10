@@ -42,8 +42,20 @@ function readingTime(content: string): string {
 }
 
 /** Very lightweight markdown → HTML (no dependencies) */
+/** Escape HTML special characters to prevent XSS in the markdown renderer */
+function escapeHtml(text: string): string {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+}
+
 function renderMarkdown(md: string): string {
-    return md
+    // Escape raw HTML first so user-supplied tags can't be injected
+    const escaped = escapeHtml(md)
+    return escaped
         // Headings
         .replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold mt-5 mb-2 text-foreground">$1</h3>')
         .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-6 mb-2 text-foreground">$1</h2>')

@@ -13,12 +13,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Check if admin
     const admin = await createAdminClient()
-    const { data: profile, error: profileError } = await admin.from("profiles").select("role").eq("id", user.id).single()
-
-    console.log("[API Admin Member] User:", user.id, "Role:", profile?.role, "Error:", profileError)
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
 
     if (profile?.role !== 'admin') {
-      console.log("[API Admin Member] Access denied. Role is not admin.")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -60,7 +57,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { role, hourly_rate } = validation.data
 
-    const updateData: any = {}
+    interface MemberUpdates {
+      role?: typeof validation.data.role
+      hourly_rate?: number
+    }
+    const updateData: MemberUpdates = {}
     if (role) updateData.role = role
     if (hourly_rate !== undefined) updateData.hourly_rate = hourly_rate
 

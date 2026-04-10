@@ -331,6 +331,9 @@ export interface Comment {
     author?: UserProfile
 }
 
+// EntityComment is an alias for Comment kept for backwards compatibility
+export type EntityComment = Comment
+
 export interface Stats {
     leaderboard: {
         id: string
@@ -344,16 +347,6 @@ export interface Stats {
         completedTasks: number
         totalEarnings: number
     } | null
-}
-
-export interface EntityComment {
-    id: string
-    entity_type: "task" | "project" | "deal" | "meeting"
-    entity_id: string
-    author_user_id: string
-    content: string
-    created_at: string
-    author?: UserProfile
 }
 
 // ─── HR & Onboarding ─────────────────────────────────────────────────────────
