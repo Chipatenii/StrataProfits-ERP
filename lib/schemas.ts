@@ -24,7 +24,11 @@ export const createSelfTaskSchema = z.object({
 })
 
 export const updateMemberSchema = z.object({
-  role: z.string().optional(),
+  role: z.enum([
+    "admin", "team_member", "virtual_assistant", "developer",
+    "social_media_manager", "book_keeper", "marketing", "sales",
+    "graphic_designer", "client"
+  ] as const).optional(),
   hourly_rate: z.number().min(0).optional(),
 })
 
