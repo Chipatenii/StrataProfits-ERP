@@ -1,2 +1,0 @@
-components/admin-dashboard.tsx(291,11): error TS2322: Type 'Stats | null' is not assignable to type 'OverviewStats'.
-  Type 'null' is not assignable to type 'OverviewStats'.

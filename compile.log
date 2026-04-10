@@ -1,2 +1,0 @@
-components/modals/admin-create-task-modal.tsx(222,48): error TS7006: Parameter 'project' implicitly has an 'any' type.
-components/modals/admin-edit-task-modal.tsx(191,48): error TS7006: Parameter 'p' implicitly has an 'any' type.
