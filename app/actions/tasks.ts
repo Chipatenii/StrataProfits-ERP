@@ -67,7 +67,6 @@ export async function approveTask(taskId: string) {
         return { error: "Forbidden" }
     }
 
-    console.log("Approving task:", taskId, "requested by:", user.id)
     const admin = await createAdminClient()
 
     const { error } = await admin
@@ -84,7 +83,6 @@ export async function approveTask(taskId: string) {
         console.error("Error approving task:", error)
         return { error: "Failed to approve task" }
     }
-    console.log("Successfully approved task:", taskId)
 
     // Trigger ensures time_logs are updated, but we can double check or let trigger handle it.
     // The migration trigger 'handle_task_approval_update' should handle it.

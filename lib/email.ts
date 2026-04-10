@@ -61,7 +61,6 @@ export async function sendEmail(
       return { success: false, error: error.message }
     }
 
-    console.log(`[Email] Sent "${subject}" → ${to}`)
     return { success: true }
   } catch (err) {
     console.error("[Email] Unexpected error:", err)
