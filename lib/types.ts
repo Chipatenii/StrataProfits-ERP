@@ -333,6 +333,8 @@ export interface Comment {
 
 // EntityComment is an alias for Comment kept for backwards compatibility
 export type EntityComment = Comment
+
+export interface Stats {
     leaderboard: {
         id: string
         name: string
