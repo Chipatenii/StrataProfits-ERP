@@ -9,9 +9,9 @@ export async function DELETE(
   try {
     const { id } = await params
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -19,7 +19,7 @@ export async function DELETE(
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", session.user.id)
+      .eq("id", user.id)
       .single()
 
     if (profile?.role === "client") {
@@ -78,9 +78,9 @@ export async function PATCH(
   try {
     const { id } = await params
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -88,7 +88,7 @@ export async function PATCH(
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", session.user.id)
+      .eq("id", user.id)
       .single()
 
     if (profile?.role === "client") {
@@ -99,10 +99,10 @@ export async function PATCH(
     const { name, parent_id } = body
 
     // We only allow updating name or parent_id (moving)
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
         updated_at: new Date().toISOString()
     }
-    
+
     if (name !== undefined) updates.name = name
     if (parent_id !== undefined) updates.parent_id = parent_id
 
