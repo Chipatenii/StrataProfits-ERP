@@ -30,6 +30,13 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const admin = await createAdminClient()
     const body = await request.json()
 
@@ -43,6 +50,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { userId, fullName } = validation.data
+
+    // Users can only update their own profile
+    if (userId !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     const { data, error } = await admin
       .from("profiles")

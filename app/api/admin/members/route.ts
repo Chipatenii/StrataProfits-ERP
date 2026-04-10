@@ -12,6 +12,11 @@ export async function GET() {
     }
 
     const admin = await createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+
+    if (!["admin", "virtual_assistant", "book_keeper"].includes(profile?.role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     // Fetch all team members (excluding admins for clarity, or include all with their roles)
     const { data: members, error } = await admin
