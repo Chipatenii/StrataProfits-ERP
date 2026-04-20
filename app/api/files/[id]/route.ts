@@ -35,7 +35,7 @@ export async function DELETE(
 
     // FIX: restrict to admin or the uploader; client role is implicitly excluded since they are never admin/owner of company files
     const isAdmin = profile?.role === 'admin'
-    const isOwner = fileRecord.uploaded_by === session.user.id
+    const isOwner = fileRecord.uploaded_by === user.id
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
@@ -107,7 +107,7 @@ export async function PATCH(
     }
 
     const isAdmin = profile?.role === 'admin'
-    const isOwner = fileRecord.uploaded_by === session.user.id
+    const isOwner = fileRecord.uploaded_by === user.id
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
