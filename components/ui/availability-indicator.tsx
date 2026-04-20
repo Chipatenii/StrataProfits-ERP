@@ -25,7 +25,7 @@ export function AvailabilityIndicator({ userId, className = "", showText = false
                     .select("id")
                     .eq("user_id", userId)
                     .is("clock_out", null)
-                    .single()
+                    .maybeSingle()
 
                 if (!isMounted) return
 
@@ -40,7 +40,7 @@ export function AvailabilityIndicator({ userId, className = "", showText = false
                         .select("id")
                         .eq("user_id", userId)
                         .eq("date", today)
-                        .single()
+                        .maybeSingle()
                     
                     if (checkIn) setStatus("away") // Checked in but not actively working
                     else setStatus("offline")

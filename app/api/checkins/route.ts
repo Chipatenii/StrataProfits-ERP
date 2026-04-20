@@ -46,13 +46,15 @@ export async function POST(request: Request) {
         const today = new Date().toISOString().split("T")[0]
         
         // Check if already checked in today
-        const { data: existing } = await (await supabase)
+        const { data: existing, error: existingError } = await (await supabase)
             .from("daily_checkins")
             .select("id")
             .eq("user_id", user.id)
             .eq("date", today)
-            .single()
-            
+            .maybeSingle()
+
+        if (existingError) throw existingError
+
         if (existing) {
             return NextResponse.json({ error: "Already checked in today" }, { status: 400 })
         }
