@@ -15,6 +15,7 @@ export type Permission =
     | "files:read" | "files:write"
     | "hr:read" | "hr:write"
     | "reports:read" | "reports:finance"
+    | "accounting:read" | "accounting:write"
     | "audit:read"
     | "users:read" | "users:write"
     | "dashboard:my_day"
@@ -35,6 +36,7 @@ const ROLE_PERMISSIONS: Record<UserProfile["role"], Permission[]> = {
         "files:read", "files:write",
         "hr:read", "hr:write",
         "reports:read", "reports:finance",
+        "accounting:read", "accounting:write",
         "audit:read",
         "users:read", "users:write",
     ],
@@ -47,6 +49,7 @@ const ROLE_PERMISSIONS: Record<UserProfile["role"], Permission[]> = {
         "payments:read", "payments:write",
         "expenses:read", "expenses:write", "expenses:approve",
         "reports:read", "reports:finance",
+        "accounting:read", "accounting:write",
     ],
     virtual_assistant: [
         "reports:read",
@@ -155,6 +158,7 @@ export function canAccessModule(role: UserProfile["role"], module: string): bool
         hr: "hr:read",
         reports: "reports:read",
         finance: "reports:finance",
+        accounting: "accounting:read",
         audit: "audit:read",
         users: "users:read",
     }

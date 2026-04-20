@@ -432,6 +432,87 @@ export interface OrganizationSettings {
     updated_at: string
 }
 
+// ─── Accounting / General Ledger ───────────────────────────────────────────────
+
+export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expense"
+
+export interface Account {
+    id: string
+    code: string
+    name: string
+    type: AccountType
+    subtype: string | null
+    parent_id: string | null
+    currency: string
+    description: string | null
+    is_active: boolean
+    is_system: boolean
+    created_at: string
+    updated_at: string
+}
+
+export interface ExchangeRate {
+    id: string
+    from_currency: string
+    to_currency: string
+    rate: number
+    effective_date: string
+    source: "manual" | "xe" | "boz" | "api"
+    created_by: string | null
+    created_at: string
+}
+
+export type JournalEntryStatus = "draft" | "posted" | "reversed"
+export type JournalSourceType =
+    | "invoice" | "payment" | "expense" | "payroll"
+    | "manual" | "fx_revaluation" | "opening_balance"
+
+export interface JournalEntry {
+    id: string
+    entry_number: string | null
+    entry_date: string
+    memo: string | null
+    source_type: JournalSourceType
+    source_id: string | null
+    status: JournalEntryStatus
+    posted_at: string | null
+    posted_by: string | null
+    reversed_by_entry_id: string | null
+    created_by: string | null
+    created_at: string
+    updated_at: string
+    lines?: JournalLine[]
+}
+
+export interface JournalLine {
+    id: string
+    entry_id: string
+    line_number: number
+    account_id: string
+    debit: number
+    credit: number
+    currency: string
+    fx_rate: number
+    base_debit: number
+    base_credit: number
+    memo: string | null
+    client_id: string | null
+    project_id: string | null
+    created_at: string
+    account?: Account
+}
+
+export interface AccountBalance {
+    account_id: string
+    code: string
+    name: string
+    type: AccountType
+    subtype: string | null
+    total_debits: number
+    total_credits: number
+    balance: number
+}
+
 // ─── Remote-First Features ─────────────────────────────────────────────────────
 
 export interface DailyCheckIn {

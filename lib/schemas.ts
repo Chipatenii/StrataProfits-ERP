@@ -104,6 +104,64 @@ export const createExpenseSchema = z.object({
   meeting_id: z.string().uuid().optional().nullable(),
 })
 
+// ─── Accounting ────────────────────────────────────────────────────────────────
+
+export const accountTypeEnum = z.enum(["asset", "liability", "equity", "revenue", "expense"])
+
+export const createAccountSchema = z.object({
+  code: z.string().min(1, "Account code is required").max(20),
+  name: z.string().min(1, "Account name is required"),
+  type: accountTypeEnum,
+  subtype: z.string().optional().nullable(),
+  parent_id: z.string().uuid().optional().nullable(),
+  currency: z.string().default("ZMW"),
+  description: z.string().optional().nullable(),
+})
+
+export const updateAccountSchema = createAccountSchema.partial().extend({
+  is_active: z.boolean().optional(),
+})
+
+export const createExchangeRateSchema = z.object({
+  from_currency: z.string().length(3),
+  to_currency: z.string().length(3).default("ZMW"),
+  rate: z.number().positive("Rate must be greater than 0"),
+  effective_date: z.string(),
+  source: z.enum(["manual", "xe", "boz", "api"]).default("manual"),
+})
+
+const journalLineInputSchema = z.object({
+  account_id: z.string().uuid("Invalid account"),
+  debit: z.number().min(0).default(0),
+  credit: z.number().min(0).default(0),
+  currency: z.string().default("ZMW"),
+  fx_rate: z.number().positive().default(1),
+  memo: z.string().optional().nullable(),
+  client_id: z.string().uuid().optional().nullable(),
+  project_id: z.string().uuid().optional().nullable(),
+}).refine(
+  (line) => (line.debit > 0 && line.credit === 0) || (line.debit === 0 && line.credit > 0),
+  { message: "Line must have exactly one of debit or credit > 0" }
+)
+
+export const createJournalEntrySchema = z.object({
+  entry_date: z.string(),
+  memo: z.string().optional().nullable(),
+  source_type: z.enum([
+    "invoice", "payment", "expense", "payroll",
+    "manual", "fx_revaluation", "opening_balance",
+  ]).default("manual"),
+  source_id: z.string().uuid().optional().nullable(),
+  lines: z.array(journalLineInputSchema).min(2, "At least 2 lines are required"),
+}).refine(
+  (entry) => {
+    const totalDebit = entry.lines.reduce((s, l) => s + (l.debit * l.fx_rate), 0)
+    const totalCredit = entry.lines.reduce((s, l) => s + (l.credit * l.fx_rate), 0)
+    return Math.abs(totalDebit - totalCredit) < 0.01
+  },
+  { message: "Journal entry must be balanced (debits = credits in base currency)" }
+)
+
 export const createDeliverableSchema = z.object({
   project_id: z.string().uuid("Invalid project ID"),
   name: z.string().min(1, "Deliverable name is required"),

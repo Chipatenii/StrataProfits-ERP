@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 import { generateDocumentNumber } from "@/lib/utils/document-numbers"
+import { postPayment, reverseEntry } from "@/lib/ledger/post"
 
 export const dynamic = 'force-dynamic'
 
@@ -65,7 +66,11 @@ export async function POST(request: NextRequest) {
         const { invoice_id, amount } = validation.data
 
         // 0. Prevent Overpayments
-        const { data: invoice } = await admin.from("invoices").select("amount").eq("id", invoice_id).single()
+        const { data: invoice } = await admin
+            .from("invoices")
+            .select("amount, invoice_number, client_id, project_id")
+            .eq("id", invoice_id)
+            .single()
         if (!invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
 
         const { data: existingPayments } = await admin.from("payments").select("amount").eq("invoice_id", invoice_id)
@@ -90,7 +95,18 @@ export async function POST(request: NextRequest) {
 
         if (error) throw error
 
-        // 2. Update Invoice Status
+        // 2. Post to General Ledger (cash-basis: Dr Cash/Bank, Cr Revenue)
+        try {
+            await postPayment(admin, payment, {
+                invoice_number: invoice.invoice_number,
+                client_id: invoice.client_id,
+                project_id: invoice.project_id,
+            })
+        } catch (ledgerErr) {
+            console.error("Ledger posting failed for payment:", payment.id, ledgerErr)
+        }
+
+        // 3. Update Invoice Status
         await reevaluateInvoiceStatus(admin, invoice_id)
 
         return NextResponse.json(payment)
@@ -161,7 +177,20 @@ export async function DELETE(request: NextRequest) {
         const id = searchParams.get('id')
         if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
 
-        const { data: payment } = await admin.from("payments").select("invoice_id").eq("id", id).single()
+        const { data: payment } = await admin
+            .from("payments")
+            .select("invoice_id, journal_entry_id")
+            .eq("id", id)
+            .single()
+
+        // Reverse the ledger entry before deleting the payment (FK cascades wipe lines)
+        if (payment?.journal_entry_id) {
+            try {
+                await reverseEntry(admin, payment.journal_entry_id, "Payment deleted", user.id)
+            } catch (revErr) {
+                console.error("Failed to reverse payment entry:", revErr)
+            }
+        }
 
         const { error } = await admin.from("payments").delete().eq("id", id)
         if (error) throw error

@@ -18,6 +18,7 @@ import { MeetingsView } from "@/components/dashboard-views/meetings-view"
 import { ReportsView } from "@/components/dashboard-views/reports-view"
 import { AdminTasksView } from "@/components/dashboard-views/admin-tasks-view"
 import { FinanceView } from "@/components/dashboard-views/finance-view"
+import { AccountingView } from "@/components/dashboard-views/accounting-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
 import { FilesView } from "@/components/dashboard-views/files-view"
 import { HRView } from "@/components/dashboard-views/hr-view"
@@ -34,7 +35,7 @@ import { VASOPs } from "@/components/dashboard-views/va-sops"
 import { LayoutDashboard, ListTodo, Users, Wallet } from "lucide-react"
 import { DashboardShell } from "./dashboard-shell"
 
-type AdminView = "my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales" | "files" | "hr" | "performance" | "checkins"
+type AdminView = "my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "accounting" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales" | "files" | "hr" | "performance" | "checkins"
 
 export function AdminDashboard({
   userId,
@@ -236,11 +237,22 @@ export function AdminDashboard({
     })
   }
 
+  const normalizeStatus = (s?: string) => s?.toLowerCase().trim() || ""
   const taskStats = {
     total: tasks.length,
-    active: tasks.filter((t) => t.status !== "completed").length,
-    completed: tasks.filter((t) => t.status === "completed").length,
-    pending: tasks.filter((t) => t.approval_status === "pending").length,
+    active: tasks.filter((t) => {
+      const s = normalizeStatus(t.status)
+      return s !== "completed" && s !== "verified"
+    }).length,
+    completed: tasks.filter((t) => {
+      const s = normalizeStatus(t.status)
+      return s === "completed" || s === "verified"
+    }).length,
+    pending: tasks.filter((t) => {
+      const s = normalizeStatus(t.status)
+      const a = normalizeStatus(t.approval_status)
+      return s === "pending_approval" || s === "completed" || a === "pending"
+    }).length,
   }
 
   const menuItems = getNavItemsForRole(userRole as UserProfile["role"]).map(item => ({
@@ -276,6 +288,7 @@ export function AdminDashboard({
       {activeView === "finance" && (
         userRole === 'admin' ? <FinanceView /> : <VAFinance userName={userName} userRole={userRole} />
       )}
+      {activeView === "accounting" && <AccountingView />}
       {activeView === "projects" && (
         selectedProjectId ? (
           <ProjectDetailView projectId={selectedProjectId} onBack={() => setSelectedProjectId(null)} />
