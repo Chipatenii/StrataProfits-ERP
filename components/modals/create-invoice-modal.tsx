@@ -153,7 +153,9 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
             }
 
             if (isDownload) {
-                PDFService.generateInvoicePDF({ ...payload as any, created_at: new Date().toISOString() }, orgSettings)
+                // FIX: use server response so PDF reflects server-assigned invoice_number and created_at, not local payload
+                const saved = await res.json()
+                PDFService.generateInvoicePDF(saved, orgSettings)
             }
 
             onSuccess()

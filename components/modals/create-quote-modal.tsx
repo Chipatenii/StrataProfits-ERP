@@ -133,7 +133,9 @@ export function CreateQuoteModal({ open, onOpenChange, onSuccess, initialData }:
             if (!res.ok) throw new Error("Failed to save quote")
 
             if ((e.nativeEvent as any).submitter?.name === "download") {
-                PDFService.generateQuotePDF({ ...payload as any, created_at: new Date().toISOString() }, orgSettings)
+                // FIX: use server response so PDF reflects server-assigned quote_number and created_at, not local payload
+                const saved = await res.json()
+                PDFService.generateQuotePDF(saved, orgSettings)
             }
 
             onSuccess()

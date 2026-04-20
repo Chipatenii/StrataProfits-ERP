@@ -131,7 +131,8 @@ export function PaymentsView() {
                                                 <Plus size={16} className="rotate-45" /> {/* Use as an edit icon or placeholder */}
                                             </button>
                                             <button
-                                                onClick={() => PDFService.generatePaymentPDF(payment, payment.invoice_id.slice(0, 8), "Customer", orgSettings)}
+                                                // FIX: use joined invoice number and client name instead of raw UUID slice and hardcoded string
+                                                onClick={() => PDFService.generatePaymentPDF(payment, payment.invoice?.invoice_number ?? 'N/A', payment.invoice?.client?.name ?? 'Customer', orgSettings)}
                                                 className="p-1.5 hover:bg-slate-100 rounded text-slate-600 transition-colors"
                                                 title="Download Receipt"
                                             >

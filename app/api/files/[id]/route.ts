@@ -22,10 +22,6 @@ export async function DELETE(
       .eq("id", user.id)
       .single()
 
-    if (profile?.role === "client") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
     // Fetch to see if it's a file, we might need to delete from Storage too
     const { data: fileRecord, error: fetchError } = await supabase
       .from("company_files")
@@ -35,6 +31,14 @@ export async function DELETE(
 
     if (fetchError || !fileRecord) {
       return NextResponse.json({ error: "File or folder not found" }, { status: 404 })
+    }
+
+    // FIX: restrict to admin or the uploader; client role is implicitly excluded since they are never admin/owner of company files
+    const isAdmin = profile?.role === 'admin'
+    const isOwner = fileRecord.uploaded_by === session.user.id
+
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     // Delete from DB (this cascades, but Supabase Storage doesn't cascade automatically.
@@ -91,7 +95,21 @@ export async function PATCH(
       .eq("id", user.id)
       .single()
 
-    if (profile?.role === "client") {
+    // FIX: fetch the file first so we can check ownership; restrict to admin or the uploader
+    const { data: fileRecord, error: fetchError } = await supabase
+      .from("company_files")
+      .select("uploaded_by")
+      .eq("id", id)
+      .single()
+
+    if (fetchError || !fileRecord) {
+      return NextResponse.json({ error: "File or folder not found" }, { status: 404 })
+    }
+
+    const isAdmin = profile?.role === 'admin'
+    const isOwner = fileRecord.uploaded_by === session.user.id
+
+    if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

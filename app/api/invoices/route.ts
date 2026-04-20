@@ -234,30 +234,27 @@ export async function PATCH(request: NextRequest) {
         if (error) throw error
 
         // 3. Update Items (Safe Replace strategy)
-        if (items && items.length > 0) {
-            // Grab old items to delete later
-            const { data: old } = await admin.from("invoice_items").select("id").eq("invoice_id", id)
-            const oldIds = old?.map(i => i.id) || []
-
-            // Insert new
-            const itemsWithId = items.map(item => ({
-                invoice_id: id,
-                description: item.description,
-                quantity: item.quantity,
-                unit_price: item.unit_price,
-                tax_rate: item.tax_rate,
-                tax_amount: item.tax_amount
-            }))
-
-            const { error: itemsError } = await admin
+        if (items !== undefined) {
+            // FIX: delete old items first so a failed insert leaves zero items (not doubled); tradeoff documented in commit
+            const { error: deleteError } = await admin
                 .from("invoice_items")
-                .insert(itemsWithId)
+                .delete()
+                .eq("invoice_id", id)
+            if (deleteError) throw deleteError
 
-            if (itemsError) throw itemsError
-
-            // Cleanly delete old items only after successful insertion
-            if (oldIds.length > 0) {
-                await admin.from("invoice_items").delete().in('id', oldIds)
+            if (items.length > 0) {
+                const itemsWithId = items.map(item => ({
+                    invoice_id: id,
+                    description: item.description,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    tax_rate: item.tax_rate || 0,
+                    tax_amount: item.tax_amount || 0
+                }))
+                const { error: itemsError } = await admin
+                    .from("invoice_items")
+                    .insert(itemsWithId)
+                if (itemsError) throw itemsError
             }
         }
 

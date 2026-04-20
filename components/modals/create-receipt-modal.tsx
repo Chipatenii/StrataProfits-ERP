@@ -110,8 +110,10 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
             if (!res.ok) throw new Error(`Failed to ${initialData ? 'update' : 'create'} receipt`)
 
             if ((e.nativeEvent as any).submitter?.name === "download") {
+                // FIX: use server response so PDF reflects server-assigned receipt_number, not local payload
+                const saved = await res.json()
                 const invoice = invoices.find(i => i.id === invoiceId)
-                PDFService.generatePaymentPDF(payload as any, invoice?.invoice_number || 'N/A', invoice?.client?.name || 'Customer', orgSettings)
+                PDFService.generatePaymentPDF(saved, invoice?.invoice_number || 'N/A', invoice?.client?.name || 'Customer', orgSettings)
             }
 
             onSuccess()

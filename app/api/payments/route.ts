@@ -27,9 +27,10 @@ export async function GET() {
         if (!['admin', 'book_keeper', 'virtual_assistant'].includes(profile?.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
+        // FIX: join invoice and client so the view can render real invoice number and customer name in the PDF
         const { data: payments, error } = await admin
             .from("payments")
-            .select("*")
+            .select("*, invoice:invoices(invoice_number, client:clients(name))")
             .order("paid_at", { ascending: false })
 
         if (error) throw error

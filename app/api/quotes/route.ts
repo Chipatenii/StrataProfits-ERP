@@ -156,12 +156,14 @@ export async function PATCH(request: NextRequest) {
         if (error) throw error
 
         // 2. Update Items (Safe Replace strategy)
-        if (items) {
-            // Grab old items
-            const { data: old } = await admin.from("quote_items").select("id").eq("quote_id", id)
-            const oldIds = old?.map(i => i.id) || []
+        if (items !== undefined) {
+            // FIX: delete old items first so a failed insert leaves zero items (not doubled); tradeoff documented in commit
+            const { error: deleteError } = await admin
+                .from("quote_items")
+                .delete()
+                .eq("quote_id", id)
+            if (deleteError) throw deleteError
 
-            // Insert new items
             if (items.length > 0) {
                 const itemsWithId = items.map(item => ({
                     quote_id: id,
@@ -171,14 +173,8 @@ export async function PATCH(request: NextRequest) {
                     tax_rate: item.tax_rate || 0,
                     tax_amount: item.tax_amount || 0
                 }))
-
                 const { error: itemsError } = await admin.from("quote_items").insert(itemsWithId)
                 if (itemsError) throw itemsError
-            }
-
-            // Only delete old items if insertion succeeded (or if items was explicitly empty array)
-            if (oldIds.length > 0) {
-                await admin.from("quote_items").delete().in("id", oldIds)
             }
         }
 

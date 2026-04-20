@@ -96,6 +96,14 @@ export async function PATCH(request: NextRequest) {
         const id = searchParams.get('id')
         if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 })
 
+        // FIX: mirror DELETE's ownership/role check so non-admins cannot edit others' expenses
+        const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+        const { data: existing } = await admin.from("expenses").select("submitted_by_user_id").eq("id", id).single()
+
+        if (profile?.role !== 'admin' && existing?.submitted_by_user_id !== user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+
         const body = await request.json()
         const validation = createExpenseSchema.partial().safeParse(body)
         if (!validation.success) {

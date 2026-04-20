@@ -132,6 +132,8 @@ export interface Payment {
     received_by_user_id?: string | null
     created_at: string
     receipt_number?: string | null
+    // FIX: joined relation returned by GET /api/payments for PDF generation
+    invoice?: { invoice_number: string; client?: { name: string } } | null
 }
 
 export interface Quote {

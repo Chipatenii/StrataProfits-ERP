@@ -5,7 +5,8 @@ import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 
 const createApprovalSchema = z.object({
-    entity_type: z.enum(['task', 'time_log', 'expense', 'invoice', 'quote', 'meeting', 'deliverable']),
+    // FIX: remove 'invoice' and 'quote' — no approval_status column exists on those tables; keep meeting now that it's handled below
+    entity_type: z.enum(['task', 'time_log', 'expense', 'meeting', 'deliverable']),
     entity_id: z.string().uuid(),
     assigned_to_user_id: z.string().uuid().optional(),
     assigned_role: z.string().optional() // e.g. 'admin'
@@ -132,6 +133,9 @@ export async function PATCH(request: NextRequest) {
                 updatePayload.is_approved = status === 'approved'
             } else if (requestRecord.entity_type === 'deliverable') {
                 updatePayload.approval_status = status
+            // FIX: sync meetings.status on approval/rejection — was previously silently skipped
+            } else if (requestRecord.entity_type === 'meeting') {
+                updatePayload.status = status === 'approved' ? 'Approved' : 'Rejected'
             }
 
             if (Object.keys(updatePayload).length > 0) {
@@ -151,7 +155,8 @@ function getTableForEntity(type: string) {
         case 'time_log': return 'time_logs'
         case 'expense': return 'expenses'
         case 'deliverable': return 'deliverables'
-        // Others might default or handled manually
+        // FIX: add meeting so its status column gets synced
+        case 'meeting': return 'meetings'
         default: return null
     }
 }
