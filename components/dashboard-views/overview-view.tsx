@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import useSWR from "swr"
-import { ClipboardList, Users, Folder, AlertCircle, DollarSign, Wallet, ArrowUpRight, Sparkles, Target } from "lucide-react"
+import { ClipboardList, Users, Folder, AlertCircle, DollarSign, Wallet, ArrowUpRight, Target, Trophy } from "lucide-react"
 import type { Invoice, Deal, Project } from "@/lib/types"
 
 interface OverviewStats {
@@ -72,230 +72,275 @@ export function OverviewView({ stats, taskStats, membersCount, setActiveView }: 
         }
     }, [projectsData])
 
+    const totalHoursLogged = stats?.leaderboard
+        ? Math.round(stats.leaderboard.reduce((acc, curr) => acc + curr.totalHours, 0))
+        : null
+
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-emerald-500/30">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-                <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-teal-300/10 rounded-full blur-xl" />
-
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-5 h-5 text-emerald-200" />
-                        <span className="text-sm font-medium text-emerald-100 uppercase tracking-wider">Dashboard</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Executive Summary</h1>
-                    <p className="text-emerald-100/80 text-lg max-w-xl">Track your business performance, team productivity, and financial health at a glance.</p>
-                </div>
-
-                {/* Quick Stats in Hero */}
-                <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-                        <p className="text-3xl font-bold">ZMW {(financeStats.revenueYTD / 1000).toFixed(0)}K</p>
-                        <p className="text-sm text-emerald-100/80">Revenue YTD</p>
-                    </div>
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-                        <p className="text-3xl font-bold">{pipelineStats.count}</p>
-                        <p className="text-sm text-emerald-100/80">Active Deals</p>
-                    </div>
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-                        <p className="text-3xl font-bold">{activeProjectsCount}</p>
-                        <p className="text-sm text-emerald-100/80">Active Projects</p>
-                    </div>
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-                        <p className="text-3xl font-bold">{membersCount}</p>
-                        <p className="text-sm text-emerald-100/80">Team Members</p>
-                    </div>
+        <div className="space-y-6 animate-fade-in">
+            {/* Page title (QuickBooks-style: simple, no gradients) */}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Business performance, team productivity, and financial health at a glance.</p>
                 </div>
             </div>
 
-            {/* Alerts Section - Premium Style */}
+            {/* Headline KPI strip */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <KpiCard
+                    label="Revenue YTD"
+                    value={`ZMW ${(financeStats.revenueYTD / 1000).toFixed(0)}K`}
+                    icon={<DollarSign className="w-4 h-4" />}
+                    tone="emerald"
+                />
+                <KpiCard
+                    label="Active deals"
+                    value={pipelineStats.count.toString()}
+                    icon={<Target className="w-4 h-4" />}
+                    tone="slate"
+                />
+                <KpiCard
+                    label="Active projects"
+                    value={activeProjectsCount.toString()}
+                    icon={<Folder className="w-4 h-4" />}
+                    tone="slate"
+                />
+                <KpiCard
+                    label="Team members"
+                    value={membersCount.toString()}
+                    icon={<Users className="w-4 h-4" />}
+                    tone="slate"
+                />
+            </div>
+
+            {/* Alerts */}
             {(overdueInvoices.length > 0 || taskStats.pending > 0) && (
                 <div className="grid gap-4 md:grid-cols-2">
                     {overdueInvoices.length > 0 && (
-                        <div className="relative overflow-hidden bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-2xl p-6 shadow-lg shadow-red-500/10">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl" />
-                            <div className="relative flex items-start gap-4">
-                                <div className="p-3 bg-red-500 rounded-xl text-white shadow-lg shadow-red-500/30">
-                                    <AlertCircle className="w-6 h-6" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-lg text-red-900 dark:text-red-100">Overdue Invoices</h4>
-                                    <p className="text-red-700 dark:text-red-300 mt-1">{overdueInvoices.length} invoice{overdueInvoices.length !== 1 && 's'} require attention</p>
-                                    <button
-                                        onClick={() => setActiveView("sales")}
-                                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-all shadow-lg shadow-red-500/25"
-                                    >
-                                        View Invoices
-                                        <ArrowUpRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <AlertRow
+                            tone="red"
+                            icon={<AlertCircle className="w-5 h-5" />}
+                            title="Overdue invoices"
+                            description={`${overdueInvoices.length} invoice${overdueInvoices.length !== 1 ? "s" : ""} require attention`}
+                            cta="View invoices"
+                            onClick={() => setActiveView("sales")}
+                        />
                     )}
                     {taskStats.pending > 0 && (
-                        <div className="relative overflow-hidden bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6 shadow-lg shadow-amber-500/10">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl" />
-                            <div className="relative flex items-start gap-4">
-                                <div className="p-3 bg-amber-500 rounded-xl text-white shadow-lg shadow-amber-500/30">
-                                    <ClipboardList className="w-6 h-6" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-lg text-amber-900 dark:text-amber-100">Pending Reviews</h4>
-                                    <p className="text-amber-700 dark:text-amber-300 mt-1">{taskStats.pending} task{taskStats.pending !== 1 && 's'} awaiting approval</p>
-                                    <button
-                                        onClick={() => setActiveView("tasks")}
-                                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/25"
-                                    >
-                                        Review Now
-                                        <ArrowUpRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <AlertRow
+                            tone="amber"
+                            icon={<ClipboardList className="w-5 h-5" />}
+                            title="Pending reviews"
+                            description={`${taskStats.pending} task${taskStats.pending !== 1 ? "s" : ""} awaiting approval`}
+                            cta="Review now"
+                            onClick={() => setActiveView("tasks")}
+                        />
                     )}
                 </div>
             )}
 
-            {/* Premium Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Revenue Card */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute inset-0 bg-emerald-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-emerald-500/30">
-                                <DollarSign className="w-6 h-6" />
-                            </div>
-                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-3 py-1 rounded-full">YTD</span>
-                        </div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Revenue</p>
-                        <p className="text-3xl font-bold text-foreground">ZMW {financeStats.revenueYTD.toLocaleString()}</p>
-                    </div>
-                </div>
-
-                {/* Outstanding Card */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute inset-0 bg-orange-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 bg-orange-500 rounded-2xl text-white shadow-lg shadow-orange-500/30">
-                                <Wallet className="w-6 h-6" />
-                            </div>
-                            <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/50 px-3 py-1 rounded-full">{financeStats.outstandingCount} pending</span>
-                        </div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Outstanding</p>
-                        <p className="text-3xl font-bold text-foreground">ZMW {financeStats.outstanding.toLocaleString()}</p>
-                    </div>
-                </div>
-
-                {/* Pipeline Card */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute inset-0 bg-blue-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/30">
-                                <Target className="w-6 h-6" />
-                            </div>
-                            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-3 py-1 rounded-full">Active</span>
-                        </div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Pipeline Deals</p>
-                        <p className="text-3xl font-bold text-foreground">{pipelineStats.count}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Est. ZMW {pipelineStats.value.toLocaleString()}</p>
-                    </div>
-                </div>
-
-                {/* Projects Card */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300">
-                    <div className="absolute inset-0 bg-purple-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 bg-purple-600 rounded-2xl text-white shadow-lg shadow-purple-500/30">
-                                <Folder className="w-6 h-6" />
-                            </div>
-                            <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/50 px-3 py-1 rounded-full">In Progress</span>
-                        </div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Active Projects</p>
-                        <p className="text-3xl font-bold text-foreground">{activeProjectsCount}</p>
-                    </div>
-                </div>
+            {/* Detailed Stat Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <DetailCard
+                    label="Revenue"
+                    value={`ZMW ${financeStats.revenueYTD.toLocaleString()}`}
+                    icon={<DollarSign className="w-5 h-5" />}
+                    badge="YTD"
+                    accent="emerald"
+                />
+                <DetailCard
+                    label="Outstanding"
+                    value={`ZMW ${financeStats.outstanding.toLocaleString()}`}
+                    icon={<Wallet className="w-5 h-5" />}
+                    badge={`${financeStats.outstandingCount} open`}
+                    accent="orange"
+                />
+                <DetailCard
+                    label="Pipeline deals"
+                    value={pipelineStats.count.toString()}
+                    icon={<Target className="w-5 h-5" />}
+                    badge="Active"
+                    accent="blue"
+                    subtext={`Est. ZMW ${pipelineStats.value.toLocaleString()}`}
+                />
+                <DetailCard
+                    label="Active projects"
+                    value={activeProjectsCount.toString()}
+                    icon={<Folder className="w-5 h-5" />}
+                    badge="In progress"
+                    accent="violet"
+                />
             </div>
 
-            {/* Team & Top Performer Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Team Productivity */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
-                            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            {/* Team overview + Top Performer */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Team overview */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-2.5 mb-5">
+                        <div className="p-1.5 bg-emerald-50 dark:bg-emerald-900/40 rounded-md">
+                            <Users className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
                         </div>
-                        <h3 className="text-xl font-bold">Team Overview</h3>
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Team overview</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 text-center">
-                            <p className="text-3xl font-bold text-foreground">{membersCount}</p>
-                            <p className="text-sm text-muted-foreground mt-1">Active Members</p>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 text-center">
-                            <p className="text-3xl font-bold text-foreground">{taskStats.active}</p>
-                            <p className="text-sm text-muted-foreground mt-1">Tasks In Progress</p>
-                        </div>
-                        <div className="bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl p-5 text-center">
-                            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{taskStats.completed}</p>
-                            <p className="text-sm text-muted-foreground mt-1">Completed</p>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 text-center">
-                            <p className="text-3xl font-bold text-foreground">
-                                {stats?.leaderboard ?
-                                    Math.round(stats.leaderboard.reduce((acc: number, curr: { totalHours: number }) => acc + curr.totalHours, 0)) + 'h'
-                                    : '-'}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">Hours Logged</p>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <TeamStat label="Active members" value={membersCount.toString()} />
+                        <TeamStat label="Tasks in progress" value={taskStats.active.toString()} />
+                        <TeamStat label="Completed" value={taskStats.completed.toString()} accent />
+                        <TeamStat label="Hours logged" value={totalHoursLogged !== null ? `${totalHoursLogged}h` : "—"} />
                     </div>
                 </div>
 
                 {/* Top Performer */}
-                <div className="relative overflow-hidden bg-primary rounded-3xl p-8 text-white shadow-2xl shadow-emerald-500/30">
-                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-teal-400/20 rounded-full blur-xl" />
-
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-6">
-                            <span className="text-3xl">🏆</span>
-                            <h3 className="text-xl font-bold">Top Performer</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-2.5 mb-5">
+                        <div className="p-1.5 bg-amber-50 dark:bg-amber-900/40 rounded-md">
+                            <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-300" />
                         </div>
-
-                        {stats?.bestPerformer ? (
-                            <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center text-3xl font-bold border border-white/30">
-                                    {stats.bestPerformer.name.charAt(0)}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-2xl font-bold">{stats.bestPerformer.name}</p>
-                                    <p className="text-emerald-100 mt-1">{stats.bestPerformer.completedTasks} tasks completed</p>
-                                    <div className="flex items-center gap-4 mt-3">
-                                        <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
-                                            <p className="text-sm text-emerald-100">Hours</p>
-                                            <p className="text-lg font-bold">{stats.bestPerformer.totalHours}h</p>
-                                        </div>
-                                        <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
-                                            <p className="text-sm text-emerald-100">Earned</p>
-                                            <p className="text-lg font-bold">ZMW {stats.bestPerformer.totalEarnings.toFixed(0)}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="h-32 flex items-center justify-center text-emerald-100/60 italic">
-                                No performance data available yet.
-                            </div>
-                        )}
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Top performer</h3>
                     </div>
+
+                    {stats?.bestPerformer ? (
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 rounded-xl bg-emerald-700 flex items-center justify-center text-2xl font-bold text-white shrink-0">
+                                {stats.bestPerformer.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-lg font-semibold text-slate-900 dark:text-white truncate">{stats.bestPerformer.name}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{stats.bestPerformer.completedTasks} tasks completed</p>
+                                <div className="flex items-center gap-2 mt-3">
+                                    <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-md px-2.5 py-1 text-xs font-medium">
+                                        {stats.bestPerformer.totalHours}h logged
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-md px-2.5 py-1 text-xs font-medium">
+                                        ZMW {stats.bestPerformer.totalEarnings.toFixed(0)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                            No performance data available yet.
+                        </div>
+                    )}
                 </div>
             </div>
+        </div>
+    )
+}
+
+/* ──────────────────────────── Subcomponents ──────────────────────────── */
+
+function KpiCard({ label, value, icon, tone }: { label: string; value: string; icon: React.ReactNode; tone: "emerald" | "slate" }) {
+    const iconClass =
+        tone === "emerald"
+            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+    return (
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-2 mb-2">
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center ${iconClass}`}>{icon}</div>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
+            </div>
+            <p className="text-2xl md:text-[26px] font-bold text-slate-900 dark:text-white leading-tight">{value}</p>
+        </div>
+    )
+}
+
+function AlertRow({
+    tone,
+    icon,
+    title,
+    description,
+    cta,
+    onClick,
+}: {
+    tone: "red" | "amber"
+    icon: React.ReactNode
+    title: string
+    description: string
+    cta: string
+    onClick: () => void
+}) {
+    const map = {
+        red: {
+            bg: "bg-red-50 dark:bg-red-950/30",
+            border: "border-red-200 dark:border-red-900/50",
+            iconBg: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
+            title: "text-red-900 dark:text-red-100",
+            text: "text-red-700 dark:text-red-300",
+            button: "bg-red-600 hover:bg-red-700",
+        },
+        amber: {
+            bg: "bg-amber-50 dark:bg-amber-950/30",
+            border: "border-amber-200 dark:border-amber-900/50",
+            iconBg: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300",
+            title: "text-amber-900 dark:text-amber-100",
+            text: "text-amber-700 dark:text-amber-300",
+            button: "bg-amber-600 hover:bg-amber-700",
+        },
+    }[tone]
+
+    return (
+        <div className={`${map.bg} ${map.border} border rounded-xl p-5`}>
+            <div className="flex items-start gap-4">
+                <div className={`p-2.5 rounded-lg ${map.iconBg} shrink-0`}>{icon}</div>
+                <div className="flex-1 min-w-0">
+                    <h4 className={`font-semibold text-[15px] ${map.title}`}>{title}</h4>
+                    <p className={`text-sm mt-0.5 ${map.text}`}>{description}</p>
+                    <button
+                        onClick={onClick}
+                        className={`mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 ${map.button} text-white rounded-md font-medium text-sm transition-colors`}
+                    >
+                        {cta}
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function DetailCard({
+    label,
+    value,
+    icon,
+    badge,
+    accent,
+    subtext,
+}: {
+    label: string
+    value: string
+    icon: React.ReactNode
+    badge: string
+    accent: "emerald" | "orange" | "blue" | "violet"
+    subtext?: string
+}) {
+    const map = {
+        emerald: { iconBg: "bg-emerald-700 text-white", badge: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+        orange: { iconBg: "bg-orange-500 text-white", badge: "bg-orange-50 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300" },
+        blue: { iconBg: "bg-blue-600 text-white", badge: "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+        violet: { iconBg: "bg-violet-600 text-white", badge: "bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300" },
+    }[accent]
+
+    return (
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+            <div className="flex items-center justify-between mb-4">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${map.iconBg}`}>{icon}</div>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${map.badge}`}>{badge}</span>
+            </div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+            {subtext && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{subtext}</p>}
+        </div>
+    )
+}
+
+function TeamStat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+    return (
+        <div className={`rounded-lg p-4 text-center border ${accent ? "bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-900/50" : "bg-slate-50 border-slate-100 dark:bg-slate-800/40 dark:border-slate-800"}`}>
+            <p className={`text-2xl font-bold ${accent ? "text-emerald-700 dark:text-emerald-300" : "text-slate-900 dark:text-white"}`}>{value}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{label}</p>
         </div>
     )
 }
