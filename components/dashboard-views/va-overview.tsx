@@ -25,8 +25,7 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
 
     const { data: overdueInvoices = [] } = useSWR<Invoice[]>('/api/invoices?status=overdue', fetcher)
     const { data: dealsData = [] } = useSWR<any[]>('/api/admin/deals', fetcher)
-    
-    // Ensure we trigger meeting fetch correctly
+
     const todayStr = new Date().toISOString().split('T')[0]
     const { data: meetings = [] } = useSWR<Meeting[]>(`/api/meetings?date=${todayStr}`, fetcher)
     const { data: members = [] } = useSWR<UserProfile[]>('/api/admin/members', fetcher)
@@ -37,7 +36,6 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     }
 
     useEffect(() => {
-        // Set initial time on client to avoid hydration mismatch
         setCurrentTime(new Date())
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
         return () => clearInterval(timer)
@@ -54,36 +52,35 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     }, [dealsData])
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">
-                        {currentTime ? getTimeBasedGreeting(userName) : `Hello, ${userName.split(' ')[0]}`}
-                    </h2>
-                    <p className="text-muted-foreground">
-                        {currentTime ? (
-                            <>
-                                {new Intl.DateTimeFormat('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentTime)}
-                                {' • '}
-                                <span className="font-mono bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
-                                    {new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(currentTime)}
-                                </span>
-                            </>
-                        ) : null}
-                    </p>
-                </div>
+        <div className="space-y-6 animate-fade-in">
+            {/* Page header */}
+            <div>
+                <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">
+                    {currentTime ? getTimeBasedGreeting(userName) : `Hello, ${userName.split(' ')[0]}`}
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {currentTime ? (
+                        <>
+                            {new Intl.DateTimeFormat('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentTime)}
+                            {' · '}
+                            <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                                {new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(currentTime)}
+                            </span>
+                        </>
+                    ) : null}
+                </p>
             </div>
 
-            {/* Alerts Section */}
+            {/* Alerts */}
             {(overdueInvoices.length > 0) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 mt-0.5" />
+                <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 rounded-xl p-4 text-rose-800 dark:text-rose-300 flex items-start gap-3">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                     <div>
-                        <h4 className="font-semibold">Attention Needed</h4>
-                        <ul className="list-disc list-inside text-sm mt-1 space-y-1">
+                        <h4 className="font-semibold text-sm">Attention needed</h4>
+                        <ul className="list-disc list-inside text-xs mt-1 space-y-0.5">
                             {overdueInvoices.map(inv => (
                                 <li key={inv.id}>
-                                    Invoice {inv.invoice_number || 'Unknown'} for {inv.client?.name || 'Client'} is Overdue.
+                                    Invoice {inv.invoice_number || 'Unknown'} for {inv.client?.name || 'Client'} is overdue.
                                 </li>
                             ))}
                         </ul>
@@ -91,80 +88,67 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                 </div>
             )}
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <div className="glass-card p-6 rounded-xl">
-                    <div className="text-sm font-medium text-muted-foreground">New Leads (Week)</div>
-                    <div className="text-2xl font-bold mt-2">{stats.leads}</div>
-                </div>
-                <div className="glass-card p-6 rounded-xl">
-                    <div className="text-sm font-medium text-muted-foreground">Proposals Sent</div>
-                    <div className="text-2xl font-bold mt-2">{stats.proposals}</div>
-                </div>
-                <div className="glass-card p-6 rounded-xl">
-                    <div className="text-sm font-medium text-muted-foreground">Pending Tasks</div>
-                    <div className="text-2xl font-bold mt-2">{tasks.length}</div>
-                </div>
-                <div className="glass-card p-6 rounded-xl">
-                    <div className="text-sm font-medium text-muted-foreground">Urgent Invoices</div>
-                    <div className="text-2xl font-bold mt-2 text-red-600">{overdueInvoices.length}</div>
-                </div>
+            {/* KPI strip */}
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard label="New leads (week)" value={stats.leads} />
+                <StatCard label="Proposals sent" value={stats.proposals} />
+                <StatCard label="Pending tasks" value={tasks.length} />
+                <StatCard label="Urgent invoices" value={overdueInvoices.length} accent={overdueInvoices.length > 0} />
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Today's Tasks */}
-                <div className="glass-card p-6 rounded-xl">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-lg">Today's Priorities</h3>
-                        <button onClick={() => onViewChange?.('tasks')} className="text-xs text-blue-600 hover:underline">View All</button>
+            <div className="grid gap-4 md:grid-cols-2">
+                {/* Today's priorities */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                        <h3 className="font-semibold text-base text-slate-900 dark:text-white">Today&apos;s priorities</h3>
+                        <button onClick={() => onViewChange?.('tasks')} className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-medium">View all</button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="p-3 space-y-2">
                         {tasks.length === 0 ? (
-                            <p className="text-muted-foreground text-sm py-4 text-center border-dashed border-2 rounded-lg">No pending tasks for today.</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">No pending tasks for today.</p>
                         ) : (
                             tasks.map(task => (
                                 <button
                                     key={task.id}
                                     onClick={() => handleCardClick(task)}
-                                    className="w-full flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors text-left group"
+                                    className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 transition-colors text-left"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-2 h-2 rounded-full ${task.priority === 'high' ? 'bg-red-500' : 'bg-blue-500'}`} />
-                                        <span className="font-medium group-hover:text-primary transition-colors truncate max-w-[150px]">{task.title}</span>
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className={`w-2 h-2 rounded-full shrink-0 ${task.priority === 'high' ? 'bg-rose-500' : 'bg-emerald-600'}`} />
+                                        <span className="font-medium text-sm text-slate-900 dark:text-white truncate">{task.title}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        {task.due_date && (
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                {new Date(task.due_date).toLocaleDateString()}
-                                            </span>
-                                        )}
-                                    </div>
+                                    {task.due_date && (
+                                        <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 shrink-0">
+                                            <Clock className="w-3 h-3" />
+                                            {new Date(task.due_date).toLocaleDateString()}
+                                        </span>
+                                    )}
                                 </button>
                             ))
                         )}
                     </div>
                 </div>
 
-                {/* Today's Meetings */}
-                <div className="glass-card p-6 rounded-xl">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-lg">Upcoming Meetings</h3>
-                        <button onClick={() => onViewChange?.('meetings')} className="text-xs text-blue-600 hover:underline">Full Schedule</button>
+                {/* Upcoming meetings */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                        <h3 className="font-semibold text-base text-slate-900 dark:text-white">Upcoming meetings</h3>
+                        <button onClick={() => onViewChange?.('meetings')} className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-medium">Full schedule</button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="p-3 space-y-2">
                         {meetings.length === 0 ? (
-                            <p className="text-muted-foreground text-sm py-4 text-center border-dashed border-2 rounded-lg">No meetings scheduled today.</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">No meetings scheduled today.</p>
                         ) : (
                             meetings.map(meeting => (
                                 <div
                                     key={meeting.id}
-                                    className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100"
+                                    className="flex items-center justify-between p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-lg border border-emerald-100 dark:border-emerald-900/40"
                                 >
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-sm">{meeting.title}</span>
-                                        <span className="text-xs text-muted-foreground">{meeting.mode} • {meeting.client?.name || 'In-House'}</span>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">{meeting.title}</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">{meeting.mode} · {meeting.client?.name || 'In-house'}</span>
                                     </div>
-                                    <div className="text-xs font-mono text-blue-700 bg-white px-2 py-1 rounded shadow-sm">
+                                    <div className="text-xs font-mono text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-900 px-2 py-1 rounded-md shrink-0">
                                         {new Date(meeting.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
@@ -179,6 +163,15 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                 members={members}
                 onOpenChange={setIsDetailModalOpen}
             />
+        </div>
+    )
+}
+
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+    return (
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
+            <p className={`text-2xl font-bold mt-1 ${accent ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>{value}</p>
         </div>
     )
 }

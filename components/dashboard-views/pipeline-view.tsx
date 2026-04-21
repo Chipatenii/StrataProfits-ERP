@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import useSWR from "swr"
-import { Plus, DollarSign, Calendar } from "lucide-react"
+import { Plus, Calendar } from "lucide-react"
 import type { Deal } from "@/lib/types"
 import { CreateDealModal } from "@/components/modals/create-deal-modal"
 import { AttachmentList } from "@/components/attachment-list"
@@ -12,102 +12,114 @@ export function PipelineView() {
   const [dealToEdit, setDealToEdit] = useState<Deal | null>(null)
 
   const fetcher = (url: string) => fetch(url).then(res => {
-      if (!res.ok) return res.text().then(t => { throw new Error(t) })
-      return res.json()
+    if (!res.ok) return res.text().then(t => { throw new Error(t) })
+    return res.json()
   })
-  const { data: deals = [], error: swrError, isLoading: loading, mutate: fetchDeals } = useSWR<Deal[]>("/api/admin/deals", fetcher)
+  const { data: deals = [], error: swrError, mutate: fetchDeals } = useSWR<Deal[]>("/api/admin/deals", fetcher)
   const error = swrError ? (swrError as Error).message : null
 
   const stages = ["NewLead", "Qualified", "ProposalSent", "Negotiation", "Won", "Lost"]
 
-  const getStageColor = (stage: string) => {
+  const getStageStyle = (stage: string) => {
     switch (stage) {
       case "NewLead":
-        return "bg-blue-100 text-blue-700 border-blue-200"
+        return { dot: "bg-slate-400", pill: "bg-slate-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300" }
       case "Qualified":
-        return "bg-purple-100 text-purple-700 border-purple-200"
+        return { dot: "bg-amber-500", pill: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" }
       case "ProposalSent":
-        return "bg-amber-100 text-amber-700 border-amber-200"
+        return { dot: "bg-amber-600", pill: "bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400" }
       case "Negotiation":
-        return "bg-orange-100 text-orange-700 border-orange-200"
+        return { dot: "bg-emerald-600", pill: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" }
       case "Won":
-        return "bg-green-100 text-green-700 border-green-200"
+        return { dot: "bg-emerald-700", pill: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" }
       case "Lost":
-        return "bg-red-100 text-red-700 border-red-200"
+        return { dot: "bg-rose-500", pill: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" }
       default:
-        return "bg-gray-100 text-gray-700"
+        return { dot: "bg-slate-400", pill: "bg-slate-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300" }
     }
   }
 
+  const totalPipelineValue = deals.reduce((sum, d) => sum + (d.estimated_value || 0), 0)
+  const wonValue = deals.filter(d => d.stage === "Won").reduce((sum, d) => sum + (d.estimated_value || 0), 0)
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
+        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 p-4 rounded-xl text-sm">
           {error}
         </div>
       )}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+      {/* Page header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
-          <h2 className="text-2xl font-bold">Sales Pipeline</h2>
-          <p className="text-muted-foreground">Track deals and opportunities</p>
+          <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Sales Pipeline</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Track deals and opportunities</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto justify-center"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          New Deal
+          <Plus className="w-4 h-4" /> New Deal
         </button>
       </div>
 
-      {/* Vertical Stack Layout for All Screens */}
-      <div className="flex flex-col gap-6 w-full">
+      {/* KPI strip */}
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total deals</p>
+          <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{deals.length}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Pipeline value</p>
+          <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">K{totalPipelineValue.toLocaleString()}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Won value</p>
+          <p className="text-2xl font-bold mt-1 text-emerald-700 dark:text-emerald-400">K{wonValue.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-5 w-full">
         {stages.map((stage) => {
           const stageDeals = deals.filter((d) => d.stage === stage)
-          // Hide empty stages? Or show them collapsed? 
-          // Requirement: "Stacked". We'll show all stages as sections.
+          const style = getStageStyle(stage)
 
           return (
             <div key={stage} className="w-full">
-              {/* Header */}
-              <div className={`p-3 rounded-lg border mb-3 font-semibold flex items-center justify-between ${getStageColor(stage)}`}>
-                <span className="flex items-center gap-2">
-                  {stage}
-                </span>
-                <span className="text-xs font-bold py-0.5 px-2 bg-white/30 rounded-full">
-                  {stageDeals.length}
-                </span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${style.dot}`} />
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{stage}</span>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${style.pill}`}>
+                    {stageDeals.length}
+                  </span>
+                </div>
               </div>
 
-              {/* Deals Grid - 2 columns on desktop for better space usage if stacked vertically, or just list? 
-                 "Stacked not horizontal" -> let's default to a list or simple grid that wraps.
-                 Let's do a uniform list or a responsive grid for items *within* the stage.
-              */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {stageDeals.map((deal) => (
                   <div
                     key={deal.id}
-                    className="glass-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-border/40"
+                    className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700 transition-colors cursor-pointer"
                     onClick={() => {
                       setDealToEdit(deal)
                       setShowCreateModal(true)
                     }}
                   >
-                    <h4 className="font-medium mb-1 truncate">{deal.title}</h4>
-                    <div className="flex justify-between items-center text-sm text-muted-foreground mb-2">
-                      <span className="truncate max-w-[150px]">{deal.client?.name || "No Client"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <DollarSign className="w-3 h-3 text-green-600" />
-                      <span className="text-green-700">{deal.estimated_value.toLocaleString()}</span> {deal.currency}
+                    <h4 className="font-semibold text-sm text-slate-900 dark:text-white mb-1 truncate">{deal.title}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 truncate">{deal.client?.name || "No Client"}</p>
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{deal.estimated_value.toLocaleString()}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{deal.currency}</span>
                     </div>
                     {deal.expected_close_date && (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {new Date(deal.expected_close_date).toLocaleDateString()}
                       </div>
                     )}
-                    <div className="flex justify-end mt-2 pt-2 border-t border-border/30">
+                    <div className="flex justify-end mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                       <AttachmentList entityType="deal" entityId={deal.id} />
                     </div>
                   </div>
@@ -115,8 +127,8 @@ export function PipelineView() {
               </div>
 
               {stageDeals.length === 0 && (
-                <div className="h-16 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-sm text-gray-400">
-                  Empty
+                <div className="h-14 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center text-xs text-slate-400 dark:text-slate-500">
+                  No deals
                 </div>
               )}
             </div>

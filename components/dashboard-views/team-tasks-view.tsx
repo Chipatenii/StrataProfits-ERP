@@ -180,29 +180,39 @@ export function TeamTasksView({
         }
     }
 
-    if (loading) return <div className="p-8 text-center text-muted-foreground">Loading your tasks...</div>
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Loading your tasks...</p>
+        </div>
+    )
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6 animate-fade-in">
+            {/* Page header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <h2 className="text-xl sm:text-2xl font-bold text-accent">My Day Tasks</h2>
+                <div>
+                    <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">My tasks</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Track and complete your assigned work.</p>
+                </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    {/* Only VAs and admins can create tasks */}
                     {(userRole === 'admin' || userRole === 'virtual_assistant') && (
                         <button
                             onClick={() => setShowCreateTask(true)}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 active:bg-emerald-900 transition-colors font-semibold text-sm shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
-                            Add Task
+                            Add task
                         </button>
                     )}
-                    <div className="flex bg-white rounded-lg p-1 border border-border">
+                    <div className="flex gap-0.5 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
                         {(["all", "active", "completed"] as const).map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setTaskFilter(filter)}
-                                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${taskFilter === filter ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${taskFilter === filter
+                                    ? "bg-emerald-700 text-white"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                                     }`}
                             >
                                 {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -212,133 +222,126 @@ export function TeamTasksView({
                 </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="space-y-3">
                 {filteredTasks.length === 0 ? (
-                    <div className="glass-card rounded-lg p-8 text-center border-dashed border-2">
-                        <p className="text-muted-foreground">No {taskFilter} tasks found.</p>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-dashed border-slate-200 dark:border-slate-700">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">No {taskFilter} tasks found.</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {filteredTasks.map((task) => {
-                            const isTaskActive = activeTaskId === task.id
-                            const isActiveTab = normalize(task.status) !== "completed"
-                            const previousLogs = timeLogs.filter(l => l.task_id === task.id && l.clock_out)
-                            const initialSeconds = previousLogs.reduce((acc, log) => acc + (log.duration_minutes || 0) * 60, 0)
-                            const isPendingApproval = normalize(task.approval_status) === "pending"
+                    filteredTasks.map((task) => {
+                        const isTaskActive = activeTaskId === task.id
+                        const isActiveTab = normalize(task.status) !== "completed"
+                        const previousLogs = timeLogs.filter(l => l.task_id === task.id && l.clock_out)
+                        const initialSeconds = previousLogs.reduce((acc, log) => acc + (log.duration_minutes || 0) * 60, 0)
+                        const isPendingApproval = normalize(task.approval_status) === "pending"
 
-                            return (
-                                <div
-                                    key={task.id}
-                                    onClick={() => handleCardClick(task)}
-                                    className={`glass-card rounded-xl p-4 transition-all border cursor-pointer ${isTaskActive ? 'ring-2 ring-amber-500 border-amber-200 bg-amber-50/30' : 'hover:border-blue-200'}`}
-                                >
-                                    <div className="flex flex-col gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <h3 className="font-bold text-slate-900">{task.title}</h3>
-                                                        {isTaskActive && (
-                                                            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded-full font-bold animate-pulse">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                                                TRACKING
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 line-clamp-1">{task.description}</p>
-                                                    {task.is_self_created && isPendingApproval && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                setTaskToEdit(task)
-                                                                setShowCreateTask(true)
-                                                            }}
-                                                            className="text-[10px] text-blue-600 hover:text-blue-700 font-bold uppercase mt-1"
-                                                        >
-                                                            Edit Details
-                                                        </button>
-                                                    )}
-                                                    {/* VA can edit tasks they personally created */}
-                                                    {userRole === 'virtual_assistant' && task.created_by === userId && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                setTaskToEdit(task)
-                                                                setShowCreateTask(true)
-                                                            }}
-                                                            className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold uppercase mt-1"
-                                                        >
-                                                            Edit Task
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                <div className="flex gap-2 shrink-0">
-                                                    {isActiveTab && (
-                                                        <>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    handleTaskStartStop(task.id)
-                                                                }}
-                                                                className={`p-2.5 rounded-full transition-all ${isTaskActive
-                                                                    ? "bg-amber-500 text-white shadow-lg shadow-amber-200"
-                                                                    : "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                                                                    }`}
-                                                            >
-                                                                {isTaskActive ? <Pause size={18} /> : <Play size={18} />}
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    setCompletingTask(task)
-                                                                    setShowCompleteModal(true)
-                                                                }}
-                                                                className="p-2.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all"
-                                                            >
-                                                                <CheckCircle size={18} />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-4 flex flex-wrap items-center gap-3">
-                                                <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                                    <Timer
-                                                        isActive={isTaskActive}
-                                                        startTime={isTaskActive ? timeLogs.find(l => !l.clock_out && l.task_id === task.id)?.clock_in || "" : null}
-                                                        initialSeconds={initialSeconds}
-                                                        estimatedHours={task.estimated_hours || undefined}
-                                                    />
-                                                </div>
-
-                                                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${task.priority === 'high' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                                    task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                                        'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                                    }`}>
-                                                    {task.priority}
+                        return (
+                            <div
+                                key={task.id}
+                                onClick={() => handleCardClick(task)}
+                                className={`bg-white dark:bg-slate-900 rounded-xl p-4 transition-colors border cursor-pointer ${isTaskActive ? 'border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/10' : 'border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-700'}`}
+                            >
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">{task.title}</h3>
+                                            {isTaskActive && (
+                                                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded font-semibold animate-pulse">
+                                                    <div className="w-1 h-1 rounded-full bg-amber-500" />
+                                                    TRACKING
                                                 </span>
-
-                                                {task.due_date && isActiveTab && (
-                                                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                                        <Clock size={12} className="text-slate-400" />
-                                                        <span>Due {new Date(task.due_date).toLocaleDateString()}</span>
-                                                    </div>
-                                                )}
-
-                                                {isPendingApproval && (
-                                                    <span className="text-[10px] font-bold text-amber-600 border border-amber-200 px-2 py-1 rounded bg-amber-50">
-                                                        PENDING APPROVAL
-                                                    </span>
-                                                )}
-                                            </div>
+                                            )}
                                         </div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{task.description}</p>
+                                        {task.is_self_created && isPendingApproval && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setTaskToEdit(task)
+                                                    setShowCreateTask(true)
+                                                }}
+                                                className="text-[10px] text-emerald-700 hover:text-emerald-800 font-semibold uppercase tracking-wide mt-1"
+                                            >
+                                                Edit details
+                                            </button>
+                                        )}
+                                        {userRole === 'virtual_assistant' && task.created_by === userId && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setTaskToEdit(task)
+                                                    setShowCreateTask(true)
+                                                }}
+                                                className="text-[10px] text-emerald-700 hover:text-emerald-800 font-semibold uppercase tracking-wide mt-1"
+                                            >
+                                                Edit task
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-1 shrink-0">
+                                        {isActiveTab && (
+                                            <>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleTaskStartStop(task.id)
+                                                    }}
+                                                    className={`p-2 rounded-md transition-colors ${isTaskActive
+                                                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                                                        : "text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                                                        }`}
+                                                >
+                                                    {isTaskActive ? <Pause size={16} /> : <Play size={16} />}
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setCompletingTask(task)
+                                                        setShowCompleteModal(true)
+                                                    }}
+                                                    className="p-2 rounded-md text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                                >
+                                                    <CheckCircle size={16} />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
-                            )
-                        })}
-                    </div>
+
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 text-xs">
+                                        <Timer
+                                            isActive={isTaskActive}
+                                            startTime={isTaskActive ? timeLogs.find(l => !l.clock_out && l.task_id === task.id)?.clock_in || "" : null}
+                                            initialSeconds={initialSeconds}
+                                            estimatedHours={task.estimated_hours || undefined}
+                                        />
+                                    </div>
+
+                                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${task.priority === 'high' ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' :
+                                        task.priority === 'medium' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                                            'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                        }`}>
+                                        {task.priority}
+                                    </span>
+
+                                    {task.due_date && isActiveTab && (
+                                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                                            <Clock size={12} />
+                                            <span>Due {new Date(task.due_date).toLocaleDateString()}</span>
+                                        </div>
+                                    )}
+
+                                    {isPendingApproval && (
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700 bg-amber-50 dark:bg-amber-900/40 dark:text-amber-300 px-1.5 py-0.5 rounded-md">
+                                            Pending approval
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })
                 )}
             </div>
 

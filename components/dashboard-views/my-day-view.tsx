@@ -166,9 +166,9 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
     }
 
     if (loading) return (
-        <div className="flex flex-col items-center justify-center p-12 gap-4">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Loading your day...</p>
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Loading your day...</p>
         </div>
     )
 
@@ -179,119 +179,107 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
     const todaysMeetings = meetings.filter(m => m.date_time_start.startsWith(todayStr))
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-                <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-indigo-300/10 rounded-full blur-xl" />
-
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Sun className="w-5 h-5 text-amber-300" />
-                        <span className="text-sm font-medium text-violet-200 uppercase tracking-wider">My Day</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">{getTimeBasedGreeting(userName)}</h1>
-                    <p className="text-violet-100/80 text-lg">Here's your focus for today. Let's make it count!</p>
+        <div className="space-y-6 animate-fade-in">
+            {/* Page header */}
+            <div>
+                <div className="flex items-center gap-2 mb-1">
+                    <Sun className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">My day</span>
                 </div>
+                <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">{getTimeBasedGreeting(userName)}</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Here&apos;s your focus for today. Let&apos;s make it count.</p>
+            </div>
 
-                {/* Quick Stats in Hero */}
-                <div className="relative z-10 grid grid-cols-3 gap-4 mt-8">
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
-                        <p className="text-3xl font-bold">{dueToday.length}</p>
-                        <p className="text-sm text-violet-100/80">Due Today</p>
-                    </div>
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
-                        <p className="text-3xl font-bold">{todaysMeetings.length}</p>
-                        <p className="text-sm text-violet-100/80">Meetings</p>
-                    </div>
-                    <div className={`backdrop-blur-lg rounded-2xl p-4 border text-center ${overdue.length > 0 ? 'bg-red-500/30 border-red-400/40' : 'bg-white/15 border-white/20'}`}>
-                        <p className="text-3xl font-bold">{overdue.length}</p>
-                        <p className="text-sm text-violet-100/80">Overdue</p>
-                    </div>
+            {/* KPI strip */}
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Due today</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{dueToday.length}</p>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Meetings</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{todaysMeetings.length}</p>
+                </div>
+                <div className={`rounded-xl p-4 border ${overdue.length > 0 ? 'bg-rose-50 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900/40' : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800'}`}>
+                    <p className={`text-xs font-medium uppercase tracking-wide ${overdue.length > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}`}>Overdue</p>
+                    <p className={`text-2xl font-bold mt-1 ${overdue.length > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-900 dark:text-white'}`}>{overdue.length}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* LEFT COLUMN: TASKS */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-4">
 
-                    {/* OVERDUE WARNING */}
+                    {/* OVERDUE */}
                     {overdue.length > 0 && (
-                        <div className="relative overflow-hidden bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-3xl p-6 shadow-xl shadow-red-500/10">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl" />
-                            <div className="relative">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-3 bg-red-500 rounded-2xl text-white shadow-lg shadow-red-500/30">
-                                        <AlertCircle className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-lg text-red-900 dark:text-red-100">Overdue Tasks</h3>
-                                        <p className="text-sm text-red-700 dark:text-red-300">{overdue.length} task{overdue.length !== 1 && 's'} need attention</p>
-                                    </div>
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4 text-rose-600" />
+                                    <h3 className="font-semibold text-base text-slate-900 dark:text-white">Overdue tasks</h3>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">· {overdue.length} need attention</span>
                                 </div>
-                                <div className="space-y-3">
-                                    {overdue.map(t => (
-                                        <div
-                                            key={t.id}
-                                            onClick={() => handleCardClick(t)}
-                                            className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-red-100 dark:border-red-900/50 flex justify-between items-center shadow-md cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px]"
-                                        >
-                                            <span className="font-medium text-foreground truncate mr-2">{t.title}</span>
-                                            <span className="text-xs text-red-600 dark:text-red-400 font-semibold whitespace-nowrap bg-red-100 dark:bg-red-900/50 px-3 py-1 rounded-full">
-                                                {new Date(t.due_date!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
+                            </div>
+                            <div className="p-3 space-y-2">
+                                {overdue.map(t => (
+                                    <div
+                                        key={t.id}
+                                        onClick={() => handleCardClick(t)}
+                                        className="bg-rose-50 dark:bg-rose-950/20 p-3 rounded-lg border border-rose-100 dark:border-rose-900/40 flex justify-between items-center cursor-pointer hover:border-rose-300 transition-colors"
+                                    >
+                                        <span className="font-medium text-sm text-slate-900 dark:text-white truncate mr-2">{t.title}</span>
+                                        <span className="text-xs text-rose-700 dark:text-rose-300 font-semibold whitespace-nowrap bg-rose-100 dark:bg-rose-900/40 px-2 py-0.5 rounded-md">
+                                            {new Date(t.due_date!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
 
                     {/* DUE TODAY */}
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-xl">
-                                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-emerald-700" />
+                                <h3 className="font-semibold text-base text-slate-900 dark:text-white">Due today</h3>
                             </div>
-                            <h3 className="text-xl font-bold text-foreground">Due Today</h3>
                         </div>
 
                         {dueToday.length === 0 ? (
-                            <div className="p-8 text-center bg-slate-50 dark:bg-slate-800 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-                                <Star className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-                                <p className="text-muted-foreground font-medium">No tasks specifically due today.</p>
-                                <p className="text-sm text-muted-foreground mt-1">Great job staying on top of things! 🎉</p>
+                            <div className="p-8 text-center">
+                                <Star className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">No tasks specifically due today.</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Great job staying on top of things.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="p-3 space-y-2">
                                 {dueToday.map(t => {
                                     const isTaskActive = activeTaskId === t.id
                                     const previousLogs = timeLogs.filter(l => l.task_id === t.id && l.clock_out)
                                     const initialSeconds = previousLogs.reduce((acc, log) => acc + (log.duration_minutes || 0) * 60, 0)
-                                    
+
                                     return (
                                     <div
                                         key={t.id}
                                         onClick={() => handleCardClick(t)}
-                                        className={`group relative p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all border ${isTaskActive ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800' : 'bg-slate-50 dark:bg-slate-800 border-transparent hover:border-emerald-200 dark:hover:border-emerald-800'}`}
+                                        className={`p-4 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer transition-colors border ${isTaskActive ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 hover:border-emerald-300'}`}
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h4 className="font-bold text-lg text-foreground truncate">{t.title}</h4>
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <h4 className="font-semibold text-sm text-slate-900 dark:text-white truncate">{t.title}</h4>
                                                 {isTaskActive && (
-                                                    <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded-full font-bold animate-pulse">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                    <span className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded font-semibold animate-pulse">
+                                                        <div className="w-1 h-1 rounded-full bg-amber-500" />
                                                         TRACKING
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-sm text-muted-foreground mr-2">{t.project_id ? "Project Task" : "General Task"}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{t.project_id ? "Project task" : "General task"}</p>
                                         </div>
-                                        <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex items-center gap-1.5 shrink-0">
                                             {isTaskActive && (
-                                                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm mr-2">
+                                                <div className="hidden sm:flex items-center px-2.5 py-1 bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-700 text-xs mr-1">
                                                     <Timer
                                                         isActive={isTaskActive}
                                                         startTime={activeClockIn}
@@ -300,83 +288,20 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                                     />
                                                 </div>
                                             )}
-                                            <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${t.priority === 'high'
-                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
-                                                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
+                                            <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${t.priority === 'high'
+                                                ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                                                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
                                                 {t.priority}
                                             </span>
-                                            
+
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     handleTaskStartStop(t.id)
                                                 }}
-                                                className={`p-2 rounded-xl transition-all ${isTaskActive
-                                                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
-                                                    : "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
-                                                }`}
-                                            >
-                                                {isTaskActive ? <Pause size={18} /> : <Play size={18} />}
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    setCompletingTask(t)
-                                                    setShowCompleteModal(true)
-                                                }}
-                                                className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-all"
-                                            >
-                                                <CheckCircle size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )})}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* HIGH PRIORITY */}
-                    {highPriority.length > 0 && (
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl">
-                                    <Zap className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                                </div>
-                                <h3 className="text-xl font-bold text-foreground">High Priority Backlog</h3>
-                            </div>
-                            <div className="space-y-3">
-                                {highPriority.map(t => {
-                                    const isTaskActive = activeTaskId === t.id
-                                    const previousLogs = timeLogs.filter(l => l.task_id === t.id && l.clock_out)
-                                    const initialSeconds = previousLogs.reduce((acc, log) => acc + (log.duration_minutes || 0) * 60, 0)
-
-                                    return (
-                                    <div
-                                        key={t.id}
-                                        onClick={() => handleCardClick(t)}
-                                        className={`p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all min-h-[56px] border ${isTaskActive ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800' : 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50'}`}
-                                    >
-                                        <div className="flex items-center gap-2 truncate mr-2">
-                                            <span className="font-medium text-foreground truncate">{t.title}</span>
-                                            {isTaskActive && (
-                                                <span className="flex shrink-0 items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] rounded-full font-bold animate-pulse mt-0.5">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                                    ON
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white shadow-md shadow-amber-500/25">
-                                                High
-                                            </span>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleTaskStartStop(t.id)
-                                                }}
-                                                className={`p-1.5 rounded-lg transition-all ${isTaskActive
-                                                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
-                                                    : "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                                                className={`p-1.5 rounded-md transition-colors ${isTaskActive
+                                                    ? "bg-amber-500 text-white hover:bg-amber-600"
+                                                    : "text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                                                 }`}
                                             >
                                                 {isTaskActive ? <Pause size={16} /> : <Play size={16} />}
@@ -387,9 +312,70 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                                                     setCompletingTask(t)
                                                     setShowCompleteModal(true)
                                                 }}
-                                                className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-all"
+                                                className="p-1.5 rounded-md text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
                                             >
                                                 <CheckCircle size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )})}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* HIGH PRIORITY */}
+                    {highPriority.length > 0 && (
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-2">
+                                    <Zap className="w-4 h-4 text-amber-600" />
+                                    <h3 className="font-semibold text-base text-slate-900 dark:text-white">High priority backlog</h3>
+                                </div>
+                            </div>
+                            <div className="p-3 space-y-2">
+                                {highPriority.map(t => {
+                                    const isTaskActive = activeTaskId === t.id
+
+                                    return (
+                                    <div
+                                        key={t.id}
+                                        onClick={() => handleCardClick(t)}
+                                        className={`p-3 rounded-lg flex justify-between items-center cursor-pointer transition-colors border ${isTaskActive ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40' : 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/40 hover:border-amber-300'}`}
+                                    >
+                                        <div className="flex items-center gap-2 truncate mr-2">
+                                            <span className="font-medium text-sm text-slate-900 dark:text-white truncate">{t.title}</span>
+                                            {isTaskActive && (
+                                                <span className="flex shrink-0 items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] rounded font-semibold animate-pulse">
+                                                    <div className="w-1 h-1 rounded-full bg-amber-500" />
+                                                    ON
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500 text-white">
+                                                High
+                                            </span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleTaskStartStop(t.id)
+                                                }}
+                                                className={`p-1.5 rounded-md transition-colors ${isTaskActive
+                                                    ? "bg-amber-500 text-white hover:bg-amber-600"
+                                                    : "text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                                                }`}
+                                            >
+                                                {isTaskActive ? <Pause size={14} /> : <Play size={14} />}
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setCompletingTask(t)
+                                                    setShowCompleteModal(true)
+                                                }}
+                                                className="p-1.5 rounded-md text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                            >
+                                                <CheckCircle size={14} />
                                             </button>
                                         </div>
                                     </div>
@@ -400,73 +386,76 @@ export function MyDayView({ userId, userName }: MyDayViewProps) {
                 </div>
 
                 {/* RIGHT COLUMN: SCHEDULE */}
-                <div className="space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-violet-100 dark:bg-violet-900/50 rounded-xl">
-                                <CalendarIcon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                <div className="space-y-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon className="w-4 h-4 text-violet-600" />
+                                <h3 className="font-semibold text-base text-slate-900 dark:text-white">Today&apos;s schedule</h3>
                             </div>
-                            <h3 className="text-xl font-bold text-foreground">Today's Schedule</h3>
                         </div>
 
-                        {todaysMeetings.length === 0 ? (
-                            <div className="p-6 text-center bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                                <CalendarIcon className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                                <p className="text-sm text-muted-foreground">No meetings scheduled for today.</p>
-                            </div>
-                        ) : (
-                            <div className="relative border-l-2 border-violet-200 dark:border-violet-800 ml-3 space-y-6 pl-6 py-2">
-                                {todaysMeetings.map(m => (
-                                    <div key={m.id} className="relative group">
-                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-violet-500 ring-4 ring-white dark:ring-slate-900 shadow-lg"></div>
-                                        <div className="bg-violet-50 dark:bg-violet-950/30 rounded-2xl p-4 border border-violet-100 dark:border-violet-900/50 group-hover:shadow-md transition-shadow">
-                                            <p className="text-xs font-bold text-violet-600 dark:text-violet-400 mb-1">
-                                                {new Date(m.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </p>
-                                            <h4 className="font-bold text-foreground leading-tight">{m.title}</h4>
-                                            <p className="text-xs text-muted-foreground mt-1 capitalize">{m.mode}</p>
+                        <div className="p-5">
+                            {todaysMeetings.length === 0 ? (
+                                <div className="text-center py-4">
+                                    <CalendarIcon className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No meetings scheduled for today.</p>
+                                </div>
+                            ) : (
+                                <div className="relative border-l-2 border-violet-200 dark:border-violet-900/40 ml-1.5 space-y-4 pl-5 py-1">
+                                    {todaysMeetings.map(m => (
+                                        <div key={m.id} className="relative">
+                                            <div className="absolute -left-[26px] top-1 w-3 h-3 rounded-full bg-violet-500 ring-4 ring-white dark:ring-slate-900"></div>
+                                            <div className="bg-violet-50 dark:bg-violet-950/30 rounded-lg p-3 border border-violet-100 dark:border-violet-900/40">
+                                                <p className="text-xs font-semibold text-violet-700 dark:text-violet-400 mb-0.5">
+                                                    {new Date(m.date_time_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                                <h4 className="font-semibold text-sm text-slate-900 dark:text-white leading-tight">{m.title}</h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 capitalize">{m.mode}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Time Tracking Widget */}
-                    <div className="relative overflow-hidden bg-emerald-500 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/25">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Clock className="w-5 h-5" />
-                                <h3 className="font-bold">Time Tracking</h3>
+                    {/* Time tracking widget */}
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-emerald-700" />
+                                <h3 className="font-semibold text-base text-slate-900 dark:text-white">Time tracking</h3>
                             </div>
+                        </div>
+                        <div className="p-5">
                             {isClockedIn && activeClockIn ? (
-                                <div className="mb-3">
+                                <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                                        <span className="text-xs text-emerald-100 font-medium">Currently tracking</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium uppercase tracking-wide">Currently tracking</span>
                                     </div>
-                                    <div className="text-2xl font-mono font-bold flex items-center gap-3">
+                                    <div className="text-xl font-mono font-bold text-slate-900 dark:text-white flex items-center gap-3">
                                         <Timer isActive={true} startTime={activeClockIn} />
                                         {activeTaskId && (
-                                            <button 
+                                            <button
                                                 onClick={() => handleTaskStartStop(activeTaskId)}
-                                                className="bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors"
+                                                className="bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 rounded-md p-1.5 transition-colors"
                                             >
-                                                <Pause className="w-4 h-4 text-white" />
+                                                <Pause className="w-3.5 h-3.5 text-emerald-700" />
                                             </button>
                                         )}
                                     </div>
                                     {activeTaskId && (
-                                        <p className="text-xs text-emerald-100 mt-2 truncate">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 truncate">
                                             Task: {tasks.find(t => t.id === activeTaskId)?.title || 'Unknown'}
                                         </p>
                                     )}
                                 </div>
                             ) : (
-                                <div className="mb-3">
-                                    <p className="text-emerald-100/90 text-sm font-medium">No active timer running.</p>
-                                    <p className="text-emerald-100/70 text-xs mt-1">Start a timer from a specific task in your task list to track productivity.</p>
+                                <div>
+                                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">No active timer running.</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Start a timer from a specific task in your task list to track productivity.</p>
                                 </div>
                             )}
                         </div>

@@ -161,26 +161,26 @@ export function TeamMemberDashboard({
       .reduce((acc, l) => acc + (l.duration_minutes || 0) * 60, 0)
   }, [timeLogs])
 
-  // --- Sidebar Widgets (Timer + Stats) ---
+  // --- Sidebar widgets (Timer + Stats) ---
   const sidebarWidgets = (
     <>
-      {/* ═══ Live Timer Widget ═══ */}
-      <div className={`mb-4 p-4 rounded-2xl border transition-all ${isClockedIn
-        ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"
+      {/* Live timer widget */}
+      <div className={`mb-3 p-4 rounded-lg border ${isClockedIn
+        ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/40"
         : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
         }`}>
-        <div className={`flex items-center gap-2 mb-2 ${isClockedIn ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-          <Clock size={16} />
-          <span className="text-xs font-semibold uppercase tracking-wider">
-            {isClockedIn ? "Working" : "Time Today"}
+        <div className={`flex items-center gap-2 mb-1.5 ${isClockedIn ? "text-emerald-700 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"}`}>
+          <Clock size={14} />
+          <span className="text-xs font-medium uppercase tracking-wide">
+            {isClockedIn ? "Working" : "Time today"}
           </span>
           {isClockedIn && (
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-auto" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-auto" />
           )}
         </div>
 
         {isClockedIn ? (
-          <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+          <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
             <Timer
               isActive={true}
               startTime={currentClockInTime}
@@ -188,39 +188,39 @@ export function TeamMemberDashboard({
             />
           </div>
         ) : (
-          <div className="text-2xl font-bold text-foreground">
-            {personalStats.todayHours} <span className="text-sm font-normal text-muted-foreground">hrs</span>
+          <div className="text-xl font-bold text-slate-900 dark:text-white">
+            {personalStats.todayHours} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">hrs</span>
           </div>
         )}
 
-        <div className="text-xs text-muted-foreground mt-1">
-          {isClockedIn ? "Clocked In" : "Clocked Out"}
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          {isClockedIn ? "Clocked in" : "Clocked out"}
         </div>
       </div>
 
-      {/* ═══ Personal Stats Widget ═══ */}
-      <div className="mb-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-2 mb-3 text-primary">
-          <TrendingUp size={16} />
-          <span className="text-xs font-semibold uppercase tracking-wider">This Week</span>
+      {/* Personal stats widget */}
+      <div className="mb-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 mb-3 text-emerald-700 dark:text-emerald-400">
+          <TrendingUp size={14} />
+          <span className="text-xs font-medium uppercase tracking-wide">This week</span>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-900/50">
-            <p className="text-lg font-bold text-foreground">{personalStats.weeklyHours}</p>
-            <p className="text-[10px] text-muted-foreground uppercase font-medium">Hours</p>
+          <div className="text-center p-2 rounded-md bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800">
+            <p className="text-base font-bold text-slate-900 dark:text-white">{personalStats.weeklyHours}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-medium">Hours</p>
           </div>
-          <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-900/50">
-            <p className="text-lg font-bold text-foreground">{weeklyCompleted}</p>
-            <p className="text-[10px] text-muted-foreground uppercase font-medium">Completed</p>
+          <div className="text-center p-2 rounded-md bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800">
+            <p className="text-base font-bold text-slate-900 dark:text-white">{weeklyCompleted}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-medium">Completed</p>
           </div>
-          <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-900/50">
-            <p className="text-lg font-bold text-foreground">{personalStats.activeTasks}</p>
-            <p className="text-[10px] text-muted-foreground uppercase font-medium">Active</p>
+          <div className="text-center p-2 rounded-md bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800">
+            <p className="text-base font-bold text-slate-900 dark:text-white">{personalStats.activeTasks}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-medium">Active</p>
           </div>
-          <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-900/50">
-            <p className="text-lg font-bold text-foreground">{personalStats.completionRate}%</p>
-            <p className="text-[10px] text-muted-foreground uppercase font-medium">Rate</p>
+          <div className="text-center p-2 rounded-md bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800">
+            <p className="text-base font-bold text-slate-900 dark:text-white">{personalStats.completionRate}%</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-medium">Rate</p>
           </div>
         </div>
       </div>
@@ -264,31 +264,23 @@ export function TeamMemberDashboard({
       )}
       {activeView === "activity" && (
         <div className="space-y-6 animate-fade-in">
-          <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <Activity className="w-5 h-5 text-indigo-200" />
-                <span className="text-sm font-medium text-indigo-100 uppercase tracking-wider">Feed</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">Activity Feed</h1>
-              <p className="text-indigo-100/80 text-lg">Recent actions and updates across the platform</p>
-            </div>
+          <div>
+            <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Activity feed</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Recent actions and updates across the platform.</p>
           </div>
           <ActivityFeed limit={30} />
         </div>
       )}
 
-      {/* Create Task FAB — hidden on tasks tab (it has its own button) */}
+      {/* Create task FAB — hidden on tasks tab (it has its own button) */}
       {activeView !== "tasks" && activeView !== "activity" && activeView !== "projects" && (
         <button
           onClick={() => setShowCreateTask(true)}
-          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 flex items-center gap-2 px-4 py-3 md:px-5 md:py-3 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 hover:brightness-110 active:scale-[0.97] transition-all duration-200"
+          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 flex items-center gap-2 px-4 py-3 rounded-lg bg-emerald-700 text-white font-semibold text-sm shadow-lg hover:bg-emerald-800 active:bg-emerald-900 transition-colors"
           aria-label="Create new task"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-          <span className="hidden sm:inline">New Task</span>
+          <span className="hidden sm:inline">New task</span>
         </button>
       )}
 
