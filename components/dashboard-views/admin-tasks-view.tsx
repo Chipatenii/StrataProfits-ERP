@@ -37,7 +37,6 @@ export function AdminTasksView({
     const filteredTasks = tasks.filter((task) => {
         const status = normalize(task.status)
         const approvalStatus = normalize(task.approval_status)
-        // Apply search filter first
         if (searchQuery) {
             const q = searchQuery.toLowerCase()
             if (!task.title?.toLowerCase().includes(q) && !task.description?.toLowerCase().includes(q)) return false
@@ -45,7 +44,6 @@ export function AdminTasksView({
         if (taskFilter === "all") return true
         if (taskFilter === "active") return status !== "completed" && status !== "verified" && status !== "pending_approval"
         if (taskFilter === "completed") return status === "completed" || status === "verified"
-        // review: only show tasks that need admin action (not already verified)
         if (taskFilter === "review") return (status === "pending_approval" || approvalStatus === "pending") && status !== "verified"
         return true
     })
@@ -56,92 +54,76 @@ export function AdminTasksView({
         return member ? member.full_name : "Unknown"
     }
 
-    const activeCount = tasks.filter(t => normalize(t.status) !== "completed" && normalize(t.status) !== "verified").length
+    const activeCount = tasks.filter(t => {
+        const s = normalize(t.status)
+        return s !== "completed" && s !== "verified" && s !== "pending_approval"
+    }).length
     const reviewCount = tasks.filter(t => normalize(t.status) === "pending_approval" || normalize(t.status) === "completed" || normalize(t.approval_status) === "pending").length
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <ListTodo className="w-5 h-5 text-amber-200" />
-                            <span className="text-sm font-medium text-amber-100 uppercase tracking-wider">Task Management</span>
-                        </div>
-                        <h1 className="text-3xl md:text-4xl font-bold mb-2">All Tasks</h1>
-                        <p className="text-amber-100/80 text-lg">Manage and track all team tasks in one place</p>
-                    </div>
-                    <button
-                        onClick={onCreateTask}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-white text-orange-600 rounded-xl hover:shadow-lg hover:bg-orange-50 active:scale-[0.98] transition-all duration-200 font-bold shadow-lg"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Create Task
-                    </button>
+        <div className="space-y-6 animate-fade-in">
+            {/* Page header (QuickBooks-style, flat) */}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Tasks</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage and track all team tasks in one place.</p>
                 </div>
-
-                {/* Quick Stats in Hero */}
-                <div className="relative z-10 grid grid-cols-3 gap-4 mt-8">
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
-                        <p className="text-3xl font-bold">{tasks.length}</p>
-                        <p className="text-sm text-amber-100/80">Total Tasks</p>
-                    </div>
-                    <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
-                        <p className="text-3xl font-bold">{activeCount}</p>
-                        <p className="text-sm text-amber-100/80">Active</p>
-                    </div>
-                    <div className={`backdrop-blur-lg rounded-2xl p-4 border text-center ${reviewCount > 0 ? 'bg-yellow-500/30 border-yellow-400/40' : 'bg-white/15 border-white/20'}`}>
-                        <p className="text-3xl font-bold">{reviewCount}</p>
-                        <p className="text-sm text-amber-100/80">Requires Review</p>
-                    </div>
-                </div>
+                <button
+                    onClick={onCreateTask}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 active:bg-emerald-900 transition-colors font-semibold text-sm shadow-sm"
+                >
+                    <Plus className="w-4 h-4" />
+                    Create task
+                </button>
             </div>
 
-            {/* Search + Filter Row */}
+            {/* Headline KPI strip */}
+            <div className="grid grid-cols-3 gap-3 md:gap-4">
+                <KpiCard label="Total tasks" value={tasks.length.toString()} tone="slate" />
+                <KpiCard label="Active" value={activeCount.toString()} tone="slate" />
+                <KpiCard label="Requires review" value={reviewCount.toString()} tone={reviewCount > 0 ? "amber" : "slate"} />
+            </div>
+
+            {/* Search + Filter row */}
             <div className="flex flex-col sm:flex-row gap-3">
-                {/* Search */}
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search tasks by title or description..."
-                        className="w-full pl-9 pr-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 transition-all shadow-lg shadow-black/5 dark:shadow-black/20"
+                        placeholder="Search tasks by title or description"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 transition-colors"
                     />
                 </div>
-                {/* Filter Tabs */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 flex flex-wrap gap-2">
+                <div className="bg-white dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-800 flex flex-wrap gap-1">
                     {(["all", "review", "active", "completed"] as const).map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setTaskFilter(filter)}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${taskFilter === filter
-                                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
-                                : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${taskFilter === filter
+                                ? "bg-emerald-700 text-white"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white"
                                 }`}
                         >
                             {filter.charAt(0).toUpperCase() + filter.slice(1)}
                             {filter === "review" && reviewCount > 0 && (
-                                <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] bg-white/30 rounded-full">{reviewCount}</span>
+                                <span className={`ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] text-[10px] rounded-full px-1 ${taskFilter === filter ? "bg-white/25" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}`}>
+                                    {reviewCount}
+                                </span>
                             )}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Tasks Grid */}
-            <div className="space-y-4">
+            {/* Tasks list */}
+            <div className="space-y-3">
                 {filteredTasks.length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
-                        <ListTodo className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-foreground mb-2">No tasks found</h3>
-                        <p className="text-muted-foreground">Adjust your filters or create a new task to get started.</p>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800">
+                        <ListTodo className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">No tasks found</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Adjust your filters or create a new task to get started.</p>
                     </div>
                 ) : (
                     filteredTasks.map((task) => {
@@ -154,44 +136,45 @@ export function AdminTasksView({
                             <div
                                 key={task.id}
                                 onClick={() => handleCardClick(task)}
-                                className="group bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+                                className="group bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer"
                             >
-                                <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-3">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap mb-2">
-                                                <h3 className="font-bold text-lg text-foreground">{task.title}</h3>
+                                            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                                                <h3 className="font-semibold text-[15px] text-slate-900 dark:text-white">{task.title}</h3>
                                                 {isPendingApproval && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs rounded-lg font-semibold">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[11px] rounded-md font-medium">
                                                         <Clock className="w-3 h-3" />
-                                                        Needs Approval
+                                                        Needs approval
                                                     </span>
                                                 )}
                                                 {isCompletedNeedsReview && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs rounded-lg font-semibold">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-50 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[11px] rounded-md font-medium">
                                                         <CheckCircle2 className="w-3 h-3" />
-                                                        Needs Verification
+                                                        Needs verification
                                                     </span>
                                                 )}
-                                                <span className="text-xs font-mono text-muted-foreground bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
-                                                    {(task.estimated_hours || 0).toFixed(1)}h Est
+                                                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                                                    {(task.estimated_hours || 0).toFixed(1)}h est
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
+                                            {task.description && (
+                                                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{task.description}</p>
+                                            )}
                                         </div>
 
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-1 shrink-0">
+                                        <div className="flex gap-0.5 shrink-0">
                                             {(isPendingApproval || isCompletedNeedsReview) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         onReviewTask(task)
                                                     }}
-                                                    className={`p-2.5 rounded-xl transition-colors ${isCompletedNeedsReview ? 'hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600' : 'hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-600'}`}
-                                                    title={isCompletedNeedsReview ? "Verify Task" : "Approve Task"}
+                                                    className={`p-2 rounded-md transition-colors ${isCompletedNeedsReview ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'hover:bg-amber-50 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}
+                                                    title={isCompletedNeedsReview ? "Verify task" : "Approve task"}
                                                 >
-                                                    <ClipboardCheck className="w-5 h-5" />
+                                                    <ClipboardCheck className="w-4 h-4" />
                                                 </button>
                                             )}
                                             <button
@@ -199,55 +182,53 @@ export function AdminTasksView({
                                                     e.stopPropagation()
                                                     onUpdateTask(task)
                                                 }}
-                                                className="p-2.5 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 transition-colors"
-                                                title="Edit Task"
+                                                className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
+                                                title="Edit task"
                                             >
-                                                <Edit className="w-5 h-5" />
+                                                <Edit className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     onDeleteTask(task.id)
                                                 }}
-                                                className="p-2.5 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 transition-colors"
+                                                className="p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
                                                 title="Delete task"
                                             >
-                                                <Trash2 className="w-5 h-5" />
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* Tags Row */}
-                                    <div className="flex flex-wrap gap-2 items-center">
-                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold ${isFullyDone ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" :
-                                                isCompletedNeedsReview ? "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300" :
-                                                isInProgress ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" :
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium ${isFullyDone ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
+                                                isCompletedNeedsReview ? "bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300" :
+                                                isInProgress ? "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" :
                                                     "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                             }`}>
                                             {isFullyDone && <CheckCircle2 className="w-3 h-3" />}
                                             {task.status?.replace("_", " ")}
                                         </span>
-                                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${task.priority === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300" :
-                                                task.priority === "medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300" :
-                                                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium ${task.priority === "high" ? "bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300" :
+                                                task.priority === "medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
+                                                    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                                             }`}>
                                             {task.priority}
                                         </span>
-                                        <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs">
-                                            👤 {getMemberName(task.assigned_to)}
+                                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[11px]">
+                                            {getMemberName(task.assigned_to)}
                                         </span>
                                         {task.due_date && (
-                                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[11px]">
                                                 <Clock className="w-3 h-3" />
                                                 {new Date(task.due_date).toLocaleDateString()}
                                             </span>
                                         )}
                                     </div>
 
-                                    {/* Completion Notes */}
                                     {(isFullyDone || isCompletedNeedsReview) && task.completion_notes && (
-                                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
-                                            <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1">Completion Notes:</p>
+                                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
+                                            <p className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 mb-0.5 uppercase tracking-wide">Completion notes</p>
                                             <p className="text-sm text-emerald-700 dark:text-emerald-400 italic">"{task.completion_notes}"</p>
                                         </div>
                                     )}
@@ -264,6 +245,16 @@ export function AdminTasksView({
                 members={members}
                 onOpenChange={setIsDetailModalOpen}
             />
+        </div>
+    )
+}
+
+function KpiCard({ label, value, tone }: { label: string; value: string; tone: "slate" | "amber" }) {
+    const valueClass = tone === "amber" ? "text-amber-700 dark:text-amber-300" : "text-slate-900 dark:text-white"
+    return (
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
+            <p className={`text-2xl md:text-[26px] font-bold leading-tight mt-1 ${valueClass}`}>{value}</p>
         </div>
     )
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import useSWR from "swr"
-import { Briefcase, Calendar, Star, ClipboardList } from "lucide-react"
+import { Calendar, Star, ClipboardList } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { TimeOffTab } from "@/components/hr/time-off-tab"
 import { ReviewsTab } from "@/components/hr/reviews-tab"
@@ -44,27 +44,17 @@ export function HRView() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Hero */}
-            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Briefcase className="w-5 h-5 text-rose-200" />
-                        <span className="text-sm font-medium text-rose-100 uppercase tracking-wider">Human Resources</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">HR & Onboarding</h1>
-                    <p className="text-rose-100/80 text-lg">
-                        {isAdmin
-                            ? "Manage time-off requests, write performance reviews, and configure onboarding checklists"
-                            : "Request time off, view your reviews, and track your onboarding progress"
-                        }
-                    </p>
-                </div>
+            <div>
+                <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">HR &amp; onboarding</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {isAdmin
+                        ? "Manage time-off requests, performance reviews, and onboarding checklists."
+                        : "Request time off, view your reviews, and track your onboarding progress."
+                    }
+                </p>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-fit">
+            <div className="flex gap-0.5 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg w-fit">
                 {TABS.map(tab => {
                     const Icon = tab.icon
                     const isActive = activeTab === tab.id
@@ -72,10 +62,10 @@ export function HRView() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                                 isActive
-                                    ? "bg-white dark:bg-slate-900 text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    ? "bg-emerald-700 text-white"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                             }`}
                         >
                             <Icon className="w-4 h-4" />

@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Loader2 } from "lucide-react"
+import { Plus, Search, Edit2 } from "lucide-react"
 import { Expense } from "@/lib/types"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CreateExpenseModal } from "@/components/modals/create-expense-modal"
 
@@ -48,38 +47,42 @@ export function ExpensesView() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "Paid": return "bg-green-100 text-green-700"
-            case "Approved": return "bg-blue-100 text-blue-700"
-            case "Rejected": return "bg-red-100 text-red-700"
-            default: return "bg-yellow-100 text-yellow-700" // Pending
+            case "Paid": return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+            case "Approved": return "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+            case "Rejected": return "bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+            default: return "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
         }
     }
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <Loader2 className="animate-spin text-primary w-8 h-8" />
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Loading expenses...</p>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Expenses</h2>
-                    <p className="text-muted-foreground">Track company expenses and outgoing payments</p>
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Expenses</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Track company expenses and outgoing payments.</p>
                 </div>
-                <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto gap-2">
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 active:bg-emerald-900 transition-colors font-semibold text-sm shadow-sm"
+                >
                     <Plus className="w-4 h-4" />
-                    Record Expense
-                </Button>
+                    Record expense
+                </button>
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <Input
                         placeholder="Search by category or description..."
                         value={searchTerm}
@@ -89,11 +92,11 @@ export function ExpensesView() {
                 </div>
             </div>
 
-            {/* Expenses List */}
-            <div className="bg-white rounded-lg border border-border overflow-hidden">
+            {/* Expenses list */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
+                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide border-b border-slate-200 dark:border-slate-800">
                             <tr>
                                 <th className="px-4 py-3 text-left font-medium">Description</th>
                                 <th className="px-4 py-3 text-left font-medium">Category</th>
@@ -103,27 +106,27 @@ export function ExpensesView() {
                                 <th className="px-4 py-3 text-right font-medium">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {filteredExpenses.length > 0 ? (
                                 filteredExpenses.map((expense) => (
-                                    <tr key={expense.id} className="hover:bg-muted/50 transition-colors">
-                                        <td className="px-4 py-3 font-medium">
+                                    <tr key={expense.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
                                             {expense.description || "No description"}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                                                 {expense.category}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-muted-foreground">
+                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                                             {new Date(expense.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(expense.status)}`}>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${getStatusColor(expense.status)}`}>
                                                 {expense.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right font-mono font-medium text-red-600">
+                                        <td className="px-4 py-3 text-right font-mono font-semibold text-rose-600 dark:text-rose-400">
                                             {formatCurrency(expense.amount, expense.currency)}
                                         </td>
                                         <td className="px-4 py-3 text-right">
@@ -132,17 +135,17 @@ export function ExpensesView() {
                                                     setExpenseToEdit(expense)
                                                     setShowCreateModal(true)
                                                 }}
-                                                className="p-1.5 hover:bg-slate-100 rounded text-blue-600 transition-colors"
-                                                title="Edit Expense"
+                                                className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-md transition-colors"
+                                                title="Edit expense"
                                             >
-                                                <Plus size={16} className="rotate-45" />
+                                                <Edit2 className="w-4 h-4" />
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                    <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                                         No expenses found.
                                     </td>
                                 </tr>

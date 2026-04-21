@@ -17,10 +17,10 @@ function getRelativeDateLabel(dateStr: string): { label: string; className: stri
     const target = new Date(date.getFullYear(), date.getMonth(), date.getDate())
     const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000)
 
-    if (diffDays < 0) return { label: "Overdue", className: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300" }
-    if (diffDays === 0) return { label: "Today", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" }
-    if (diffDays === 1) return { label: "Tomorrow", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300" }
-    if (diffDays <= 7) return { label: `In ${diffDays} days`, className: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" }
+    if (diffDays < 0) return { label: "Overdue", className: "bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" }
+    if (diffDays === 0) return { label: "Today", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" }
+    if (diffDays === 1) return { label: "Tomorrow", className: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" }
+    if (diffDays <= 7) return { label: `In ${diffDays} days`, className: "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" }
     return null
 }
 
@@ -47,7 +47,6 @@ export function MeetingsView() {
     const { data: meetings = [], isLoading: loading, mutate: fetchMeetings } = useSWR<Meeting[]>("/api/meetings", fetcher)
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
-        // Optimistic update
         fetchMeetings(meetings.map(m => m.id === id ? { ...m, status: newStatus as Meeting["status"] } : m), false)
 
         try {
@@ -61,7 +60,7 @@ export function MeetingsView() {
         } catch (error) {
             console.error("Error updating status:", error)
             toast.error("Failed to update status")
-            fetchMeetings() // Revert on failure
+            fetchMeetings()
         }
     }
 
@@ -72,7 +71,6 @@ export function MeetingsView() {
                 label: "Delete",
                 onClick: async () => {
                     setDeletingId(meeting.id)
-                    // Optimistic remove
                     fetchMeetings(meetings.filter(m => m.id !== meeting.id), false)
                     try {
                         const res = await fetch(`/api/meetings?id=${meeting.id}`, { method: "DELETE" })
@@ -80,7 +78,7 @@ export function MeetingsView() {
                         toast.success("Meeting deleted")
                     } catch {
                         toast.error("Failed to delete meeting")
-                        fetchMeetings() // Restore on failure
+                        fetchMeetings()
                     } finally {
                         setDeletingId(null)
                     }
@@ -90,12 +88,10 @@ export function MeetingsView() {
         })
     }
 
-    // Derived counts
     const upcomingCount = meetings.filter(m => m.status !== "Completed" && m.status !== "Cancelled").length
     const completedCount = meetings.filter(m => m.status === "Completed").length
     const cancelledCount = meetings.filter(m => m.status === "Cancelled").length
 
-    // Filtered list
     const filteredMeetings = useMemo(() => {
         let list = meetings
         if (activeTab === "Upcoming") list = list.filter(m => m.status !== "Completed" && m.status !== "Cancelled")
@@ -116,69 +112,58 @@ export function MeetingsView() {
     const TABS: FilterTab[] = ["All", "Upcoming", "Completed", "Cancelled"]
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-primary/30">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <CalendarDays className="w-5 h-5 text-cyan-200" />
-                            <span className="text-sm font-medium text-cyan-100 uppercase tracking-wider">Calendar</span>
-                        </div>
-                        <h1 className="text-3xl md:text-4xl font-bold mb-2">Meetings & Logistics</h1>
-                        <p className="text-cyan-100/80 text-lg">Schedule and manage your calendar</p>
-                    </div>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-xl hover:shadow-lg hover:bg-blue-50 active:scale-[0.98] transition-all duration-200 font-bold shadow-lg"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Schedule Meeting
-                    </button>
+        <div className="space-y-6 animate-fade-in">
+            {/* Page header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Meetings</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Schedule and manage your calendar.</p>
                 </div>
-
-                {/* Quick Stats */}
-                <div className="relative z-10 grid grid-cols-4 gap-3 mt-8">
-                    {[
-                        { value: meetings.length, label: "Total" },
-                        { value: upcomingCount, label: "Upcoming" },
-                        { value: completedCount, label: "Completed" },
-                        { value: cancelledCount, label: "Cancelled" },
-                    ].map(stat => (
-                        <div key={stat.label} className="bg-white/15 backdrop-blur-lg rounded-2xl p-4 border border-white/20 text-center">
-                            <p className="text-3xl font-bold">{stat.value}</p>
-                            <p className="text-sm text-cyan-100/80">{stat.label}</p>
-                        </div>
-                    ))}
-                </div>
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 active:bg-emerald-900 transition-colors font-semibold text-sm shadow-sm"
+                >
+                    <Plus className="w-4 h-4" />
+                    Schedule meeting
+                </button>
             </div>
 
-            {/* Search + Filter Toolbar */}
+            {/* KPI strip */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                    { value: meetings.length, label: "Total" },
+                    { value: upcomingCount, label: "Upcoming" },
+                    { value: completedCount, label: "Completed" },
+                    { value: cancelledCount, label: "Cancelled" },
+                ].map(stat => (
+                    <div key={stat.label} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{stat.label}</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stat.value}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* Search + filter toolbar */}
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                {/* Search */}
                 <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     <input
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        placeholder="Search by title, client or project…"
-                        className="w-full pl-9 pr-4 py-2 rounded-xl bg-card border border-border/30 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        placeholder="Search by title, client or project..."
+                        className="w-full pl-9 pr-4 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
                     />
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="flex gap-1 p-1 bg-card border border-border/30 rounded-xl">
+                <div className="flex gap-0.5 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
                     {TABS.map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab
-                                    ? "bg-blue-600 text-white shadow"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === tab
+                                    ? "bg-emerald-700 text-white"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                                 }`}
                         >
                             {tab}
@@ -187,20 +172,20 @@ export function MeetingsView() {
                 </div>
             </div>
 
-            {/* Meetings List */}
-            <div className="space-y-4">
+            {/* Meetings list */}
+            <div className="space-y-3">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-16 gap-4">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
-                        <p className="text-muted-foreground">Loading meetings...</p>
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Loading meetings...</p>
                     </div>
                 ) : filteredMeetings.length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center shadow-xl shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
-                        <CalendarDays className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800">
+                        <CalendarDays className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">
                             {search ? "No meetings match your search" : "No meetings scheduled"}
                         </h3>
-                        <p className="text-muted-foreground">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
                             {search ? "Try a different keyword." : "Schedule your first meeting to get started."}
                         </p>
                     </div>
@@ -216,111 +201,101 @@ export function MeetingsView() {
                         return (
                             <div
                                 key={meeting.id}
-                                className="group bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg shadow-black/5 dark:shadow-black/20 border-l-4 border-l-blue-500 border border-slate-200/50 dark:border-slate-800 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+                                className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/40 transition-colors"
                             >
                                 <div className="flex flex-col gap-4">
-
-                                    {/* Top row: date + content + badges */}
                                     <div className="flex gap-4 items-start w-full">
-                                        {/* Date Box */}
-                                        <div className="flex flex-col items-center justify-center bg-primary text-white rounded-2xl p-3 min-w-[70px] h-min shrink-0 shadow-lg shadow-primary/25">
-                                            <span className="text-xs font-bold uppercase">
+                                        {/* Date box */}
+                                        <div className="flex flex-col items-center justify-center bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg p-2.5 min-w-[60px] h-min shrink-0">
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide">
                                                 {new Date(meeting.date_time_start).toLocaleDateString(undefined, { month: "short" })}
                                             </span>
-                                            <span className="text-2xl font-bold">
+                                            <span className="text-xl font-bold">
                                                 {new Date(meeting.date_time_start).getDate()}
                                             </span>
                                         </div>
 
-                                        {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start gap-2 flex-wrap">
-                                                <h3 className="font-bold text-lg text-foreground leading-tight truncate max-w-xs">
+                                                <h3 className="font-semibold text-base text-slate-900 dark:text-white leading-tight truncate max-w-xs">
                                                     {meeting.title}
                                                 </h3>
                                                 {relativeBadge && (
-                                                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full shrink-0 ${relativeBadge.className}`}>
+                                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-md shrink-0 ${relativeBadge.className}`}>
                                                         {relativeBadge.label}
                                                     </span>
                                                 )}
                                             </div>
 
-                                            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mt-2">
-                                                {/* Time */}
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                                    <Clock className="w-4 h-4 text-blue-500" />
+                                            <div className="flex flex-wrap gap-1.5 text-xs mt-2">
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md">
+                                                    <Clock className="w-3.5 h-3.5 text-emerald-700" />
                                                     {new Date(meeting.date_time_start).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                                                    {duration && <span className="text-xs text-muted-foreground">· {duration}</span>}
+                                                    {duration && <span className="text-slate-500 dark:text-slate-400">· {duration}</span>}
                                                 </span>
 
-                                                {/* Mode */}
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ${
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${
                                                     meeting.mode === "Zoom" || meeting.mode === "GoogleMeet"
-                                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                                                        ? "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                                                         : meeting.mode === "InPerson"
-                                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
-                                                            : "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300"
+                                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                                            : "bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
                                                 }`}>
-                                                    {meeting.mode === "Zoom" || meeting.mode === "GoogleMeet" ? <Video className="w-4 h-4" />
-                                                        : meeting.mode === "InPerson" ? <MapPin className="w-4 h-4" />
-                                                            : <Phone className="w-4 h-4" />}
+                                                    {meeting.mode === "Zoom" || meeting.mode === "GoogleMeet" ? <Video className="w-3.5 h-3.5" />
+                                                        : meeting.mode === "InPerson" ? <MapPin className="w-3.5 h-3.5" />
+                                                            : <Phone className="w-3.5 h-3.5" />}
                                                     {meeting.mode === "GoogleMeet" ? "Google Meet"
-                                                        : meeting.mode === "InPerson" ? "In Person"
-                                                            : meeting.mode === "PhoneCall" ? "Phone Call"
+                                                        : meeting.mode === "InPerson" ? "In person"
+                                                            : meeting.mode === "PhoneCall" ? "Phone call"
                                                                 : meeting.mode}
                                                 </span>
 
-                                                {/* Meeting link */}
                                                 {(meeting as any).meeting_link && (
                                                     <a
                                                         href={(meeting as any).meeting_link}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 rounded-lg hover:underline"
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-md hover:underline"
                                                         onClick={e => e.stopPropagation()}
                                                     >
-                                                        <Link2 className="w-4 h-4" />
+                                                        <Link2 className="w-3.5 h-3.5" />
                                                         Join
                                                     </a>
                                                 )}
 
-                                                {/* Client */}
                                                 {meeting.client?.name && (
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg font-medium text-foreground">
-                                                        <User className="w-4 h-4 text-slate-500" />
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md font-medium">
+                                                        <User className="w-3.5 h-3.5 text-slate-400" />
                                                         {meeting.client.name}
                                                     </span>
                                                 )}
 
-                                                {/* Assigned To */}
                                                 {assignedName && (
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300 rounded-lg">
-                                                        <User className="w-4 h-4" />
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 rounded-md">
+                                                        <User className="w-3.5 h-3.5" />
                                                         {assignedName}
                                                     </span>
                                                 )}
                                             </div>
 
-                                            {/* Agenda snippet */}
                                             {agendaSnippet && (
-                                                <p className="mt-2 text-xs text-muted-foreground line-clamp-2 italic">
+                                                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 italic">
                                                     {agendaSnippet}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Status & Actions */}
-                                    <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 w-full">
+                                    <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 w-full">
                                         <div className="flex items-center gap-2">
                                             <select
                                                 value={meeting.status}
                                                 onChange={(e) => handleUpdateStatus(meeting.id, e.target.value)}
-                                                className={`px-3 py-1.5 text-xs rounded-lg font-semibold border-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-colors ${
-                                                    meeting.status === "Approved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
-                                                        : meeting.status === "Completed" ? "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                                            : meeting.status === "Cancelled" ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
-                                                                : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
+                                                className={`px-2.5 py-1 text-xs rounded-md font-semibold border-none focus:ring-2 focus:ring-emerald-600/20 cursor-pointer ${
+                                                    meeting.status === "Approved" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                                        : meeting.status === "Completed" ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                                            : meeting.status === "Cancelled" ? "bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+                                                                : "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
                                                 }`}
                                                 onClick={e => e.stopPropagation()}
                                             >
@@ -330,24 +305,22 @@ export function MeetingsView() {
                                                 <option value="Cancelled">Cancelled</option>
                                             </select>
 
-                                            {/* Edit */}
                                             <button
                                                 onClick={() => {
                                                     setEditingMeeting(meeting)
                                                     setShowCreateModal(true)
                                                 }}
-                                                className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl transition-colors"
-                                                title="Edit Meeting"
+                                                className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-md transition-colors"
+                                                title="Edit meeting"
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
 
-                                            {/* Delete */}
                                             <button
                                                 onClick={() => handleDelete(meeting)}
                                                 disabled={deletingId === meeting.id}
-                                                className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-colors disabled:opacity-40"
-                                                title="Delete Meeting"
+                                                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-md transition-colors disabled:opacity-40"
+                                                title="Delete meeting"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>

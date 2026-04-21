@@ -1,17 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { DailyCheckIn, UserProfile } from "@/lib/types"
-import { Button } from "@/components/ui/button"
+import { DailyCheckIn } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { Loader2, MessageSquare, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import { format } from "date-fns"
 
-export function DailyCheckInView({ userId, userName }: { userId: string, userName: string }) {
-  const supabase = createClient()
+export function DailyCheckInView({ userId }: { userId: string, userName: string }) {
   const [checkIns, setCheckIns] = useState<DailyCheckIn[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -33,8 +30,7 @@ export function DailyCheckInView({ userId, userName }: { userId: string, userNam
       if (response.ok) {
         const data = await response.json()
         setCheckIns(data)
-        
-        // Check if current user has checked in today
+
         const today = new Date().toISOString().split("T")[0]
         const userCheckIn = data.find((c: DailyCheckIn) => c.user_id === userId && c.date === today)
         if (userCheckIn) {
@@ -81,120 +77,123 @@ export function DailyCheckInView({ userId, userName }: { userId: string, userNam
 
   if (loading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Loading check-ins...</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-bold tracking-tight">Daily Stand-ups</h2>
-        <p className="text-muted-foreground">
+    <div className="space-y-6 animate-fade-in">
+      {/* Page header */}
+      <div>
+        <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Daily stand-ups</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Async check-ins for the team. See what everyone is working on today.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Submission Form */}
-        <div className="lg:col-span-1 border rounded-xl bg-card p-6 shadow-sm h-fit">
-          <div className="flex items-center gap-2 font-semibold text-lg mb-6">
-            <MessageSquare className="text-primary w-5 h-5" />
-            Your Check-in
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Submission form */}
+        <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 h-fit">
+          <h3 className="font-semibold text-base text-slate-900 dark:text-white mb-4">Your check-in</h3>
 
           {hasCheckedInToday ? (
-            <div className="flex flex-col items-center justify-center p-6 text-center bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900 rounded-lg">
-              <CheckCircle2 className="w-12 h-12 text-emerald-500 mb-3" />
-              <h3 className="font-semibold text-emerald-800 dark:text-emerald-300">You're all set!</h3>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
+            <div className="flex flex-col items-center justify-center p-5 text-center bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 rounded-lg">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 mb-2" />
+              <h3 className="font-semibold text-sm text-emerald-800 dark:text-emerald-300">You&apos;re all set</h3>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
                 Your stand-up for today has been recorded.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="did">What did you do yesterday?</Label>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="did" className="text-xs font-medium text-slate-700 dark:text-slate-300">What did you do yesterday?</Label>
                 <Textarea
                   id="did"
                   placeholder="e.g., Designed the new dashboard..."
-                  className="resize-none h-20 bg-background"
+                  className="resize-none h-20 text-sm"
                   value={formData.what_i_did}
                   onChange={(e) => setFormData({ ...formData, what_i_did: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="doing">What are you doing today?</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="doing" className="text-xs font-medium text-slate-700 dark:text-slate-300">What are you doing today?</Label>
                 <Textarea
                   id="doing"
                   placeholder="e.g., Implementing the notification system..."
-                  className="resize-none h-20 bg-background"
+                  className="resize-none h-20 text-sm"
                   value={formData.what_im_doing}
                   onChange={(e) => setFormData({ ...formData, what_im_doing: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="blockers">Any blockers? (Optional)</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="blockers" className="text-xs font-medium text-slate-700 dark:text-slate-300">Any blockers? (optional)</Label>
                 <Textarea
                   id="blockers"
                   placeholder="e.g., Waiting for API keys..."
-                  className="resize-none h-16 bg-background"
+                  className="resize-none h-16 text-sm"
                   value={formData.blockers}
                   onChange={(e) => setFormData({ ...formData, blockers: e.target.value })}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Post Stand-up
-              </Button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 active:bg-emerald-900 transition-colors font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Post stand-up
+              </button>
             </form>
           )}
         </div>
 
-        {/* Team Feed */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-xl font-semibold mb-4">Today's Updates</h3>
-          
+        {/* Team feed */}
+        <div className="lg:col-span-2 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Today&apos;s updates</h3>
+
           {checkIns.length === 0 ? (
-            <div className="p-8 text-center border border-dashed rounded-xl bg-muted/20 text-muted-foreground">
-              No one has checked in yet today.
+            <div className="p-8 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30">
+              <p className="text-sm text-slate-500 dark:text-slate-400">No one has checked in yet today.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {checkIns.map((checkin) => (
-                <div key={checkin.id} className="p-5 border rounded-xl bg-card shadow-sm space-y-4">
+                <div key={checkin.id} className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
                   <div className="flex items-center gap-3">
                     {checkin.user?.avatar_url ? (
-                      <img src={checkin.user.avatar_url} alt="" className="w-10 h-10 rounded-full bg-muted" />
+                      <img src={checkin.user.avatar_url} alt="" className="w-9 h-9 rounded-full bg-slate-100" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                      <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-semibold text-sm">
                         {checkin.user?.full_name?.charAt(0) || "U"}
                       </div>
                     )}
                     <div>
-                      <div className="font-semibold text-foreground">{checkin.user?.full_name || "Unknown User"}</div>
-                      <div className="text-xs text-muted-foreground">{format(new Date(checkin.created_at), "h:mm a")}</div>
+                      <div className="font-semibold text-sm text-slate-900 dark:text-white">{checkin.user?.full_name || "Unknown user"}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{format(new Date(checkin.created_at), "h:mm a")}</div>
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-4 pt-2">
+                  <div className="grid sm:grid-cols-2 gap-4 pt-1">
                     <div className="space-y-1">
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">Yesterday</div>
-                      <p className="text-sm text-foreground/90 whitespace-pre-wrap">{checkin.what_i_did}</p>
+                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Yesterday</div>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{checkin.what_i_did}</p>
                     </div>
                     <div className="space-y-1">
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">Today</div>
-                      <p className="text-sm text-foreground/90 whitespace-pre-wrap">{checkin.what_im_doing}</p>
+                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Today</div>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{checkin.what_im_doing}</p>
                     </div>
                   </div>
 
                   {checkin.blockers && (
-                    <div className="mt-4 p-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900 flex gap-2">
-                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                    <div className="mt-3 p-3 rounded-lg border border-rose-100 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-900/40 flex gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                       <div>
-                        <div className="text-xs font-semibold uppercase text-red-600 dark:text-red-400">Blockers</div>
-                        <p className="text-sm text-red-800 dark:text-red-300">{checkin.blockers}</p>
+                        <div className="text-xs font-medium uppercase tracking-wide text-rose-700 dark:text-rose-400">Blockers</div>
+                        <p className="text-sm text-rose-800 dark:text-rose-300">{checkin.blockers}</p>
                       </div>
                     </div>
                   )}

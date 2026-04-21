@@ -37,48 +37,34 @@ interface TeamMemberReport {
     }>
 }
 
-import { BarChart3 } from "lucide-react"
-
 export function ReportsView() {
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-white shadow-2xl shadow-violet-500/30">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <BarChart3 className="w-5 h-5 text-purple-200" />
-                        <span className="text-sm font-medium text-purple-100 uppercase tracking-wider">Analytics</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Reports</h1>
-                    <p className="text-purple-100/80 text-lg">Comprehensive business intelligence and reporting</p>
-                </div>
+        <div className="space-y-6 animate-fade-in">
+            <div>
+                <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Reports</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Business intelligence, payroll, and financial statements.</p>
             </div>
 
-            {/* Premium Tabs */}
-            <Tabs defaultValue="workforce" className="space-y-6">
-                <TabsList className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 h-auto">
+            <Tabs defaultValue="workforce" className="space-y-5">
+                <TabsList className="bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 h-auto inline-flex">
                     <TabsTrigger
                         value="workforce"
-                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
                     >
-                        Workforce & Payroll
+                        Workforce &amp; Payroll
                     </TabsTrigger>
                     <TabsTrigger
                         value="financial"
-                        className="px-6 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/25"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
                     >
-                        Financial Statements
+                        Financial statements
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="workforce" className="space-y-6">
+                <TabsContent value="workforce" className="space-y-5 mt-5">
                     <WorkforceReports />
                 </TabsContent>
-                <TabsContent value="financial" className="space-y-6">
+                <TabsContent value="financial" className="space-y-5 mt-5">
                     <FinancialReports />
                 </TabsContent>
             </Tabs>
@@ -112,7 +98,7 @@ function FinancialReports() {
 
     if (loading) return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1,2,3,4].map(i => <div key={i} className="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />)}
+            {[1,2,3,4].map(i => <div key={i} className="h-32 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />)}
         </div>
     )
 
@@ -139,22 +125,22 @@ function FinancialReports() {
 
             {/* P&L Summary */}
             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-emerald-500" /><span className="text-xs font-semibold text-muted-foreground uppercase">Revenue</span></div>
                     <p className="text-2xl font-bold text-emerald-600">ZMW {(pnl.totalRevenue || 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground mt-1">{pnl.invoiceCount || 0} paid invoices</p>
                 </div>
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-2 mb-2"><TrendingDown className="w-4 h-4 text-red-500" /><span className="text-xs font-semibold text-muted-foreground uppercase">Expenses</span></div>
                     <p className="text-2xl font-bold text-red-600">ZMW {(pnl.totalExpenses || 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground mt-1">{pnl.expenseCount || 0} approved expenses</p>
                 </div>
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-2 mb-2"><DollarSign className="w-4 h-4 text-indigo-500" /><span className="text-xs font-semibold text-muted-foreground uppercase">Net Profit</span></div>
                     <p className={`text-2xl font-bold ${(pnl.netProfit || 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>ZMW {(pnl.netProfit || 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground mt-1">{(pnl.profitMargin || 0).toFixed(1)}% margin</p>
                 </div>
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-2 mb-2"><AlertCircle className="w-4 h-4 text-amber-500" /><span className="text-xs font-semibold text-muted-foreground uppercase">Pending</span></div>
                     <p className="text-2xl font-bold text-amber-600">ZMW {(pnl.pendingRevenue || 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground mt-1">Unpaid invoices</p>
@@ -164,7 +150,7 @@ function FinancialReports() {
             {/* Aged Receivables & Revenue by Client side by side */}
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Aged Receivables */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
                     <h3 className="font-bold text-foreground mb-1">Aged Receivables</h3>
                     <p className="text-sm text-muted-foreground mb-4">ZMW {(receivables.totalOutstanding || 0).toLocaleString()} outstanding across {receivables.totalInvoices || 0} invoices</p>
                     <div className="space-y-3">
@@ -193,7 +179,7 @@ function FinancialReports() {
                 </div>
 
                 {/* Revenue by Client */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
                     <h3 className="font-bold text-foreground mb-1">Revenue by Client</h3>
                     <p className="text-sm text-muted-foreground mb-4">Top clients by paid revenue</p>
                     {revenueByClient.length === 0 ? (
@@ -221,7 +207,7 @@ function FinancialReports() {
             </div>
 
             {/* Expense Breakdown */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
                 <h3 className="font-bold text-foreground mb-1">Expense Breakdown</h3>
                 <p className="text-sm text-muted-foreground mb-4">ZMW {(expenseBreakdown.total || 0).toLocaleString()} total across {(expenseBreakdown.categories || []).length} categories</p>
                 {(expenseBreakdown.categories || []).length === 0 ? (

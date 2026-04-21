@@ -5,66 +5,55 @@ import { InvoicesView } from "./invoices-view"
 import { QuotesView } from "./quotes-view"
 import { PaymentsView } from "./payments-view"
 import { PipelineView } from "./pipeline-view"
-import { TrendingUp } from "lucide-react"
 
 export function SalesView() {
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Premium Hero Header */}
-            <div className="relative overflow-hidden rounded-3xl bg-accent p-8 md:p-10 text-white shadow-2xl shadow-pink-500/30">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="w-5 h-5 text-rose-200" />
-                        <span className="text-sm font-medium text-rose-100 uppercase tracking-wider">Revenue</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Sales</h1>
-                    <p className="text-rose-100/80 text-lg">Manage invoices, quotes, payments, and deals</p>
-                </div>
+        <div className="space-y-6 animate-fade-in">
+            {/* Page header */}
+            <div>
+                <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Sales</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage invoices, quotes, payments, and deals.</p>
             </div>
 
-            {/* Premium Tabs */}
-            <Tabs defaultValue="pipeline" className="space-y-6">
-                <TabsList className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 border border-slate-200/50 dark:border-slate-800 h-auto flex-wrap">
+            {/* Tabs */}
+            <Tabs defaultValue="pipeline" className="space-y-5">
+                <TabsList className="bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 h-auto inline-flex flex-wrap gap-0.5">
                     <TabsTrigger
                         value="pipeline"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
                     >
                         Pipeline
                     </TabsTrigger>
                     <TabsTrigger
                         value="invoices"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
                     >
                         Invoices
                     </TabsTrigger>
                     <TabsTrigger
                         value="quotes"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
                     >
                         Quotes
                     </TabsTrigger>
                     <TabsTrigger
                         value="payments"
-                        className="px-5 py-3 rounded-xl text-sm font-semibold data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/25"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
                     >
                         Payments
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="pipeline" className="space-y-6">
+                <TabsContent value="pipeline" className="space-y-5 mt-5">
                     <PipelineView />
                 </TabsContent>
-                <TabsContent value="invoices" className="space-y-6">
+                <TabsContent value="invoices" className="space-y-5 mt-5">
                     <InvoicesView />
                 </TabsContent>
-                <TabsContent value="quotes" className="space-y-6">
+                <TabsContent value="quotes" className="space-y-5 mt-5">
                     <QuotesView />
                 </TabsContent>
-                <TabsContent value="payments" className="space-y-6">
+                <TabsContent value="payments" className="space-y-5 mt-5">
                     <PaymentsView />
                 </TabsContent>
             </Tabs>
