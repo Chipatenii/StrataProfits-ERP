@@ -25,7 +25,6 @@ const ROLE_FILTERS = [
     { id: "graphic_designer", label: "Designer" },
     { id: "social_media_manager", label: "Social Media" },
     { id: "book_keeper", label: "Bookkeeper" },
-    { id: "team_member", label: "Team Member" },
 ] as const
 
 const ROLE_COLORS: Record<string, string> = {
@@ -37,7 +36,6 @@ const ROLE_COLORS: Record<string, string> = {
     graphic_designer: "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300",
     social_media_manager: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300",
     book_keeper: "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300",
-    team_member: "bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300",
 }
 
 function getRoleColor(role?: string | null) {
@@ -165,8 +163,9 @@ export function TeamView({ userId }: TeamViewProps) {
 
     // --- Dynamic Stats ---
     const stats = useMemo(() => {
-        const totalActive = tasks.filter(t => t.status !== "completed").length
-        const totalCompleted = tasks.filter(t => t.status === "completed").length
+        const isDone = (s?: string) => s === "completed" || s === "verified"
+        const totalActive = tasks.filter(t => !isDone(t.status) && t.status !== "pending_approval").length
+        const totalCompleted = tasks.filter(t => isDone(t.status)).length
         // Count unique roles
         const roles = new Set(members.map(m => m.role).filter(Boolean))
         return {
@@ -294,8 +293,9 @@ export function TeamView({ userId }: TeamViewProps) {
                 ) : (
                     filteredMembers.map((member, index) => {
                         const memberTasks = tasks.filter((t) => t.assigned_to === member.id)
-                        const activeTasks = memberTasks.filter(t => t.status !== "completed").length
-                        const completedTasks = memberTasks.filter(t => t.status === "completed").length
+                        const isDone = (s?: string) => s === "completed" || s === "verified"
+                        const activeTasks = memberTasks.filter(t => !isDone(t.status) && t.status !== "pending_approval").length
+                        const completedTasks = memberTasks.filter(t => isDone(t.status)).length
                         const isCurrentUser = member.id === userId
                         const completionRate = memberTasks.length > 0 ? Math.round((completedTasks / memberTasks.length) * 100) : 0
 

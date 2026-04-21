@@ -100,7 +100,7 @@ export function TeamMemberDashboard({
       setWeeklyMinutes(wMins)
 
       const completedThisWeek = (tasksData || []).filter(
-        t => t.status === "completed" && t.completed_at && new Date(t.completed_at) >= weekStart
+        t => (t.status === "completed" || t.status === "verified") && t.completed_at && new Date(t.completed_at) >= weekStart
       ).length
       setWeeklyCompleted(completedThisWeek)
 
@@ -144,8 +144,9 @@ export function TeamMemberDashboard({
   // --- Personal stats ---
   const personalStats = useMemo(() => {
     const totalTasks = tasks.length
-    const activeTasks = tasks.filter(t => t.status !== "completed").length
-    const completedTasks = tasks.filter(t => t.status === "completed").length
+    const isDone = (s?: string) => s === "completed" || s === "verified"
+    const activeTasks = tasks.filter(t => !isDone(t.status) && t.status !== "pending_approval").length
+    const completedTasks = tasks.filter(t => isDone(t.status)).length
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
     const todayHours = Math.round((todayMinutes / 60) * 10) / 10
     const weeklyHours = Math.round((weeklyMinutes / 60) * 10) / 10

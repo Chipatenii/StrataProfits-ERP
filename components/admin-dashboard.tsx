@@ -242,7 +242,7 @@ export function AdminDashboard({
     total: tasks.length,
     active: tasks.filter((t) => {
       const s = normalizeStatus(t.status)
-      return s !== "completed" && s !== "verified"
+      return s !== "completed" && s !== "verified" && s !== "pending_approval"
     }).length,
     completed: tasks.filter((t) => {
       const s = normalizeStatus(t.status)

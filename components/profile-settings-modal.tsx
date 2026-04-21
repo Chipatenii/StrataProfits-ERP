@@ -55,7 +55,7 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
     if (initialProfile) {
       setFullName(initialProfile.full_name || "")
       setEmail(initialProfile.email || "")
-      setRole(initialProfile.role || "team_member")
+      setRole(initialProfile.role || "developer")
       setHourlyRate(initialProfile.hourly_rate?.toString() || "")
       return
     }
@@ -83,7 +83,7 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
         if (data) {
           setFullName(data.full_name || "")
           setEmail(data.email || "")
-          setRole(data.role || "team_member")
+          setRole(data.role || "developer")
           setHourlyRate(data.hourly_rate?.toString() || "")
         }
       } catch (error) {
@@ -368,10 +368,10 @@ export function ProfileSettingsModal({ userId, isAdmin, initialProfile, onClose,
                       onChange={(e) => setRole(e.target.value)}
                       className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      <option value="team_member">Team Member</option>
-                      <option value="virtual_assistant">Virtual Assistant</option>
-                      <option value="social_media_manager">Social Media Manager</option>
                       <option value="developer">Developer</option>
+                      <option value="graphic_designer">Graphic Designer</option>
+                      <option value="social_media_manager">Social Media Manager</option>
+                      <option value="virtual_assistant">Virtual Assistant</option>
                       <option value="book_keeper">Book Keeper</option>
                       <option value="marketing">Marketing</option>
                       <option value="sales">Sales</option>
