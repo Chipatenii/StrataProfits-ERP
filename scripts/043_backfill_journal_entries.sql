@@ -13,6 +13,51 @@
 -- RUN ONCE after migration 042. In Supabase SQL editor or psql.
 -- ============================================================================
 
+-- ---------------------------------------------------------------------------
+-- Precondition check: 042 must have run successfully before this backfill.
+-- Runs OUTSIDE the transaction so the error surfaces clearly.
+-- ---------------------------------------------------------------------------
+DO $pre$
+DECLARE
+    v_has_accounts  boolean;
+    v_has_je        boolean;
+    v_has_jl        boolean;
+    v_account_count int;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'accounts'
+    ) INTO v_has_accounts;
+
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'journal_entries'
+    ) INTO v_has_je;
+
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'journal_lines'
+    ) INTO v_has_jl;
+
+    IF NOT v_has_accounts OR NOT v_has_je OR NOT v_has_jl THEN
+        RAISE EXCEPTION E'Migration 042 has not run successfully.\n'
+            '  accounts table exists:         %\n'
+            '  journal_entries table exists:  %\n'
+            '  journal_lines table exists:    %\n'
+            'Run scripts/042_add_gl_accounting.sql first, then retry this script.',
+            v_has_accounts, v_has_je, v_has_jl;
+    END IF;
+
+    SELECT COUNT(*) INTO v_account_count FROM public.accounts WHERE is_system = true;
+    IF v_account_count < 30 THEN
+        RAISE EXCEPTION 'Chart of Accounts is not seeded (found only % system accounts). '
+            'Re-run 042 — the INSERT ... ON CONFLICT seed block must complete.', v_account_count;
+    END IF;
+
+    RAISE NOTICE 'Precondition OK: 042 schema present, % system accounts seeded.', v_account_count;
+END
+$pre$;
+
 BEGIN;
 
 DO $$

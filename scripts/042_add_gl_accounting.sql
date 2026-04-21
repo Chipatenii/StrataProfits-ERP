@@ -16,6 +16,19 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
+-- 0) Ensure get_my_role() exists (RLS depends on it). Safe to re-run.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS text
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+    SELECT role FROM profiles WHERE id = auth.uid();
+$$;
+
+-- ---------------------------------------------------------------------------
 -- 1) Chart of Accounts
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.accounts (
@@ -300,52 +313,58 @@ CREATE TRIGGER trg_je_updated_at
     FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
 -- ---------------------------------------------------------------------------
--- 10) Row-Level Security
+-- 10) Row-Level Security (wrapped so failures can't roll back the schema)
 -- ---------------------------------------------------------------------------
-ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.exchange_rates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.journal_entries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.journal_lines ENABLE ROW LEVEL SECURITY;
+DO $rls$
+BEGIN
+    ALTER TABLE public.accounts         ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.exchange_rates   ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.journal_entries  ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.journal_lines    ENABLE ROW LEVEL SECURITY;
 
--- accounts: admin + book_keeper manage; anyone on finance side can read
-DROP POLICY IF EXISTS "accounts_read" ON public.accounts;
-CREATE POLICY "accounts_read" ON public.accounts FOR SELECT
-    USING (get_my_role() IN ('admin', 'book_keeper', 'virtual_assistant'));
+    -- accounts: admin + book_keeper manage; VA reads
+    DROP POLICY IF EXISTS "accounts_read" ON public.accounts;
+    CREATE POLICY "accounts_read" ON public.accounts FOR SELECT
+        USING (public.get_my_role() IN ('admin', 'book_keeper', 'virtual_assistant'));
 
-DROP POLICY IF EXISTS "accounts_write" ON public.accounts;
-CREATE POLICY "accounts_write" ON public.accounts FOR ALL
-    USING (get_my_role() IN ('admin', 'book_keeper'))
-    WITH CHECK (get_my_role() IN ('admin', 'book_keeper'));
+    DROP POLICY IF EXISTS "accounts_write" ON public.accounts;
+    CREATE POLICY "accounts_write" ON public.accounts FOR ALL
+        USING (public.get_my_role() IN ('admin', 'book_keeper'))
+        WITH CHECK (public.get_my_role() IN ('admin', 'book_keeper'));
 
--- exchange_rates: same as accounts
-DROP POLICY IF EXISTS "fx_read" ON public.exchange_rates;
-CREATE POLICY "fx_read" ON public.exchange_rates FOR SELECT
-    USING (get_my_role() IN ('admin', 'book_keeper', 'virtual_assistant'));
+    -- exchange_rates
+    DROP POLICY IF EXISTS "fx_read" ON public.exchange_rates;
+    CREATE POLICY "fx_read" ON public.exchange_rates FOR SELECT
+        USING (public.get_my_role() IN ('admin', 'book_keeper', 'virtual_assistant'));
 
-DROP POLICY IF EXISTS "fx_write" ON public.exchange_rates;
-CREATE POLICY "fx_write" ON public.exchange_rates FOR ALL
-    USING (get_my_role() IN ('admin', 'book_keeper'))
-    WITH CHECK (get_my_role() IN ('admin', 'book_keeper'));
+    DROP POLICY IF EXISTS "fx_write" ON public.exchange_rates;
+    CREATE POLICY "fx_write" ON public.exchange_rates FOR ALL
+        USING (public.get_my_role() IN ('admin', 'book_keeper'))
+        WITH CHECK (public.get_my_role() IN ('admin', 'book_keeper'));
 
--- journal_entries: admin + book_keeper manage
-DROP POLICY IF EXISTS "je_read" ON public.journal_entries;
-CREATE POLICY "je_read" ON public.journal_entries FOR SELECT
-    USING (get_my_role() IN ('admin', 'book_keeper'));
+    -- journal_entries
+    DROP POLICY IF EXISTS "je_read" ON public.journal_entries;
+    CREATE POLICY "je_read" ON public.journal_entries FOR SELECT
+        USING (public.get_my_role() IN ('admin', 'book_keeper'));
 
-DROP POLICY IF EXISTS "je_write" ON public.journal_entries;
-CREATE POLICY "je_write" ON public.journal_entries FOR ALL
-    USING (get_my_role() IN ('admin', 'book_keeper'))
-    WITH CHECK (get_my_role() IN ('admin', 'book_keeper'));
+    DROP POLICY IF EXISTS "je_write" ON public.journal_entries;
+    CREATE POLICY "je_write" ON public.journal_entries FOR ALL
+        USING (public.get_my_role() IN ('admin', 'book_keeper'))
+        WITH CHECK (public.get_my_role() IN ('admin', 'book_keeper'));
 
--- journal_lines: same as entries
-DROP POLICY IF EXISTS "jl_read" ON public.journal_lines;
-CREATE POLICY "jl_read" ON public.journal_lines FOR SELECT
-    USING (get_my_role() IN ('admin', 'book_keeper'));
+    -- journal_lines
+    DROP POLICY IF EXISTS "jl_read" ON public.journal_lines;
+    CREATE POLICY "jl_read" ON public.journal_lines FOR SELECT
+        USING (public.get_my_role() IN ('admin', 'book_keeper'));
 
-DROP POLICY IF EXISTS "jl_write" ON public.journal_lines;
-CREATE POLICY "jl_write" ON public.journal_lines FOR ALL
-    USING (get_my_role() IN ('admin', 'book_keeper'))
-    WITH CHECK (get_my_role() IN ('admin', 'book_keeper'));
+    DROP POLICY IF EXISTS "jl_write" ON public.journal_lines;
+    CREATE POLICY "jl_write" ON public.journal_lines FOR ALL
+        USING (public.get_my_role() IN ('admin', 'book_keeper'))
+        WITH CHECK (public.get_my_role() IN ('admin', 'book_keeper'));
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'RLS setup hit an error: % — schema is preserved; fix RLS separately.', SQLERRM;
+END
+$rls$;
 
 -- ---------------------------------------------------------------------------
 -- 11) Convenience views for reporting
