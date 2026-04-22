@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
@@ -25,12 +24,13 @@ interface AdminCreateTaskModalProps {
     onSuccess: () => void
 }
 
+const INPUT_CLS = "mt-1 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+const SELECT_CLS = "mt-1 w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 disabled:opacity-60"
+
 export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEdit, onOpenChange, onSuccess }: AdminCreateTaskModalProps) {
     const isEditMode = !!taskToEdit
 
-    // Default status for team_member and va is pending_approval
     const defaultStatus = (userRole === "team_member" || userRole === "virtual_assistant") ? "pending_approval" : "pending"
-    // Default assignee for team member is themselves
     const defaultAssignedTo = userRole === "team_member" ? userId : ""
 
     const getInitialFormData = () => {
@@ -53,7 +53,6 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
     const { data: projectsData } = useSWR(open ? "/api/admin/projects" : null)
     const projects: { id: string; name: string }[] = projectsData || []
 
-    // Re-populate form if editing
     useEffect(() => {
         if (open) {
             setFormData(getInitialFormData())
@@ -89,21 +88,21 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
                 priority: formData.priority,
                 assigned_to: formData.assigned_to || null,
                 due_date: formData.due_date || null,
-                estimated_hours: (formData.estimated_hours || formData.estimated_minutes) ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60)) : null,
+                estimated_hours: (formData.estimated_hours || formData.estimated_minutes)
+                    ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60))
+                    : null,
                 project_id: formData.project_id || null,
             }
 
             let response: Response
 
             if (isEditMode && taskToEdit) {
-                // PATCH to update existing task
                 response = await fetch(`/api/admin/tasks?id=${taskToEdit.id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(taskData),
                 })
             } else {
-                // POST to create new task
                 taskData.created_by = userId
                 response = await fetch("/api/admin/tasks", {
                     method: "POST",
@@ -133,40 +132,36 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
                         {isEditMode ? "Edit Task" : "Create New Task"}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
                         {isEditMode ? "Update the task details below." : "Fill in the details to create a new task."}
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <Label htmlFor="title" className="text-foreground font-medium">
-                            Task Title *
-                        </Label>
+                        <Label htmlFor="title">Task Title *</Label>
                         <Input
                             id="title"
                             value={formData.title}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })}
-                            className="mt-1 bg-card border-border/30"
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            className={INPUT_CLS}
                             placeholder="Enter task title"
                             required
                         />
                     </div>
 
                     <div>
-                        <Label htmlFor="description" className="text-foreground font-medium">
-                            Description
-                        </Label>
+                        <Label htmlFor="description">Description</Label>
                         <textarea
                             id="description"
                             value={formData.description}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
-                            className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground placeholder-muted-foreground"
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                             placeholder="Enter task description"
                             rows={3}
                         />
@@ -174,14 +169,12 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="status" className="text-foreground font-medium">
-                                Status
-                            </Label>
+                            <Label htmlFor="status">Status</Label>
                             <select
                                 id="status"
                                 value={formData.status}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className={SELECT_CLS}
                                 disabled={userRole === "team_member" || userRole === "virtual_assistant"}
                             >
                                 <option value="pending_approval">Pending Approval</option>
@@ -192,14 +185,12 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
                         </div>
 
                         <div>
-                            <Label htmlFor="priority" className="text-foreground font-medium">
-                                Priority
-                            </Label>
+                            <Label htmlFor="priority">Priority</Label>
                             <select
                                 id="priority"
                                 value={formData.priority}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, priority: e.target.value as "low" | "medium" | "high" })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                onChange={(e) => setFormData({ ...formData, priority: e.target.value as "low" | "medium" | "high" })}
+                                className={SELECT_CLS}
                             >
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
@@ -210,14 +201,12 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className={canReassign ? "" : "col-span-2"}>
-                            <Label htmlFor="project" className="text-foreground font-medium">
-                                Project
-                            </Label>
+                            <Label htmlFor="project">Project</Label>
                             <select
                                 id="project"
                                 value={formData.project_id || ""}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, project_id: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                className={SELECT_CLS}
                             >
                                 <option value="">No Project</option>
                                 {projects.map((project) => (
@@ -230,14 +219,12 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
 
                         {canReassign && (
                             <div>
-                                <Label htmlFor="assignedTo" className="text-foreground font-medium">
-                                    Assign To
-                                </Label>
+                                <Label htmlFor="assignedTo">Assign To</Label>
                                 <select
                                     id="assignedTo"
                                     value={formData.assigned_to}
-                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, assigned_to: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                    onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
+                                    className={SELECT_CLS}
                                 >
                                     <option value="">Unassigned</option>
                                     {members.map((member) => (
@@ -252,15 +239,13 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="dueDate" className="text-foreground font-medium">
-                                Due Date (Deadline)
-                            </Label>
+                            <Label htmlFor="dueDate">Due Date (Deadline)</Label>
                             <Input
                                 id="dueDate"
                                 type="date"
                                 value={formData.due_date}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, due_date: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
+                                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                                className={INPUT_CLS}
                             />
                         </div>
                         <EstimatedTimeInput
@@ -273,24 +258,25 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
                     </div>
 
                     <DialogFooter>
-                        <Button
+                        <button
                             type="button"
-                            variant="outline"
                             onClick={() => {
                                 if (!isEditMode) resetForm()
                                 onOpenChange(false)
                             }}
                             disabled={isLoading}
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
                         >
                             Cancel
-                        </Button>
-                        <Button
+                        </button>
+                        <button
                             type="submit"
                             disabled={isLoading}
-                            className="px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
                         >
+                            {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
                             {isLoading ? (isEditMode ? "Saving..." : "Creating...") : (isEditMode ? "Save Changes" : "Create Task")}
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>

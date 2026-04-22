@@ -3,18 +3,16 @@
 import { useState, useEffect } from "react"
 import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Task, UserProfile } from "@/lib/types"
 import { toast } from "sonner"
 
-// Helper to format ISO date string to yyyy-MM-dd for HTML date inputs
 function formatDateForInput(dateString: string | null | undefined): string {
     if (!dateString) return ""
     try {
         const date = new Date(dateString)
-        return date.toISOString().split('T')[0]
+        return date.toISOString().split("T")[0]
     } catch {
         return ""
     }
@@ -27,6 +25,9 @@ interface AdminEditTaskModalProps {
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
 }
+
+const INPUT_CLS = "mt-1 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+const SELECT_CLS = "mt-1 w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
 
 export function AdminEditTaskModal({ open, task, members, onOpenChange, onSuccess }: AdminEditTaskModalProps) {
     const [formData, setFormData] = useState({
@@ -45,21 +46,19 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
-        if (open) {
-            if (task) {
-                const eh = task.estimated_hours
-                setFormData({
-                    title: task.title,
-                    description: task.description || "",
-                    status: task.status,
-                    priority: task.priority,
-                    assigned_to: task.assigned_to || "",
-                    due_date: formatDateForInput(task.due_date),
-                    estimated_hours: eh != null ? String(Math.floor(eh)) : "",
-                    estimated_minutes: eh != null ? String(Math.round((eh % 1) * 60)) : "",
-                    project_id: task.project_id || "",
-                })
-            }
+        if (open && task) {
+            const eh = task.estimated_hours
+            setFormData({
+                title: task.title,
+                description: task.description || "",
+                status: task.status,
+                priority: task.priority,
+                assigned_to: task.assigned_to || "",
+                due_date: formatDateForInput(task.due_date),
+                estimated_hours: eh != null ? String(Math.floor(eh)) : "",
+                estimated_minutes: eh != null ? String(Math.round((eh % 1) * 60)) : "",
+                project_id: task.project_id || "",
+            })
         }
     }, [task, open])
 
@@ -77,15 +76,15 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                 priority: formData.priority,
                 assigned_to: formData.assigned_to || null,
                 due_date: formData.due_date || null,
-                estimated_hours: (formData.estimated_hours || formData.estimated_minutes) ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60)) : null,
+                estimated_hours: (formData.estimated_hours || formData.estimated_minutes)
+                    ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60))
+                    : null,
                 project_id: formData.project_id || null,
             }
 
             const response = await fetch(`/api/admin/tasks?id=${task.id}`, {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updateData),
             })
 
@@ -107,49 +106,43 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">Edit Task</DialogTitle>
-                    <DialogDescription>Modify task details below.</DialogDescription>
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Edit Task</DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">Modify task details below.</DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <Label htmlFor="title" className="text-foreground font-medium">
-                            Task Title
-                        </Label>
+                        <Label htmlFor="title">Task Title</Label>
                         <Input
                             id="title"
                             value={formData.title}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })}
-                            className="mt-1 bg-card border-border/30"
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            className={INPUT_CLS}
                             required
                         />
                     </div>
 
                     <div>
-                        <Label htmlFor="description" className="text-foreground font-medium">
-                            Description
-                        </Label>
+                        <Label htmlFor="description">Description</Label>
                         <textarea
                             id="description"
                             value={formData.description}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
-                            className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground placeholder-muted-foreground"
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                             rows={3}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="status" className="text-foreground font-medium">
-                                Status
-                            </Label>
+                            <Label htmlFor="status">Status</Label>
                             <select
                                 id="status"
                                 value={formData.status}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className={SELECT_CLS}
                             >
                                 <option value="pending">Pending</option>
                                 <option value="in_progress">In Progress</option>
@@ -160,14 +153,12 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                         </div>
 
                         <div>
-                            <Label htmlFor="priority" className="text-foreground font-medium">
-                                Priority
-                            </Label>
+                            <Label htmlFor="priority">Priority</Label>
                             <select
                                 id="priority"
                                 value={formData.priority}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, priority: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                className={SELECT_CLS}
                             >
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
@@ -178,14 +169,12 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="project" className="text-foreground font-medium">
-                                Project
-                            </Label>
+                            <Label htmlFor="project">Project</Label>
                             <select
                                 id="project"
                                 value={formData.project_id}
                                 onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                className={SELECT_CLS}
                             >
                                 <option value="">No Project</option>
                                 {projects.map((p) => (
@@ -195,14 +184,12 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                         </div>
 
                         <div>
-                            <Label htmlFor="assignedTo" className="text-foreground font-medium">
-                                Assign To
-                            </Label>
+                            <Label htmlFor="assignedTo">Assign To</Label>
                             <select
                                 id="assignedTo"
                                 value={formData.assigned_to}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, assigned_to: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
+                                className={SELECT_CLS}
                             >
                                 <option value="">Unassigned</option>
                                 {members.map((member) => (
@@ -216,44 +203,40 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="dueDate" className="text-foreground font-medium">
-                                Due Date (Deadline)
-                            </Label>
+                            <Label htmlFor="dueDate">Due Date (Deadline)</Label>
                             <Input
                                 id="dueDate"
                                 type="date"
                                 value={formData.due_date}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, due_date: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
+                                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                                className={INPUT_CLS}
                             />
                         </div>
                         <div className="col-span-2">
-                            <Label className="text-foreground font-medium">
-                                Estimated Time
-                            </Label>
+                            <Label>Estimated Time</Label>
                             <div className="grid grid-cols-2 gap-2 mt-1">
                                 <div>
-                                    <label className="text-xs text-muted-foreground mb-1 block">Hours</label>
+                                    <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">Hours</label>
                                     <Input
                                         type="number"
                                         min="0"
                                         step="1"
                                         value={formData.estimated_hours}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_hours: e.target.value })}
-                                        className="bg-card border-border/30"
+                                        onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
+                                        className="rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                                         placeholder="0"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs text-muted-foreground mb-1 block">Minutes</label>
+                                    <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">Minutes</label>
                                     <Input
                                         type="number"
                                         min="0"
                                         max="59"
                                         step="5"
                                         value={formData.estimated_minutes}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, estimated_minutes: e.target.value })}
-                                        className="bg-card border-border/30"
+                                        onChange={(e) => setFormData({ ...formData, estimated_minutes: e.target.value })}
+                                        className="rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                                         placeholder="0"
                                     />
                                 </div>
@@ -262,16 +245,22 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            disabled={isLoading}
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+                        >
                             Cancel
-                        </Button>
-                        <Button
+                        </button>
+                        <button
                             type="submit"
                             disabled={isLoading}
-                            className="px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
                         >
+                            {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
                             {isLoading ? "Saving..." : "Save Changes"}
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>

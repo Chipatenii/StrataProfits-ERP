@@ -6,9 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { addProjectMemberSchema } from "@/lib/schemas"
 import * as z from "zod"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
 import { UserProfile } from "@/lib/types"
 import { toast } from "sonner"
 
@@ -20,6 +18,8 @@ interface AddMemberModalProps {
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
 }
+
+const SELECT_CLS = "flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
 
 export function AddMemberModal({ projectId, open, onOpenChange, onSuccess }: AddMemberModalProps) {
     const [submitting, setSubmitting] = useState(false)
@@ -69,20 +69,18 @@ export function AddMemberModal({ projectId, open, onOpenChange, onSuccess }: Add
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] glass-card border-border/50">
+            <DialogContent className="sm:max-w-[425px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <DialogHeader>
-                    <DialogTitle>Add Project Member</DialogTitle>
-                    <DialogDescription>Select a team member to add to this project.</DialogDescription>
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Add Project Member</DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
+                        Select a team member to add to this project.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="userId">Team Member</Label>
-                        <select
-                            id="userId"
-                            {...form.register("userId")}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
+                        <select id="userId" {...form.register("userId")} className={SELECT_CLS}>
                             <option value="">Select a member</option>
                             {users.map(user => (
                                 <option key={user.id} value={user.id}>
@@ -91,17 +89,13 @@ export function AddMemberModal({ projectId, open, onOpenChange, onSuccess }: Add
                             ))}
                         </select>
                         {form.formState.errors.userId && (
-                            <p className="text-sm text-red-500">{form.formState.errors.userId.message}</p>
+                            <p className="text-xs text-rose-600 dark:text-rose-400">{form.formState.errors.userId.message}</p>
                         )}
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="role">Role</Label>
-                        <select
-                            id="role"
-                            {...form.register("role")}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
+                        <select id="role" {...form.register("role")} className={SELECT_CLS}>
                             <option value="manager">Manager</option>
                             <option value="member">Member</option>
                             <option value="viewer">Viewer</option>
@@ -109,19 +103,21 @@ export function AddMemberModal({ projectId, open, onOpenChange, onSuccess }: Add
                     </div>
 
                     <div className="flex justify-end gap-2 mt-4">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
                             Cancel
-                        </Button>
-                        <Button type="submit" disabled={submitting}>
-                            {submitting ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Adding...
-                                </>
-                            ) : (
-                                "Add Member"
-                            )}
-                        </Button>
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
+                        >
+                            {submitting && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
+                            {submitting ? "Adding..." : "Add Member"}
+                        </button>
                     </div>
                 </form>
             </DialogContent>

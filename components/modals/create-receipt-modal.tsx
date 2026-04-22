@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react"
 import useSWR from "swr"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, FileText, CreditCard, Hash, StickyNote, Trash2, Download } from "lucide-react"
+import { FileText, CreditCard, StickyNote, Trash2, Download } from "lucide-react"
 import { Invoice, OrganizationSettings, Payment } from "@/lib/types"
 import { PDFService } from "@/lib/pdf-service"
 import { toast } from "sonner"
@@ -29,6 +28,11 @@ const PAYMENT_METHODS = [
     { value: "other", label: "Other" },
 ]
 
+const INPUT_CLS = "h-11 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+const SELECT_CLS = "mt-1 w-full h-11 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+
+const Spinner = () => <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+
 export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData }: CreateReceiptModalProps) {
     const [loading, setLoading] = useState(false)
     const { data: invoicesData, isLoading: loadingInvoices } = useSWR(open ? "/api/invoices" : null)
@@ -36,7 +40,6 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
     const [previewNumber, setPreviewNumber] = useState("")
     const [orgSettings, setOrgSettings] = useState<Partial<OrganizationSettings>>({})
 
-    // Form State
     const [invoiceId, setInvoiceId] = useState("")
     const [amount, setAmount] = useState<number>(0)
     const [receiptNumber, setReceiptNumber] = useState("")
@@ -45,7 +48,6 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
     const [paidAt, setPaidAt] = useState(new Date().toISOString().split('T')[0])
     const [notes, setNotes] = useState("")
 
-    // Derived - the selected invoice's remaining balance
     const selectedInvoice = invoices.find(i => i.id === invoiceId)
     const invoiceBalance = selectedInvoice ? selectedInvoice.amount : 0
 
@@ -110,7 +112,6 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
             if (!res.ok) throw new Error(`Failed to ${initialData ? 'update' : 'create'} receipt`)
 
             if ((e.nativeEvent as any).submitter?.name === "download") {
-                // FIX: use server response so PDF reflects server-assigned receipt_number, not local payload
                 const saved = await res.json()
                 const invoice = invoices.find(i => i.id === invoiceId)
                 PDFService.generatePaymentPDF(saved, invoice?.invoice_number || 'N/A', invoice?.client?.name || 'Customer', orgSettings)
@@ -155,37 +156,34 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex flex-col max-w-lg w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] p-0 gap-0 rounded-none sm:rounded-2xl overflow-hidden glass-card border-border/30">
+            <DialogContent className="flex flex-col max-w-lg w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] p-0 gap-0 rounded-none sm:rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
 
-                {/* ── Sticky Header ── */}
-                <div className="flex-none px-4 pt-5 pb-4 sm:px-6 border-b border-border/50 bg-card/80 backdrop-blur-sm">
-                    <DialogTitle className="text-lg font-bold leading-tight">
+                <div className="flex-none px-4 pt-5 pb-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
                         {initialData ? 'Edit Receipt' : 'Record Payment'}
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-muted-foreground mt-0.5">
+                    <DialogDescription className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                         Record a payment received and generate a receipt.
                     </DialogDescription>
                 </div>
 
-                {/* ── Scrollable Body ── */}
                 <form id="receipt-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
                     <div className="px-4 sm:px-6 py-5 space-y-6">
 
-                        {/* Section 1 – Invoice */}
                         <section>
                             <SectionHeading icon={<FileText size={15} />} title="Invoice" />
                             <div className="mt-3">
-                                <Label>Select Invoice <span className="text-destructive">*</span></Label>
+                                <Label>Select Invoice <span className="text-rose-600">*</span></Label>
                                 {loadingInvoices ? (
-                                    <div className="mt-1 h-11 rounded-md bg-muted animate-pulse" />
+                                    <div className="mt-1 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
                                 ) : (
                                     <select
-                                        className="mt-1 w-full h-11 px-3 rounded-md bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                                        className={SELECT_CLS}
                                         value={invoiceId}
                                         onChange={(e) => handleInvoiceSelect(e.target.value)}
                                         required
                                     >
-                                        <option value="">Select an invoice…</option>
+                                        <option value="">Select an invoice...</option>
                                         {invoices.map(inv => (
                                             <option key={inv.id} value={inv.id}>
                                                 {inv.invoice_number || 'INV-???'} — {inv.client?.name} ({inv.currency} {fmt(inv.amount)})
@@ -194,11 +192,10 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                                     </select>
                                 )}
 
-                                {/* Invoice summary chip */}
                                 {selectedInvoice && (
-                                    <div className="mt-2 flex items-center justify-between rounded-lg bg-muted/50 border border-border/50 px-3 py-2 text-sm">
-                                        <span className="text-muted-foreground">Invoice Total</span>
-                                        <span className="font-semibold tabular-nums text-foreground">
+                                    <div className="mt-2 flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm">
+                                        <span className="text-slate-500 dark:text-slate-400">Invoice Total</span>
+                                        <span className="font-semibold font-mono text-slate-900 dark:text-white">
                                             {selectedInvoice.currency} {fmt(invoiceBalance)}
                                         </span>
                                     </div>
@@ -206,18 +203,17 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                             </div>
                         </section>
 
-                        {/* Section 2 – Payment Details */}
                         <section>
                             <SectionHeading icon={<CreditCard size={15} />} title="Payment Details" />
                             <div className="mt-3 space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <Label>Amount Received <span className="text-destructive">*</span></Label>
+                                        <Label>Amount Received <span className="text-rose-600">*</span></Label>
                                         <Input
                                             type="number"
                                             min="0"
                                             step="0.01"
-                                            className="mt-1 h-11 bg-background"
+                                            className={`mt-1 font-mono ${INPUT_CLS}`}
                                             value={amount}
                                             onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
                                             required
@@ -232,7 +228,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                                         <Label>Payment Date</Label>
                                         <Input
                                             type="date"
-                                            className="mt-1 h-11 bg-background"
+                                            className={`mt-1 ${INPUT_CLS}`}
                                             value={paidAt}
                                             onChange={(e) => setPaidAt(e.target.value)}
                                         />
@@ -247,10 +243,10 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                                                 key={m.value}
                                                 type="button"
                                                 onClick={() => setPaymentMethod(m.value)}
-                                                className={`h-10 px-3 rounded-lg border text-sm font-medium transition-all ${
+                                                className={`h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
                                                     paymentMethod === m.value
-                                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                                        : "bg-background border-border hover:border-primary/40 hover:bg-muted/50 text-foreground"
+                                                        ? "bg-emerald-700 text-white border-emerald-700"
+                                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-slate-700 dark:text-slate-300"
                                                 }`}
                                             >
                                                 {m.label}
@@ -263,7 +259,7 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                                     <div>
                                         <Label>Reference / Cheque #</Label>
                                         <Input
-                                            className="mt-1 h-11 bg-background"
+                                            className={`mt-1 ${INPUT_CLS}`}
                                             value={reference}
                                             onChange={(e) => setReference(e.target.value)}
                                             placeholder="e.g. TXN-123456"
@@ -273,41 +269,39 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                                         <Label>Receipt #</Label>
                                         <div className="relative mt-1">
                                             <Input
-                                                className="h-11 bg-background pr-3"
+                                                className={`${INPUT_CLS} pr-3`}
                                                 value={receiptNumber}
                                                 onChange={(e) => setReceiptNumber(e.target.value)}
                                                 placeholder={previewNumber || "Auto-generated"}
                                             />
                                             {!initialData && !receiptNumber && previewNumber && (
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60 font-mono pointer-events-none select-none">
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono pointer-events-none select-none">
                                                     {previewNumber}
                                                 </span>
                                             )}
                                         </div>
                                         {!initialData && !receiptNumber && (
-                                            <p className="text-xs text-muted-foreground mt-1">Auto-assigned on save.</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Auto-assigned on save.</p>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* Section 3 – Notes (optional) */}
                         <section>
                             <SectionHeading icon={<StickyNote size={15} />} title="Notes" />
                             <Textarea
-                                className="mt-3 min-h-[80px] bg-background"
-                                placeholder="Internal notes about this payment…"
+                                className="mt-3 min-h-[80px] rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                                placeholder="Internal notes about this payment..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             />
                         </section>
 
-                        {/* Amount summary */}
                         {amount > 0 && (
-                            <div className="rounded-xl border border-green-200/60 bg-green-50/30 dark:bg-green-950/20 px-4 py-3 flex justify-between items-center">
-                                <span className="text-sm font-medium text-foreground/80">Amount Being Recorded</span>
-                                <span className="text-xl font-bold text-green-600 tabular-nums">
+                            <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-3 flex justify-between items-center">
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Amount Being Recorded</span>
+                                <span className="text-xl font-bold font-mono text-emerald-700">
                                     {selectedInvoice?.currency || 'ZMW'} {fmt(amount)}
                                 </span>
                             </div>
@@ -317,28 +311,27 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                     </div>
                 </form>
 
-                {/* ── Sticky Footer ── */}
-                <div className="flex-none border-t border-border/50 bg-card/90 backdrop-blur-sm px-4 py-3 sm:px-6">
+                <div className="flex-none border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 sm:px-6">
                     {/* Mobile */}
                     <div className="flex flex-col gap-2 sm:hidden">
-                        <Button form="receipt-form" type="submit" disabled={loading || !invoiceId}
-                            className="w-full h-12 gap-2 text-base bg-green-600 hover:bg-green-700 text-white">
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText size={16} />}
+                        <button form="receipt-form" type="submit" disabled={loading || !invoiceId}
+                            className="w-full h-12 inline-flex items-center justify-center gap-2 text-base font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white disabled:opacity-50">
+                            {loading ? <Spinner /> : <FileText size={16} />}
                             {initialData ? "Update Receipt" : "Generate Receipt"}
-                        </Button>
+                        </button>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button form="receipt-form" type="submit" name="download" variant="outline" disabled={loading || !invoiceId}
-                                className="h-11 border-green-200 text-green-700 hover:bg-green-50 gap-1.5">
+                            <button form="receipt-form" type="submit" name="download" disabled={loading || !invoiceId}
+                                className="h-11 inline-flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 disabled:opacity-50">
                                 <Download size={14} /> Save & PDF
-                            </Button>
-                            <Button type="button" variant="ghost" className="h-11" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            </button>
+                            <button type="button" className="h-11 inline-flex items-center justify-center text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => onOpenChange(false)}>Cancel</button>
                         </div>
                         {initialData && (
-                            <Button type="button" variant="outline" disabled={loading} onClick={handleDelete}
-                                className="w-full h-11 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-2">
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 size={15} />}
+                            <button type="button" disabled={loading} onClick={handleDelete}
+                                className="w-full h-11 inline-flex items-center justify-center gap-2 text-sm font-medium rounded-lg border border-rose-200 dark:border-rose-900/60 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 disabled:opacity-50">
+                                {loading ? <Spinner /> : <Trash2 size={15} />}
                                 Delete Receipt
-                            </Button>
+                            </button>
                         )}
                     </div>
 
@@ -346,25 +339,25 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
                     <div className="hidden sm:flex items-center justify-between gap-3">
                         <div>
                             {initialData && (
-                                <Button type="button" variant="outline" disabled={loading} onClick={handleDelete}
-                                    className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-2 h-10">
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 size={15} />}
+                                <button type="button" disabled={loading} onClick={handleDelete}
+                                    className="inline-flex items-center gap-2 h-10 px-3 text-sm font-medium rounded-lg border border-rose-200 dark:border-rose-900/60 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 disabled:opacity-50">
+                                    {loading ? <Spinner /> : <Trash2 size={15} />}
                                     Delete
-                                </Button>
+                                </button>
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button type="button" variant="ghost" className="h-10" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button form="receipt-form" type="submit" name="download" variant="outline" disabled={loading || !invoiceId}
-                                className="h-10 border-green-200 text-green-700 hover:bg-green-50 gap-1.5">
-                                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                            <button type="button" className="h-10 inline-flex items-center px-4 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => onOpenChange(false)}>Cancel</button>
+                            <button form="receipt-form" type="submit" name="download" disabled={loading || !invoiceId}
+                                className="h-10 inline-flex items-center gap-1.5 px-4 text-sm font-medium rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 disabled:opacity-50">
+                                {loading && <Spinner />}
                                 <Download size={14} /> Save & PDF
-                            </Button>
-                            <Button form="receipt-form" type="submit" disabled={loading || !invoiceId}
-                                className="h-10 gap-2 bg-green-600 hover:bg-green-700 text-white">
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText size={15} />}
+                            </button>
+                            <button form="receipt-form" type="submit" disabled={loading || !invoiceId}
+                                className="h-10 inline-flex items-center gap-2 px-4 text-sm font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white disabled:opacity-50">
+                                {loading ? <Spinner /> : <FileText size={15} />}
                                 {initialData ? "Update Receipt" : "Generate Receipt"}
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -372,5 +365,3 @@ export function CreateReceiptModal({ open, onOpenChange, onSuccess, initialData 
         </Dialog>
     )
 }
-
-

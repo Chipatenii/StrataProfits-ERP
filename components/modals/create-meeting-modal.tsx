@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Meeting, Client, Project, UserProfile } from "@/lib/types"
@@ -19,6 +18,9 @@ interface CreateMeetingModalProps {
 
 const MEETING_TYPES = ["General", "Discovery", "Review", "Strategy", "Renewal"] as const
 const MEETING_MODES = ["Zoom", "GoogleMeet", "InPerson", "PhoneCall"] as const
+
+const INPUT_CLS = "mt-1 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+const SELECT_CLS = "mt-1 w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
 
 function computeDuration(start: string, end: string): string | null {
     if (!start || !end) return null
@@ -58,13 +60,11 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
 
     const isEditing = !!meetingToEdit
 
-    // Derived: computed duration
     const duration = useMemo(
         () => computeDuration(formData.date_time_start, formData.date_time_end),
         [formData.date_time_start, formData.date_time_end]
     )
 
-    // Filtered projects by selected client
     const filteredProjects = useMemo(
         () => projects.filter(p => !formData.client_id || p.client_id === formData.client_id),
         [projects, formData.client_id]
@@ -106,7 +106,6 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
             return
         }
 
-        // Validate end time is after start time
         if (formData.date_time_end && new Date(formData.date_time_end) <= new Date(formData.date_time_start)) {
             toast.error("End time must be after start time.")
             return
@@ -159,29 +158,29 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
                         {isEditing ? "Edit Meeting" : "Schedule Meeting"}
                     </DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
+                        {isEditing ? "Update the meeting details below." : "Fill in the details to schedule a new meeting."}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-
-                    {/* Title */}
                     <div>
                         <Label htmlFor="title">Title *</Label>
                         <Input
                             id="title"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="mt-1 bg-card border-border/30"
+                            className={INPUT_CLS}
                             placeholder="e.g. Kickoff Call"
                             required
                         />
                     </div>
 
-                    {/* Start & End Times */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="start">Start Time *</Label>
@@ -190,7 +189,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 type="datetime-local"
                                 value={formData.date_time_start}
                                 onChange={(e) => setFormData({ ...formData, date_time_start: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
+                                className={INPUT_CLS}
                                 required
                             />
                         </div>
@@ -201,21 +200,19 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 type="datetime-local"
                                 value={formData.date_time_end}
                                 onChange={(e) => setFormData({ ...formData, date_time_end: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
+                                className={INPUT_CLS}
                                 min={formData.date_time_start || undefined}
                             />
                         </div>
                     </div>
 
-                    {/* Duration hint */}
                     {duration && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground -mt-2 px-1">
-                            <Clock className="w-3.5 h-3.5 text-blue-500" />
-                            <span>Duration: <strong className="text-foreground">{duration}</strong></span>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 -mt-2 px-1">
+                            <Clock className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Duration: <strong className="text-slate-900 dark:text-white">{duration}</strong></span>
                         </div>
                     )}
 
-                    {/* Type & Mode */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="type">Type</Label>
@@ -223,7 +220,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 id="type"
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                className={SELECT_CLS}
                             >
                                 {MEETING_TYPES.map(t => (
                                     <option key={t} value={t}>{t}</option>
@@ -236,7 +233,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 id="mode"
                                 value={formData.mode}
                                 onChange={(e) => setFormData({ ...formData, mode: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                className={SELECT_CLS}
                             >
                                 {MEETING_MODES.map(m => (
                                     <option key={m} value={m}>
@@ -250,7 +247,6 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                         </div>
                     </div>
 
-                    {/* Meeting Link (Zoom / Google Meet) */}
                     {showLinkField && (
                         <div>
                             <Label htmlFor="meeting_link" className="flex items-center gap-1">
@@ -261,13 +257,12 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 type="url"
                                 value={formData.meeting_link}
                                 onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
+                                className={INPUT_CLS}
                                 placeholder={formData.mode === "Zoom" ? "https://zoom.us/j/..." : "https://meet.google.com/..."}
                             />
                         </div>
                     )}
 
-                    {/* Location (In Person) */}
                     {showLocationField && (
                         <div>
                             <Label htmlFor="location">Location Address</Label>
@@ -275,13 +270,12 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 id="location"
                                 value={formData.location}
                                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                className="mt-1 bg-card border-border/30"
+                                className={INPUT_CLS}
                                 placeholder="e.g. Client Office, 14 Cairo Road"
                             />
                         </div>
                     )}
 
-                    {/* Client & Project */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="client">Client</Label>
@@ -289,7 +283,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 id="client"
                                 value={formData.client_id}
                                 onChange={(e) => setFormData({ ...formData, client_id: e.target.value, project_id: "" })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                className={SELECT_CLS}
                             >
                                 <option value="">None</option>
                                 {clients.map(c => (
@@ -303,7 +297,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                                 id="project"
                                 value={formData.project_id}
                                 onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                className={SELECT_CLS}
                             >
                                 <option value="">None</option>
                                 {filteredProjects.map(p => (
@@ -313,14 +307,13 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                         </div>
                     </div>
 
-                    {/* Assign To */}
                     <div>
                         <Label htmlFor="assigned_to">Assign To (Team Member)</Label>
                         <select
                             id="assigned_to"
                             value={formData.assigned_to_user_id}
                             onChange={(e) => setFormData({ ...formData, assigned_to_user_id: e.target.value })}
-                            className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                            className={SELECT_CLS}
                         >
                             <option value="">Unassigned</option>
                             {members.map(m => (
@@ -329,31 +322,29 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                         </select>
                     </div>
 
-                    {/* Agenda */}
                     <div>
                         <Label htmlFor="agenda">Agenda / Notes</Label>
                         <textarea
                             id="agenda"
                             value={formData.agenda}
                             onChange={(e) => setFormData({ ...formData, agenda: e.target.value })}
-                            className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground placeholder:text-muted-foreground resize-none"
+                            className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
                             rows={3}
                             placeholder="Key discussion points, objectives..."
                         />
                     </div>
 
-                    {/* Meeting Notes — only in edit mode (post-meeting) */}
                     {isEditing && (
                         <div>
                             <Label htmlFor="meeting_notes">
                                 Meeting Notes
-                                <span className="ml-2 text-xs text-muted-foreground font-normal">(post-meeting)</span>
+                                <span className="ml-2 text-xs text-slate-500 dark:text-slate-400 font-normal">(post-meeting)</span>
                             </Label>
                             <textarea
                                 id="meeting_notes"
                                 value={formData.meeting_notes}
                                 onChange={(e) => setFormData({ ...formData, meeting_notes: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground placeholder:text-muted-foreground resize-none"
+                                className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
                                 rows={3}
                                 placeholder="Outcomes, decisions, action items..."
                             />
@@ -361,15 +352,25 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                     )}
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            disabled={isLoading}
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+                        >
                             Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading}>
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
+                        >
+                            {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
                             {isLoading
-                                ? (isEditing ? "Updating…" : "Scheduling…")
+                                ? (isEditing ? "Updating..." : "Scheduling...")
                                 : (isEditing ? "Update Meeting" : "Schedule Meeting")
                             }
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>

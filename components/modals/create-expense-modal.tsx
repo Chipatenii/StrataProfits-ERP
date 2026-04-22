@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Expense } from "@/lib/types"
 
@@ -16,6 +14,9 @@ interface CreateExpenseModalProps {
     initialData?: Expense | null
 }
 
+const INPUT_CLS = "mt-1 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+const SELECT_CLS = "mt-1 w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+
 export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData }: CreateExpenseModalProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
         category: "Other",
         description: "",
         currency: "ZMW",
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split("T")[0]
     })
 
     useEffect(() => {
@@ -34,7 +35,7 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                     category: initialData.category || "Other",
                     description: initialData.description || "",
                     currency: initialData.currency || "ZMW",
-                    date: initialData.date || new Date().toISOString().split('T')[0]
+                    date: initialData.date || new Date().toISOString().split("T")[0]
                 })
             } else {
                 setFormData({
@@ -42,7 +43,7 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                     category: "Other",
                     description: "",
                     currency: "ZMW",
-                    date: new Date().toISOString().split('T')[0]
+                    date: new Date().toISOString().split("T")[0]
                 })
             }
         }
@@ -53,10 +54,7 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
         setLoading(true)
 
         try {
-            const payload = {
-                ...formData,
-                amount: parseFloat(formData.amount)
-            }
+            const payload = { ...formData, amount: parseFloat(formData.amount) }
 
             const url = initialData?.id ? `/api/expenses?id=${initialData.id}` : "/api/expenses"
             const method = initialData?.id ? "PATCH" : "POST"
@@ -67,14 +65,14 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                 body: JSON.stringify(payload)
             })
 
-            if (!res.ok) throw new Error(`Failed to ${initialData ? 'update' : 'create'} expense`)
+            if (!res.ok) throw new Error(`Failed to ${initialData ? "update" : "create"} expense`)
 
             onSuccess()
             onOpenChange(false)
-            toast.success(initialData ? 'Expense updated successfully' : 'Expense recorded successfully')
+            toast.success(initialData ? "Expense updated successfully" : "Expense recorded successfully")
         } catch (error) {
             console.error(error)
-            toast.error(`Failed to ${initialData ? 'update' : 'create'} expense`)
+            toast.error(`Failed to ${initialData ? "update" : "create"} expense`)
         } finally {
             setLoading(false)
         }
@@ -82,11 +80,13 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md glass-card">
+            <DialogContent className="max-w-md rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <DialogHeader>
-                    <DialogTitle>{initialData ? 'Edit Expense' : 'Record Expense'}</DialogTitle>
-                    <DialogDescription>
-                        {initialData ? 'Update the details of this expense.' : 'Enter the details of the company expense.'}
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                        {initialData ? "Edit Expense" : "Record Expense"}
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
+                        {initialData ? "Update the details of this expense." : "Enter the details of the company expense."}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -98,6 +98,7 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             placeholder="e.g. Office Supplies"
                             required
+                            className={INPUT_CLS}
                         />
                     </div>
 
@@ -111,12 +112,13 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                                 placeholder="0.00"
                                 required
+                                className={INPUT_CLS}
                             />
                         </div>
                         <div>
                             <Label>Category</Label>
                             <select
-                                className="w-full mt-1 px-3 py-2 rounded-lg bg-card border border-border"
+                                className={SELECT_CLS}
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             >
@@ -132,7 +134,7 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label>Currency</Label>
-                            <Input value={formData.currency} disabled className="bg-muted" />
+                            <Input value={formData.currency} disabled className={`mt-1 bg-slate-50 dark:bg-slate-800 rounded-lg border-slate-200 dark:border-slate-800`} />
                         </div>
                         <div>
                             <Label>Date</Label>
@@ -140,6 +142,7 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className={INPUT_CLS}
                             />
                         </div>
                     </div>
@@ -147,9 +150,8 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                     <DialogFooter className="flex flex-row justify-between items-center w-full">
                         <div>
                             {initialData?.id && (
-                                <Button
+                                <button
                                     type="button"
-                                    variant="outline"
                                     onClick={async () => {
                                         if (confirm("Are you sure you want to delete this expense?")) {
                                             setLoading(true)
@@ -165,22 +167,33 @@ export function CreateExpenseModal({ open, onOpenChange, onSuccess, initialData 
                                             } catch (e) {
                                                 console.error(e)
                                                 toast.error("Error deleting expense")
+                                            } finally {
+                                                setLoading(false)
                                             }
-                                            finally { setLoading(false) }
                                         }
                                     }}
-                                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                    className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                                 >
                                     Delete
-                                </Button>
+                                </button>
                             )}
                         </div>
                         <div className="flex gap-2">
-                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            <button
+                                type="button"
+                                onClick={() => onOpenChange(false)}
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
+                            >
+                                {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
                                 {initialData ? "Update Expense" : "Record Expense"}
-                            </Button>
+                            </button>
                         </div>
                     </DialogFooter>
                 </form>

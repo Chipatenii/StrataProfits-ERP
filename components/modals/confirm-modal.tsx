@@ -34,18 +34,24 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="glass-card border-border/50">
+            <AlertDialogContent className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-foreground">{title}</AlertDialogTitle>
-                    <AlertDialogDescription className="text-muted-foreground">
+                    <AlertDialogTitle className="text-slate-900 dark:text-white">{title}</AlertDialogTitle>
+                    <AlertDialogDescription className="text-slate-500 dark:text-slate-400">
                         {description}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-background hover:bg-muted text-foreground border-border">{cancelText}</AlertDialogCancel>
+                    <AlertDialogCancel className="rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+                        {cancelText}
+                    </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={onConfirm}
-                        className={variant === "destructive" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-primary text-primary-foreground hover:bg-primary/90"}
+                        className={
+                            variant === "destructive"
+                                ? "rounded-lg bg-rose-600 text-white hover:bg-rose-700"
+                                : "rounded-lg bg-emerald-700 text-white hover:bg-emerald-800"
+                        }
                     >
                         {confirmText}
                     </AlertDialogAction>

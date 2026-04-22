@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react"
 import useSWR from "swr"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createSelfCreatedTask } from "@/app/actions/tasks"
@@ -25,6 +24,9 @@ interface CreateSelfTaskModalProps {
     } | null
 }
 
+const INPUT_CLS = "mt-1 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+const SELECT_CLS = "mt-1 w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+
 export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit }: CreateSelfTaskModalProps) {
     const [formData, setFormData] = useState({
         title: "",
@@ -40,7 +42,6 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
     const { data: projectsData } = useSWR(open ? "/api/projects" : null)
     const projects: { id: string; name: string }[] = projectsData || []
 
-    // Load projects on open so user can select if they toggle project related
     useEffect(() => {
         if (open) {
             if (taskToEdit) {
@@ -59,6 +60,7 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                 resetForm()
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, taskToEdit])
 
     const resetForm = () => {
@@ -115,38 +117,36 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="glass-card border-border/30 max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">{taskToEdit ? 'Edit Task' : 'Create New Task'}</DialogTitle>
-                    <div className="text-sm text-muted-foreground mb-4">
-                        Fill out the details below to create a new task.
-                    </div>
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                        {taskToEdit ? "Edit Task" : "Create New Task"}
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
+                        {taskToEdit ? "Update the task details below." : "Fill in the details below to create a new task."}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <Label htmlFor="title" className="text-foreground font-medium">
-                            Task Title *
-                        </Label>
+                        <Label htmlFor="title">Task Title *</Label>
                         <Input
                             id="title"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="mt-1 bg-card border-border/30"
+                            className={INPUT_CLS}
                             placeholder="What are you working on?"
                             required
                         />
                     </div>
 
                     <div>
-                        <Label htmlFor="description" className="text-foreground font-medium">
-                            Description
-                        </Label>
+                        <Label htmlFor="description">Description</Label>
                         <textarea
                             id="description"
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground placeholder-muted-foreground"
+                            className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                             placeholder="Add details about this task..."
                             rows={3}
                         />
@@ -158,21 +158,19 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                             id="is_project_related"
                             checked={formData.is_project_related}
                             onChange={(e) => setFormData({ ...formData, is_project_related: e.target.checked })}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-emerald-700 focus:ring-emerald-500/40"
                         />
-                        <Label htmlFor="is_project_related" className="text-foreground font-medium">Link to a Project?</Label>
+                        <Label htmlFor="is_project_related">Link to a Project?</Label>
                     </div>
 
                     {formData.is_project_related && (
                         <div>
-                            <Label htmlFor="project" className="text-foreground font-medium">
-                                Project
-                            </Label>
+                            <Label htmlFor="project">Project</Label>
                             <select
                                 id="project"
                                 value={formData.project_id}
                                 onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                className={SELECT_CLS}
                                 required={formData.is_project_related}
                             >
                                 <option value="">Select a project...</option>
@@ -187,14 +185,12 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="priority" className="text-foreground font-medium">
-                                Priority
-                            </Label>
+                            <Label htmlFor="priority">Priority</Label>
                             <select
                                 id="priority"
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-card border border-border/30 text-foreground"
+                                className={SELECT_CLS}
                             >
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
@@ -210,25 +206,21 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                     </div>
 
                     <div>
-                        <Label htmlFor="dueDate" className="text-foreground font-medium">
-                            Due Date (Optional)
-                        </Label>
+                        <Label htmlFor="dueDate">Due Date (Optional)</Label>
                         <Input
                             id="dueDate"
                             type="date"
                             value={formData.due_date}
                             onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                            className="mt-1 bg-card border-border/30"
+                            className={INPUT_CLS}
                         />
                     </div>
 
                     <DialogFooter className="flex flex-row justify-between items-center w-full">
                         <div>
                             {taskToEdit && (
-                                <Button
+                                <button
                                     type="button"
-                                    variant="ghost"
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-0"
                                     onClick={async () => {
                                         if (confirm("Are you sure you want to delete this task?")) {
                                             setIsLoading(true)
@@ -246,30 +238,33 @@ export function CreateSelfTaskModal({ open, onOpenChange, onSuccess, taskToEdit 
                                             finally { setIsLoading(false) }
                                         }
                                     }}
+                                    disabled={isLoading}
+                                    className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 disabled:opacity-50"
                                 >
                                     Delete Task
-                                </Button>
+                                </button>
                             )}
                         </div>
                         <div className="flex gap-2">
-                            <Button
+                            <button
                                 type="button"
-                                variant="outline"
                                 onClick={() => {
                                     resetForm()
                                     onOpenChange(false)
                                 }}
                                 disabled={isLoading}
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
                             >
                                 Cancel
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
                             >
+                                {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
                                 {isLoading ? "Saving..." : taskToEdit ? "Update Task" : "Create Task"}
-                            </Button>
+                            </button>
                         </div>
                     </DialogFooter>
                 </form>

@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 interface RecordPayrollModalProps {
@@ -20,6 +18,9 @@ interface RecordPayrollModalProps {
     periodStart: string
     periodEnd: string
 }
+
+const INPUT_CLS = "rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+const SELECT_CLS = "flex h-10 w-full mt-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
 
 export function RecordPayrollModal({ open, onOpenChange, onSuccess, member, periodStart, periodEnd }: RecordPayrollModalProps) {
     const [loading, setLoading] = useState(false)
@@ -84,11 +85,14 @@ export function RecordPayrollModal({ open, onOpenChange, onSuccess, member, peri
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md glass-card">
+            <DialogContent className="max-w-md rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <DialogHeader>
-                    <DialogTitle>Record Payment for {member.name}</DialogTitle>
-                    <DialogDescription>
-                        Enter the details of the payroll payment. The estimated amount for this period is ZMW {member.estimatedPayroll.toFixed(2)}.
+                    <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                        Record Payment for {member.name}
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
+                        Enter the details of the payroll payment. The estimated amount for this period is{" "}
+                        <span className="font-mono font-semibold text-emerald-700">ZMW {member.estimatedPayroll.toFixed(2)}</span>.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -103,11 +107,12 @@ export function RecordPayrollModal({ open, onOpenChange, onSuccess, member, peri
                                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                                 placeholder="0.00"
                                 required
+                                className={`mt-1 ${INPUT_CLS}`}
                             />
                         </div>
                         <div>
                             <Label>Currency</Label>
-                            <Input value={formData.currency} disabled className="bg-muted" />
+                            <Input value={formData.currency} disabled className={`mt-1 bg-slate-50 dark:bg-slate-800 ${INPUT_CLS}`} />
                         </div>
                     </div>
 
@@ -115,7 +120,7 @@ export function RecordPayrollModal({ open, onOpenChange, onSuccess, member, peri
                         <div>
                             <Label>Payment Method *</Label>
                             <select
-                                className="w-full mt-1 px-3 py-2 rounded-lg bg-card border border-border"
+                                className={SELECT_CLS}
                                 value={formData.payment_method}
                                 onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                                 required
@@ -132,6 +137,7 @@ export function RecordPayrollModal({ open, onOpenChange, onSuccess, member, peri
                                 value={formData.reference}
                                 onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
                                 placeholder="e.g. TXN-12345"
+                                className={`mt-1 ${INPUT_CLS}`}
                             />
                         </div>
                     </div>
@@ -142,15 +148,26 @@ export function RecordPayrollModal({ open, onOpenChange, onSuccess, member, peri
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             placeholder="Optional notes..."
+                            className={`mt-1 ${INPUT_CLS}`}
                         />
                     </div>
 
                     <DialogFooter className="mt-6">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Record Payment
-                        </Button>
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
+                        >
+                            {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
+                            {loading ? "Recording..." : "Record Payment"}
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>
