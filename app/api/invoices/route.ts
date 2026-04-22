@@ -157,8 +157,10 @@ export async function POST(request: NextRequest) {
                 description: item.description,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
+                // total is the authoritative per-line amount stored in the DB
+                total: item.quantity * item.unit_price,
                 tax_rate: item.tax_rate,
-                tax_amount: item.tax_amount
+                tax_amount: item.tax_amount,
             }))
 
             const { error: itemsError } = await admin
@@ -248,8 +250,10 @@ export async function PATCH(request: NextRequest) {
                     description: item.description,
                     quantity: item.quantity,
                     unit_price: item.unit_price,
+                    // total is the authoritative per-line amount stored in the DB
+                    total: item.quantity * item.unit_price,
                     tax_rate: item.tax_rate || 0,
-                    tax_amount: item.tax_amount || 0
+                    tax_amount: item.tax_amount || 0,
                 }))
                 const { error: itemsError } = await admin
                     .from("invoice_items")

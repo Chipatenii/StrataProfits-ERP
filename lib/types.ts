@@ -36,11 +36,15 @@ export interface Deliverable {
     updated_at: string
 }
 
+import { TaskStatus } from "./schemas"
+
+export type { TaskStatus }
+
 export interface Task {
     id: string
     title: string
     description: string | null
-    status: string
+    status: TaskStatus
     priority: "low" | "medium" | "high"
     due_date: string | null
     estimated_hours: number | null
@@ -174,7 +178,7 @@ export interface QuoteItem {
 
 export interface ApprovalRequest {
     id: string
-    entity_type: "task" | "time_log" | "expense" | "invoice" | "quote" | "meeting"
+    entity_type: "task" | "time_log" | "expense" | "meeting" | "deliverable"
     entity_id: string
     requested_by_user_id: string
     assigned_to_user_id?: string | null

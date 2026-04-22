@@ -16,6 +16,51 @@ const createPaymentSchema = z.object({
     receipt_number: z.string().optional()
 })
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Derive the canonical invoice total.
+ *
+ * Prefers the sum of `invoice_items.total` values (written on every new item
+ * insert) over the header `amount` column so that both the overpayment guard
+ * and `reevaluateInvoiceStatus` always use the same figure.
+ */
+function resolveInvoiceTotal(
+    invoiceAmount: number,
+    items: { total: number }[] | null | undefined
+): number {
+    const itemsTotal = (items ?? []).reduce((s, i) => s + (i.total || 0), 0)
+    return itemsTotal > 0 ? itemsTotal : (invoiceAmount ?? 0)
+}
+
+async function reevaluateInvoiceStatus(admin: any, invoiceId: string) {
+    // Fetch both header amount AND line items so we use the same logic as
+    // getOutstandingBalance in lib/data/invoices.ts.
+    const { data: invoice } = await admin
+        .from("invoices")
+        .select("amount, invoice_items(total)")
+        .eq("id", invoiceId)
+        .single()
+
+    const { data: payments } = await admin
+        .from("payments")
+        .select("amount")
+        .eq("invoice_id", invoiceId)
+
+    if (invoice && payments) {
+        const totalDue = resolveInvoiceTotal(invoice.amount, invoice.invoice_items)
+        const totalPaid = payments.reduce((sum: number, p: any) => sum + p.amount, 0)
+        const newStatus = totalPaid >= totalDue ? 'paid' : totalPaid > 0 ? 'sent' : 'draft'
+        await admin.from("invoices").update({ status: newStatus }).eq("id", invoiceId)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// GET
+// ---------------------------------------------------------------------------
+
 export async function GET() {
     try {
         const supabase = await createClient()
@@ -43,6 +88,10 @@ export async function GET() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// POST
+// ---------------------------------------------------------------------------
+
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient()
@@ -65,17 +114,18 @@ export async function POST(request: NextRequest) {
 
         const { invoice_id, amount } = validation.data
 
-        // 0. Prevent Overpayments
+        // 0. Prevent Overpayments — use the canonical total (items > header fallback)
         const { data: invoice } = await admin
             .from("invoices")
-            .select("amount, invoice_number, client_id, project_id")
+            .select("amount, invoice_number, client_id, project_id, invoice_items(total)")
             .eq("id", invoice_id)
             .single()
         if (!invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
 
         const { data: existingPayments } = await admin.from("payments").select("amount").eq("invoice_id", invoice_id)
         const totalPaid = (existingPayments || []).reduce((sum: number, p: any) => sum + p.amount, 0)
-        const balanceDue = invoice.amount - totalPaid
+        const invoiceTotal = resolveInvoiceTotal(invoice.amount, invoice.invoice_items)
+        const balanceDue = invoiceTotal - totalPaid
 
         if (amount > balanceDue) {
             return NextResponse.json({ error: "Unprocessable Entity", details: "Payment amount exceeds balance due" }, { status: 422 })
@@ -117,6 +167,10 @@ export async function POST(request: NextRequest) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// PATCH
+// ---------------------------------------------------------------------------
+
 export async function PATCH(request: NextRequest) {
     try {
         const supabase = await createClient()
@@ -140,6 +194,45 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: "Validation failed" }, { status: 400 })
         }
 
+        // Overpayment guard: if the amount is being changed we must re-check the balance.
+        if (validation.data.amount !== undefined) {
+            const { data: currentPayment } = await admin
+                .from("payments")
+                .select("invoice_id, amount")
+                .eq("id", id)
+                .single()
+
+            if (!currentPayment) {
+                return NextResponse.json({ error: "Payment not found" }, { status: 404 })
+            }
+
+            const invoiceId = validation.data.invoice_id ?? currentPayment.invoice_id
+            const { data: invoice } = await admin
+                .from("invoices")
+                .select("amount, invoice_items(total)")
+                .eq("id", invoiceId)
+                .single()
+
+            if (invoice) {
+                const { data: allPayments } = await admin
+                    .from("payments")
+                    .select("amount")
+                    .eq("invoice_id", invoiceId)
+                    .neq("id", id) // exclude current payment from the sum
+
+                const otherPaid = (allPayments ?? []).reduce((s: number, p: any) => s + p.amount, 0)
+                const invoiceTotal = resolveInvoiceTotal(invoice.amount, invoice.invoice_items)
+                const balanceDue = invoiceTotal - otherPaid
+
+                if (validation.data.amount > balanceDue) {
+                    return NextResponse.json(
+                        { error: "Unprocessable Entity", details: "Updated amount would exceed balance due" },
+                        { status: 422 }
+                    )
+                }
+            }
+        }
+
         const { data: payment, error } = await admin
             .from("payments")
             .update(validation.data)
@@ -159,6 +252,10 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Failed to update payment" }, { status: 500 })
     }
 }
+
+// ---------------------------------------------------------------------------
+// DELETE
+// ---------------------------------------------------------------------------
 
 export async function DELETE(request: NextRequest) {
     try {
@@ -203,17 +300,5 @@ export async function DELETE(request: NextRequest) {
     } catch (error) {
         console.error("Error deleting payment:", error)
         return NextResponse.json({ error: "Failed to delete payment" }, { status: 500 })
-    }
-}
-
-async function reevaluateInvoiceStatus(admin: any, invoiceId: string) {
-    const { data: invoice } = await admin.from("invoices").select("amount").eq("id", invoiceId).single()
-    const { data: payments } = await admin.from("payments").select("amount").eq("invoice_id", invoiceId)
-
-    if (invoice && payments) {
-        let totalDue = invoice.amount || 0;
-        const totalPaid = payments.reduce((sum: number, p: any) => sum + p.amount, 0)
-        let newStatus = totalPaid >= totalDue ? 'paid' : totalPaid > 0 ? 'sent' : 'draft'
-        await admin.from("invoices").update({ status: newStatus }).eq("id", invoiceId)
     }
 }
