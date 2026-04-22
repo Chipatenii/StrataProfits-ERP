@@ -81,11 +81,11 @@ export function Timer({ isActive, startTime, initialSeconds = 0, estimatedHours,
   const getTimerColor = () => {
     switch (timeStatus) {
       case "exceeded":
-        return "text-red-600"
+        return "text-rose-600 dark:text-rose-400"
       case "warning":
-        return "text-amber-600"
+        return "text-amber-600 dark:text-amber-400"
       default:
-        return "text-accent"
+        return "text-emerald-700 dark:text-emerald-400"
     }
   }
 

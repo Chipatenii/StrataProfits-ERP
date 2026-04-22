@@ -1,7 +1,6 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 interface EstimatedTimeInputProps {
     hours: string
@@ -22,22 +21,22 @@ export function EstimatedTimeInput({
 }: EstimatedTimeInputProps) {
     return (
         <div className={className}>
-            <Label className="text-foreground font-medium">{label}</Label>
-            <div className="grid grid-cols-2 gap-2 mt-1">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
                 <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Hours</label>
+                    <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">Hours</label>
                     <Input
                         type="number"
                         min="0"
                         step="1"
                         value={hours}
                         onChange={(e) => onHoursChange(e.target.value)}
-                        className="bg-card border-border/30"
+                        className="rounded-lg border-slate-200 dark:border-slate-800"
                         placeholder="0"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Minutes</label>
+                    <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">Minutes</label>
                     <Input
                         type="number"
                         min="0"
@@ -45,7 +44,7 @@ export function EstimatedTimeInput({
                         step="5"
                         value={minutes}
                         onChange={(e) => onMinutesChange(e.target.value)}
-                        className="bg-card border-border/30"
+                        className="rounded-lg border-slate-200 dark:border-slate-800"
                         placeholder="0"
                     />
                 </div>

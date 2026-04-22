@@ -1,6 +1,5 @@
 "use client"
 
-
 interface Stats {
   totalTasks: number
   completedTasks: number
@@ -11,38 +10,27 @@ interface Stats {
 }
 
 export function StatsOverview({ stats }: { stats: Stats }) {
+  const items = [
+    { label: "Total tasks", value: stats.totalTasks, emphasis: false },
+    { label: "In progress", value: stats.inProgressTasks, emphasis: false },
+    { label: "Completed", value: stats.completedTasks, emphasis: true },
+    { label: "Team members", value: stats.totalTeamMembers, emphasis: false },
+    { label: "Total hours", value: stats.totalHours, emphasis: false },
+  ]
+
   return (
-    <div className="grid md:grid-cols-5 gap-4">
-      <div className="glass-card border-border/30 rounded-xl p-6">
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">Total Tasks</p>
-          <p className="text-3xl font-bold text-primary mt-2">{stats.totalTasks}</p>
+    <div className="grid gap-3 md:grid-cols-5">
+      {items.map(item => (
+        <div
+          key={item.label}
+          className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800"
+        >
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{item.label}</p>
+          <p className={`text-2xl font-bold mt-1 ${item.emphasis ? "text-emerald-700 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
+            {item.value}
+          </p>
         </div>
-      </div>
-      <div className="glass-card border-border/30 rounded-xl p-6">
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">In Progress</p>
-          <p className="text-3xl font-bold text-accent mt-2">{stats.inProgressTasks}</p>
-        </div>
-      </div>
-      <div className="glass-card border-border/30 rounded-xl p-6">
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">Completed</p>
-          <p className="text-3xl font-bold text-green-600 mt-2">{stats.completedTasks}</p>
-        </div>
-      </div>
-      <div className="glass-card border-border/30 rounded-xl p-6">
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">Team Members</p>
-          <p className="text-3xl font-bold text-primary mt-2">{stats.totalTeamMembers}</p>
-        </div>
-      </div>
-      <div className="glass-card border-border/30 rounded-xl p-6">
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">Total Hours</p>
-          <p className="text-3xl font-bold text-accent mt-2">{stats.totalHours}</p>
-        </div>
-      </div>
+      ))}
     </div>
   )
 }

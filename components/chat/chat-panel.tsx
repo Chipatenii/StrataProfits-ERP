@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import {
-    MessageSquare, X, Hash, Send, Plus, Loader2, Users, ChevronLeft
+    MessageSquare, X, Hash, Send, Plus, Users, ChevronLeft
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
@@ -44,7 +44,6 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
     const [newChannelName, setNewChannelName] = useState("")
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
-    // Load channels
     const loadChannels = useCallback(async () => {
         try {
             const res = await fetch("/api/chat/channels")
@@ -57,7 +56,6 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
         if (isOpen) loadChannels()
     }, [isOpen, loadChannels])
 
-    // Load messages when channel selected
     const loadMessages = useCallback(async (channelId: string) => {
         try {
             const res = await fetch(`/api/chat/messages?channel_id=${channelId}&limit=50`)
@@ -69,7 +67,6 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
         if (activeChannel) loadMessages(activeChannel.id)
     }, [activeChannel, loadMessages])
 
-    // Real-time subscription
     useEffect(() => {
         if (!activeChannel) return
 
@@ -81,7 +78,6 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                 table: "chat_messages",
                 filter: `channel_id=eq.${activeChannel.id}`,
             }, async (payload) => {
-                // Fetch full message with sender profile
                 const { data } = await supabase
                     .from("chat_messages")
                     .select("*, sender:profiles!chat_messages_sender_id_fkey(id, full_name, avatar_url, role)")
@@ -96,7 +92,6 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
         return () => { supabase.removeChannel(channel) }
     }, [activeChannel, supabase])
 
-    // Auto-scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
@@ -129,7 +124,7 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                 setNewChannelName("")
                 setShowNewChannel(false)
                 loadChannels()
-                toast.success("Channel created!")
+                toast.success("Channel created")
             }
         } catch { toast.error("Failed to create channel") }
     }
@@ -146,52 +141,46 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
 
     return (
         <>
-            {/* Backdrop */}
             <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={onClose} />
 
-            {/* Panel */}
-            <div className="fixed right-0 top-0 bottom-0 w-full sm:w-[420px] bg-white dark:bg-slate-950 z-50 shadow-2xl flex flex-col animate-slide-in-right">
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-primary text-white">
+            <div className="fixed right-0 top-0 bottom-0 w-full sm:w-[420px] bg-white dark:bg-slate-950 z-50 border-l border-slate-200 dark:border-slate-800 flex flex-col animate-slide-in-right">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
                     {activeChannel ? (
-                        <button onClick={() => setActiveChannel(null)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                            <ChevronLeft className="w-5 h-5" />
+                        <button onClick={() => setActiveChannel(null)} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                            <ChevronLeft className="w-4 h-4" />
                             <Hash className="w-4 h-4" />
-                            <span className="font-semibold">{activeChannel.name}</span>
+                            <span>{activeChannel.name}</span>
                         </button>
                     ) : (
-                        <div className="flex items-center gap-2">
-                            <MessageSquare className="w-5 h-5" />
-                            <span className="font-semibold text-lg">Chat</span>
+                        <div className="inline-flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white">Chat</span>
                         </div>
                     )}
-                    <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
-                        <X className="w-5 h-5" />
+                    <button onClick={onClose} className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
+                        <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                {/* Content */}
                 {!activeChannel ? (
-                    /* ── Channel List ── */
                     <div className="flex-1 overflow-y-auto">
-                        {/* Create Channel */}
                         <div className="p-3 border-b border-slate-100 dark:border-slate-800">
                             {showNewChannel ? (
                                 <div className="flex items-center gap-2">
-                                    <Hash className="w-4 h-4 text-muted-foreground shrink-0" />
+                                    <Hash className="w-4 h-4 text-slate-400 shrink-0" />
                                     <input
                                         type="text" value={newChannelName}
                                         onChange={e => setNewChannelName(e.target.value)}
                                         onKeyDown={e => e.key === "Enter" && handleCreateChannel()}
                                         placeholder="channel-name"
-                                        className="flex-1 text-sm bg-transparent border-b border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:outline-none py-1 px-0"
+                                        className="flex-1 text-sm bg-transparent border-b border-slate-200 dark:border-slate-700 focus:border-emerald-500 focus:outline-none py-1 px-0 text-slate-900 dark:text-white"
                                         autoFocus
                                     />
-                                    <button onClick={handleCreateChannel} className="text-indigo-600 text-sm font-semibold hover:text-indigo-700">Create</button>
-                                    <button onClick={() => { setShowNewChannel(false); setNewChannelName("") }} className="text-muted-foreground text-sm">Cancel</button>
+                                    <button onClick={handleCreateChannel} className="text-emerald-700 dark:text-emerald-400 text-sm font-semibold hover:text-emerald-800 dark:hover:text-emerald-300">Create</button>
+                                    <button onClick={() => { setShowNewChannel(false); setNewChannelName("") }} className="text-slate-500 dark:text-slate-400 text-sm">Cancel</button>
                                 </div>
                             ) : (
-                                <button onClick={() => setShowNewChannel(true)} className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 font-semibold hover:text-indigo-700 w-full py-1">
+                                <button onClick={() => setShowNewChannel(true)} className="inline-flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400 font-semibold hover:text-emerald-800 dark:hover:text-emerald-300 w-full py-1">
                                     <Plus className="w-4 h-4" /> New Channel
                                 </button>
                             )}
@@ -199,12 +188,12 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
 
                         {loading ? (
                             <div className="flex items-center justify-center py-16">
-                                <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-600 border-t-transparent"></div>
                             </div>
                         ) : channels.length === 0 ? (
                             <div className="text-center py-16 px-4">
-                                <MessageSquare className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
-                                <p className="text-sm text-muted-foreground">No channels yet. Create one to start chatting!</p>
+                                <MessageSquare className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+                                <p className="text-sm text-slate-500 dark:text-slate-400">No channels yet. Create one to start chatting.</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -212,24 +201,24 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                                     <button
                                         key={ch.id}
                                         onClick={() => setActiveChannel(ch)}
-                                        className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors flex items-start gap-3"
+                                        className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors flex items-start gap-3"
                                     >
-                                        <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white shrink-0 mt-0.5">
+                                        <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                                             {ch.is_dm ? <Users className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-semibold text-sm text-foreground">{ch.name}</span>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">{ch.name}</span>
                                                 {ch.unread_count > 0 && (
-                                                    <span className="bg-indigo-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">{ch.unread_count}</span>
+                                                    <span className="bg-emerald-700 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center shrink-0">{ch.unread_count}</span>
                                                 )}
                                             </div>
                                             {ch.last_message ? (
-                                                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                                                     <span className="font-medium">{ch.last_message.sender?.full_name}:</span> {ch.last_message.content}
                                                 </p>
                                             ) : (
-                                                <p className="text-xs text-muted-foreground italic mt-0.5">No messages yet</p>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 italic mt-0.5">No messages yet</p>
                                             )}
                                         </div>
                                     </button>
@@ -238,13 +227,12 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                         )}
                     </div>
                 ) : (
-                    /* ── Message Thread ── */
                     <>
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {messages.length === 0 ? (
                                 <div className="text-center py-16">
                                     <MessageSquare className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-                                    <p className="text-sm text-muted-foreground">No messages yet. Say hello! 👋</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No messages yet. Say hello.</p>
                                 </div>
                             ) : (
                                 messages.map((msg, idx) => {
@@ -253,24 +241,23 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                                     return (
                                         <div key={msg.id} className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : ""}`}>
                                             {showAvatar ? (
-                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${isOwn ? "bg-indigo-500" : "bg-emerald-500"}`}>
+                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${isOwn ? "bg-emerald-700" : "bg-slate-600"}`}>
                                                     {(msg.sender?.full_name || "?")[0]}
                                                 </div>
                                             ) : <div className="w-7 shrink-0" />}
                                             <div className={`max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
                                                 {showAvatar && (
-                                                    <p className={`text-[11px] font-semibold mb-0.5 ${isOwn ? "text-right text-indigo-600" : "text-emerald-600"}`}>
+                                                    <p className={`text-[11px] font-semibold mb-0.5 text-slate-500 dark:text-slate-400 ${isOwn ? "text-right" : ""}`}>
                                                         {msg.sender?.full_name || "Unknown"}
                                                     </p>
                                                 )}
-                                                <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                                                    isOwn
-                                                        ? "bg-indigo-500 text-white rounded-tr-md"
-                                                        : "bg-slate-100 dark:bg-slate-800 text-foreground rounded-tl-md"
-                                                }`}>
+                                                <div className={`px-3 py-2 rounded-xl text-sm leading-relaxed ${isOwn
+                                                    ? "bg-emerald-700 text-white rounded-tr-sm"
+                                                    : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-tl-sm"
+                                                    }`}>
                                                     {msg.content}
                                                 </div>
-                                                <p className={`text-[10px] text-muted-foreground mt-0.5 ${isOwn ? "text-right" : ""}`}>
+                                                <p className={`text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 ${isOwn ? "text-right" : ""}`}>
                                                     {formatTime(msg.created_at)}
                                                 </p>
                                             </div>
@@ -281,7 +268,6 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Compose */}
                         <div className="p-3 border-t border-slate-200 dark:border-slate-800">
                             <div className="flex items-center gap-2">
                                 <input
@@ -290,14 +276,16 @@ export function ChatPanel({ isOpen, onClose, userId }: ChatPanelProps) {
                                     onChange={e => setNewMessage(e.target.value)}
                                     onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
                                     placeholder={`Message #${activeChannel.name}...`}
-                                    className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border-0 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-foreground"
+                                    className="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white"
                                 />
                                 <button
                                     onClick={handleSend}
                                     disabled={!newMessage.trim() || sending}
-                                    className="p-2.5 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="p-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                    {sending ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                    ) : <Send className="w-4 h-4" />}
                                 </button>
                             </div>
                         </div>

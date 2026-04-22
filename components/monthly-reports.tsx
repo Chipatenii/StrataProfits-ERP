@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Download, Loader2 } from "lucide-react"
+import { ArrowLeft, Download } from "lucide-react"
 import jsPDF from "jspdf"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { RecordPayrollModal } from "@/components/modals/record-payroll-modal"
@@ -45,8 +45,7 @@ export function MonthlyReports() {
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
   const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
-  
-  // Payroll Modal State
+
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false)
   const [memberToPay, setMemberToPay] = useState<{ id: string, name: string, estimatedPayroll: number } | null>(null)
 
@@ -69,7 +68,6 @@ export function MonthlyReports() {
       setTotalCompanyHours(totalHours || 0)
       setTotalEstimatedPayroll(totalPayroll || 0)
 
-      // Find top performer and least productive
       if (fetchedReports && fetchedReports.length > 0) {
         const top = fetchedReports.reduce((prev: TeamMemberReport, current: TeamMemberReport) =>
           (current.total_hours > prev.total_hours) ? current : prev
@@ -95,7 +93,6 @@ export function MonthlyReports() {
     loadReports()
   }, [loadReports])
 
-  // Real-time subscriptions
   useRealtimeSubscription("tasks", loadReports)
   useRealtimeSubscription("time_logs", loadReports)
 
@@ -120,7 +117,6 @@ export function MonthlyReports() {
 
     let y = 110
     reports.forEach((r) => {
-      // Check for page break
       if (y > 250) {
         doc.addPage()
         y = 20
@@ -138,7 +134,6 @@ export function MonthlyReports() {
 
       y += 30
 
-      // Task Breakdown
       if (r.tasks && r.tasks.length > 0) {
         doc.setFontSize(9)
         doc.setFont("helvetica", "bold")
@@ -160,7 +155,7 @@ export function MonthlyReports() {
         y += 5
       }
 
-      doc.line(10, y, 200, y) // Separator line
+      doc.line(10, y, 200, y)
       y += 10
     })
 
@@ -169,216 +164,209 @@ export function MonthlyReports() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-emerald-600 border-t-transparent"></div>
       </div>
     )
   }
 
+  const activeCount = reports.filter((r) => r.days_worked > 0).length
+  const avgHours = reports.length > 0
+    ? (Math.round((reports.reduce((acc, r) => acc + r.total_hours, 0) / reports.length) * 100) / 100).toFixed(2)
+    : "0"
+
   return (
-    <div className="min-h-screen bg-blue-50">
-      {/* Header */}
-      <header className="bg-white border-b border-border shadow-sm">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Monthly Reports</h1>
-              <p className="text-sm text-muted-foreground">Team hours tracking</p>
+              <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Monthly Reports</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Team hours tracking</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Controls */}
-        <div className="glass-card rounded-2xl p-6 flex items-center justify-between">
+      <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <label className="block text-sm font-medium mb-2">Select Month</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Select month</label>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+              className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             />
           </div>
-          <button onClick={handleExportPDF} className="flex items-center gap-2 btn-secondary">
+          <button
+            onClick={handleExportPDF}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
             <Download className="w-4 h-4" />
             Export Report
           </button>
         </div>
 
-        {/* Summary Card */}
-        <div className="glass-card rounded-2xl p-6">
-          <h2 className="text-xl font-semibold mb-4">Summary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-background rounded-lg">
-              <p className="text-sm text-muted-foreground">Total Company Hours</p>
-              <p className="text-2xl font-bold text-accent">{totalCompanyHours} hrs</p>
-            </div>
-            <div className="p-4 bg-background rounded-lg">
-              <p className="text-sm text-muted-foreground">Team Members</p>
-              <p className="text-2xl font-bold text-primary">{reports.filter((r) => r.days_worked > 0).length}</p>
-            </div>
-            <div className="p-4 bg-background rounded-lg">
-              <p className="text-sm text-muted-foreground">Average Hours/Person</p>
-              <p className="text-2xl font-bold text-primary">
-                {reports.length > 0
-                  ? (
-                    Math.round((reports.reduce((acc, r) => acc + r.total_hours, 0) / reports.length) * 100) / 100
-                  ).toFixed(2)
-                  : "0"}{" "}
-                hrs
-              </p>
-            </div>
-            <div className="p-4 bg-background rounded-lg">
-              <p className="text-sm text-muted-foreground">Estimated Payroll</p>
-              <p className="text-2xl font-bold text-green-600">ZMW {totalEstimatedPayroll.toFixed(2)}</p>
-            </div>
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total hours</p>
+            <p className="text-2xl font-bold mt-1 text-emerald-700 dark:text-emerald-400">{totalCompanyHours}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Team members</p>
+            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{activeCount}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Avg hours / person</p>
+            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{avgHours}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Est. payroll</p>
+            <p className="text-2xl font-bold mt-1 text-emerald-700 dark:text-emerald-400 font-mono">ZMW {totalEstimatedPayroll.toFixed(2)}</p>
           </div>
         </div>
 
-        {/* Productivity Highlights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {topPerformer && (
-            <div className="glass-card rounded-2xl p-6 bg-green-50/50 border-green-100">
-              <h3 className="text-lg font-semibold text-green-800 mb-2">Top Performer 🏆</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-xl">{topPerformer.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{topPerformer.email}</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+              <h3 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide mb-3">Top performer</h3>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-base text-slate-900 dark:text-white truncate">{topPerformer.full_name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{topPerformer.email}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">{topPerformer.total_hours.toFixed(1)} hrs</p>
-                  <p className="text-xs text-muted-foreground">This Month</p>
+                <div className="text-right shrink-0">
+                  <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-mono">{topPerformer.total_hours.toFixed(1)} hrs</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">This month</p>
                 </div>
               </div>
             </div>
           )}
 
           {leastProductive && (
-            <div className="glass-card rounded-2xl p-6 bg-orange-50/50 border-orange-100">
-              <h3 className="text-lg font-semibold text-orange-800 mb-2">Needs Support 💪</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-xl">{leastProductive.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{leastProductive.email}</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+              <h3 className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">Needs support</h3>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-base text-slate-900 dark:text-white truncate">{leastProductive.full_name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{leastProductive.email}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-orange-600">{leastProductive.total_hours.toFixed(1)} hrs</p>
-                  <p className="text-xs text-muted-foreground">This Month</p>
+                <div className="text-right shrink-0">
+                  <p className="text-xl font-bold text-amber-600 dark:text-amber-400 font-mono">{leastProductive.total_hours.toFixed(1)} hrs</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">This month</p>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Team Member Reports Table */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Team Member Details</h2>
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-primary/5">
-                  <tr className="border-b border-border">
-                    <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold">Total Hours</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold">Days Worked</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold">Avg Hours/Day</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold">Est. Payroll</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold">Balance</th>
-                    <th className="px-6 py-3 text-right text-sm font-semibold">Actions</th>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Team member details</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-800/30 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Name</th>
+                  <th className="px-4 py-3 text-left font-medium">Email</th>
+                  <th className="px-4 py-3 text-right font-medium">Total hrs</th>
+                  <th className="px-4 py-3 text-right font-medium">Days</th>
+                  <th className="px-4 py-3 text-right font-medium">Avg/day</th>
+                  <th className="px-4 py-3 text-right font-medium">Est. payroll</th>
+                  <th className="px-4 py-3 text-right font-medium">Balance</th>
+                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {reports.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                      No data available for this month
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {reports.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                        No data available for this month
-                      </td>
-                    </tr>
-                  ) : (
-                    reports.map((report) => (
-                      <>
-                        <tr
-                          key={report.user_id}
-                          className="border-b border-border hover:bg-background/50 transition-colors cursor-pointer"
-                          onClick={() => setExpandedUser(expandedUser === report.user_id ? null : report.user_id)}
-                        >
-                          <td className="px-6 py-4 font-medium">{report.full_name}</td>
-                          <td className="px-6 py-4 text-muted-foreground">{report.email}</td>
-                          <td className="px-6 py-4 font-semibold text-accent">{report.total_hours.toFixed(2)}</td>
-                          <td className="px-6 py-4">{report.days_worked}</td>
-                          <td className="px-6 py-4">{report.average_hours_per_day.toFixed(2)}</td>
-                          <td className="px-6 py-4 font-medium text-muted-foreground">ZMW {report.estimated_payroll.toFixed(2)}</td>
-                          <td className="px-6 py-4 font-bold text-accent">ZMW {(report.remaining_balance || 0).toFixed(2)}</td>
-                          <td className="px-6 py-4 text-right">
-                              <button
-                                  onClick={(e) => {
-                                      e.stopPropagation()
-                                      setMemberToPay({
-                                          id: report.user_id,
-                                          name: report.full_name,
-                                          estimatedPayroll: report.remaining_balance || report.estimated_payroll
-                                      })
-                                      setIsPayrollModalOpen(true)
-                                  }}
-                                  className="text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-sm transition-colors"
-                              >
-                                  Record Payment
-                              </button>
-                          </td>
-                        </tr>
-                        {expandedUser === report.user_id && (
-                          <tr className="bg-muted/30">
-                            <td colSpan={8} className="px-6 py-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                  <div className="flex items-center justify-between">
-                                      <h4 className="font-semibold text-sm">Payment History</h4>
-                                      <span className="text-xs text-muted-foreground">Total Paid: ZMW {(report.total_paid || 0).toFixed(2)}</span>
-                                  </div>
-                                  {report.payments && report.payments.length > 0 ? (
-                                      <div className="grid gap-2">
-                                          {report.payments.map((payment) => (
-                                              <div key={payment.id} className="flex items-center justify-between text-sm bg-white p-3 rounded-lg border border-border">
-                                                  <div>
-                                                      <span className="font-semibold text-green-600">ZMW {payment.amount.toFixed(2)}</span>
-                                                      <p className="text-xs text-muted-foreground mt-0.5">{new Date(payment.payment_date).toLocaleDateString()}</p>
-                                                  </div>
-                                                  <div className="text-right">
-                                                      <span className="capitalize text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-700">{payment.payment_method.replace('_', ' ')}</span>
-                                                      {payment.reference && <p className="text-xs text-muted-foreground mt-0.5">Ref: {payment.reference}</p>}
-                                                  </div>
-                                              </div>
-                                          ))}
-                                      </div>
-                                  ) : (
-                                      <p className="text-sm text-muted-foreground p-4 bg-white rounded-lg border border-dashed text-center">No past payments recorded for this period.</p>
-                                  )}
+                ) : (
+                  reports.map((report) => (
+                    <Fragment key={report.user_id}>
+                      <tr
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
+                        onClick={() => setExpandedUser(expandedUser === report.user_id ? null : report.user_id)}
+                      >
+                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{report.full_name}</td>
+                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{report.email}</td>
+                        <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-700 dark:text-emerald-400">{report.total_hours.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{report.days_worked}</td>
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 font-mono">{report.average_hours_per_day.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400 font-mono">ZMW {report.estimated_payroll.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-emerald-700 dark:text-emerald-400 font-mono">ZMW {(report.remaining_balance || 0).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setMemberToPay({
+                                id: report.user_id,
+                                name: report.full_name,
+                                estimatedPayroll: report.remaining_balance || report.estimated_payroll
+                              })
+                              setIsPayrollModalOpen(true)
+                            }}
+                            className="inline-flex items-center px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-md transition-colors"
+                          >
+                            Record Payment
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedUser === report.user_id && (
+                        <tr className="bg-slate-50 dark:bg-slate-800/30">
+                          <td colSpan={8} className="px-4 py-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Payment history</h4>
+                                  <span className="text-xs text-slate-500 dark:text-slate-400">Total paid: <span className="font-mono">ZMW {(report.total_paid || 0).toFixed(2)}</span></span>
                                 </div>
-                                <div className="space-y-4">
-                                  <h4 className="font-semibold text-sm mb-2">Task Breakdown</h4>
-                                  {report.tasks && report.tasks.length > 0 ? (
-                                  <div className="grid gap-2">
+                                {report.payments && report.payments.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {report.payments.map((payment) => (
+                                      <div key={payment.id} className="flex items-center justify-between text-sm bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                                        <div>
+                                          <span className="font-semibold text-emerald-700 dark:text-emerald-400 font-mono">ZMW {payment.amount.toFixed(2)}</span>
+                                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{new Date(payment.payment_date).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="text-right">
+                                          <span className="capitalize text-[10px] font-semibold bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-md uppercase">{payment.payment_method.replace("_", " ")}</span>
+                                          {payment.reference && <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Ref: {payment.reference}</p>}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-slate-500 dark:text-slate-400 p-4 bg-white dark:bg-slate-900 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-center">No past payments recorded for this period.</p>
+                                )}
+                              </div>
+                              <div className="space-y-3">
+                                <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Task breakdown</h4>
+                                {report.tasks && report.tasks.length > 0 ? (
+                                  <div className="space-y-1.5">
                                     {report.tasks.map((task, idx) => (
-                                      <div key={idx} className="flex items-center justify-between text-sm bg-white/50 p-2 rounded">
-                                        <span className="font-medium">{task.title}</span>
-                                        <div className="flex items-center gap-4 text-muted-foreground">
-                                          <span>{task.hours.toFixed(2)} hrs</span>
+                                      <div key={idx} className="flex items-center justify-between text-sm bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                        <span className="font-medium text-slate-900 dark:text-white truncate">{task.title}</span>
+                                        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 shrink-0">
+                                          <span className="font-mono text-xs">{task.hours.toFixed(2)}h</span>
                                           {task.estimated && (
-                                            <span className={task.hours > task.estimated ? "text-red-500 font-medium" : "text-green-600"}>
-                                              (Est: {task.estimated} hrs)
+                                            <span className={`text-xs font-mono ${task.hours > task.estimated ? "text-rose-500 dark:text-rose-400 font-medium" : "text-emerald-700 dark:text-emerald-400"}`}>
+                                              (Est: {task.estimated}h)
                                             </span>
                                           )}
-                                          <span className="capitalize px-2 py-0.5 rounded bg-gray-100 text-xs">
+                                          <span className="capitalize px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-semibold uppercase">
                                             {task.status}
                                           </span>
                                         </div>
@@ -386,24 +374,22 @@ export function MonthlyReports() {
                                     ))}
                                   </div>
                                 ) : (
-                                  <p className="text-sm text-muted-foreground">No specific task data available.</p>
+                                  <p className="text-sm text-slate-500 dark:text-slate-400">No specific task data available.</p>
                                 )}
-                                </div>
                               </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </main>
 
-      {/* Record Payroll Modal */}
       <RecordPayrollModal
         open={isPayrollModalOpen}
         onOpenChange={setIsPayrollModalOpen}

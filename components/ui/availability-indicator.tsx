@@ -73,7 +73,7 @@ export function AvailabilityIndicator({ userId, className = "", showText = false
     }, [userId, supabase])
 
     if (loading) {
-        return <div className={`w-3 h-3 rounded-full bg-muted animate-pulse ${className}`} title="Loading status..." />
+        return <div className={`w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse ${className}`} title="Loading status..." />
     }
 
     const config = {
@@ -84,13 +84,13 @@ export function AvailabilityIndicator({ userId, className = "", showText = false
 
     return (
         <div className={`flex items-center gap-2 ${className}`}>
-            <div className="relative flex h-3 w-3" title={config.label}>
+            <div className="relative flex h-2.5 w-2.5" title={config.label}>
                 {status !== "offline" && (
                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${config.ping}`} />
                 )}
-                <span className={`relative inline-flex rounded-full h-3 w-3 border-2 border-background ${config.color}`} />
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 border-2 border-white dark:border-slate-900 ${config.color}`} />
             </div>
-            {showText && <span className="text-xs text-muted-foreground font-medium">{config.label}</span>}
+            {showText && <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{config.label}</span>}
         </div>
     )
 }

@@ -38,7 +38,7 @@ export function InvoiceTemplate({ invoice, organization }: InvoiceTemplateProps)
                     {organization?.logo_url && (
                         <img src={organization.logo_url} alt="Logo" className="w-16 h-16 object-contain ml-auto mb-2" />
                     )}
-                    <h2 className="text-2xl font-bold text-blue-600 mb-1">{companyName}</h2>
+                    <h2 className="text-2xl font-bold text-emerald-700 mb-1">{companyName}</h2>
                     <p className="text-sm text-gray-600">{companyAddress}</p>
                     <p className="text-sm text-gray-600">{companyEmail}</p>
                     {companyPhone && <p className="text-sm text-gray-600">{companyPhone}</p>}
@@ -90,7 +90,7 @@ export function InvoiceTemplate({ invoice, organization }: InvoiceTemplateProps)
                             <td className="py-4">
                                 {invoice.project?.name ? `Project: ${invoice.project.name}` : 'Professional Services'}
                             </td>
-                            <td className="py-4 text-right font-medium">
+                            <td className="py-4 text-right font-mono font-medium">
                                 {invoice.currency} {invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </td>
                         </tr>
@@ -103,7 +103,7 @@ export function InvoiceTemplate({ invoice, organization }: InvoiceTemplateProps)
                 <div className="w-1/2 border-t-2 border-gray-100 pt-4">
                     <div className="flex justify-between items-center">
                         <span className="text-xl font-bold text-gray-900">Total</span>
-                        <span className="text-2xl font-bold text-blue-600">
+                        <span className="text-2xl font-bold font-mono text-emerald-700">
                             {invoice.currency} {invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
                     </div>

@@ -39,13 +39,13 @@ export function MobileBottomNav({ activeView, onViewChange, items = defaultItems
                             <Icon
                                 size={22}
                                 strokeWidth={isActive ? 2.5 : 2}
-                                className={`transition-all duration-200 ${isActive ? "text-primary scale-110" : ""}`}
+                                className={`transition-all duration-200 ${isActive ? "text-emerald-700 dark:text-emerald-400 scale-110" : ""}`}
                             />
-                            <span className={`text-[10px] font-medium ${isActive ? "text-primary" : ""}`}>
+                            <span className={`text-[10px] font-medium ${isActive ? "text-emerald-700 dark:text-emerald-400" : ""}`}>
                                 {item.label}
                             </span>
                             {isActive && (
-                                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-b-full" />
+                                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-emerald-700 rounded-b-full" />
                             )}
                         </button>
                     )

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, X, CheckCircle, AlertTriangle, Clock, Calendar, Star, Upload, ClipboardCheck } from "lucide-react"
+import { Bell, X, CheckCircle2, AlertTriangle, Clock, Calendar, Star, Upload, ClipboardCheck } from "lucide-react"
 import { subscribeToNotifications } from "@/lib/notification-utils"
 import type { Notification } from "@/lib/notification-utils"
 
@@ -16,10 +16,8 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Load initial notifications
         loadNotifications()
 
-        // Subscribe to real-time notifications
         const unsubscribe = subscribeToNotifications(userId, (notification) => {
             setNotifications((prev) => [notification, ...prev])
         })
@@ -33,7 +31,6 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
         try {
             const response = await fetch(`/api/admin/notifications?adminId=${userId}`)
             if (!response.ok) {
-                // Non-admin users get 403 — silently ignore
                 setNotifications([])
                 return
             }
@@ -77,35 +74,22 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
     const getNotificationIcon = (type: Notification["type"]) => {
         switch (type) {
             case "task_completed":
-                return <CheckCircle className="w-5 h-5 text-green-600" />
+                return <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             case "time_exceeded":
-                return <AlertTriangle className="w-5 h-5 text-red-600" />
+                return <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
             case "due_date_reminder":
-                return <Clock className="w-5 h-5 text-amber-600" />
+                return <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             case "pto_approved":
             case "pto_rejected":
-                return <Calendar className="w-5 h-5 text-indigo-600" />
+                return <Calendar className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             case "review_published":
-                return <Star className="w-5 h-5 text-pink-600" />
+                return <Star className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             case "file_shared":
-                return <Upload className="w-5 h-5 text-violet-600" />
+                return <Upload className="w-4 h-4 text-slate-600 dark:text-slate-400" />
             case "onboarding_assigned":
-                return <ClipboardCheck className="w-5 h-5 text-teal-600" />
+                return <ClipboardCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             default:
-                return <Bell className="w-5 h-5 text-blue-600" />
-        }
-    }
-
-    const getNotificationColor = (type: Notification["type"]) => {
-        switch (type) {
-            case "task_completed":
-                return "bg-green-50 border-green-200 hover:bg-green-100 dark:bg-green-950/30 dark:border-green-800 dark:hover:bg-green-900/40"
-            case "time_exceeded":
-                return "bg-red-50 border-red-200 hover:bg-red-100 dark:bg-red-950/30 dark:border-red-800 dark:hover:bg-red-900/40"
-            case "due_date_reminder":
-                return "bg-amber-50 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/30 dark:border-amber-800 dark:hover:bg-amber-900/40"
-            default:
-                return "bg-blue-50 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/30 dark:border-blue-800 dark:hover:bg-blue-900/40"
+                return <Bell className="w-4 h-4 text-slate-500 dark:text-slate-400" />
         }
     }
 
@@ -113,78 +97,74 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
 
     return (
         <div className="relative">
-            {/* Bell Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+                className="relative p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
                 title="Notifications"
             >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                 )}
             </button>
 
-            {/* Dropdown Panel */}
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
-                    {/* Notifications Panel */}
-                    <div className="absolute right-0 mt-2 w-96 max-h-[32rem] bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-border dark:border-slate-700 z-50 overflow-hidden">
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-border bg-blue-50 dark:bg-slate-800">
-                            <h3 className="font-semibold text-lg">Notifications</h3>
+                    <div className="absolute right-0 mt-2 w-96 max-h-[32rem] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden shadow-lg">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</h3>
                             <div className="flex items-center gap-2">
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={handleMarkAllAsRead}
-                                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                        className="text-xs text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold"
                                     >
                                         Mark all read
                                     </button>
                                 )}
-                                <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/50 rounded">
-                                    <X className="w-4 h-4" />
+                                <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
+                                    <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Notifications List */}
                         <div className="overflow-y-auto max-h-[28rem]">
                             {loading ? (
-                                <div className="p-8 text-center text-muted-foreground">Loading...</div>
+                                <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading...</div>
                             ) : notifications.length === 0 ? (
-                                <div className="p-8 text-center text-muted-foreground">
-                                    <Bell className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                                    <p>No notifications yet</p>
+                                <div className="p-8 text-center">
+                                    <Bell className="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No notifications yet</p>
                                 </div>
                             ) : (
-                                <div className="divide-y divide-border">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {notifications.map((notification) => (
                                         <div
                                             key={notification.id}
-                                            className={`p-4 transition-colors cursor-pointer ${notification.is_read ? "bg-white dark:bg-slate-900 opacity-60" : getNotificationColor(notification.type)
+                                            className={`p-4 transition-colors cursor-pointer ${notification.is_read
+                                                ? "hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                                                : "bg-emerald-50/40 dark:bg-emerald-950/10 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/20"
                                                 }`}
                                             onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
                                         >
                                             <div className="flex items-start gap-3">
-                                                <div className="flex-shrink-0 mt-1">{getNotificationIcon(notification.type)}</div>
+                                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center">
+                                                    {getNotificationIcon(notification.type)}
+                                                </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-sm ${notification.is_read ? "text-muted-foreground" : "font-medium"}`}>
+                                                    <p className={`text-sm ${notification.is_read ? "text-slate-500 dark:text-slate-400" : "font-medium text-slate-900 dark:text-white"}`}>
                                                         {notification.message}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                                                         {new Date(notification.created_at).toLocaleString()}
                                                     </p>
                                                 </div>
                                                 {!notification.is_read && (
-                                                    <div className="flex-shrink-0">
-                                                        <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                                                    </div>
+                                                    <div className="w-2 h-2 bg-emerald-700 rounded-full mt-2" />
                                                 )}
                                             </div>
                                         </div>
