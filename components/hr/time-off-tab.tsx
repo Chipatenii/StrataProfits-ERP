@@ -34,7 +34,16 @@ export function TimeOffTab({ isAdmin }: TimeOffTabProps) {
     const [loading, setLoading] = useState(true)
     const [showForm, setShowForm] = useState(false)
     const [saving, setSaving] = useState(false)
-    const [form, setForm] = useState({ type: "vacation", start_date: "", end_date: "", days_count: 1, reason: "" })
+    const [form, setForm] = useState({ type: "vacation", start_date: "", end_date: "", reason: "" })
+
+    const computedDays = (() => {
+        if (!form.start_date || !form.end_date) return 0
+        const start = new Date(form.start_date)
+        const end = new Date(form.end_date)
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0
+        const ms = end.getTime() - start.getTime()
+        return Math.floor(ms / (1000 * 60 * 60 * 24)) + 1
+    })()
 
     const fetchRequests = useCallback(async () => {
         try {
@@ -47,17 +56,18 @@ export function TimeOffTab({ isAdmin }: TimeOffTabProps) {
 
     const handleSubmit = async () => {
         if (!form.start_date || !form.end_date) { toast.error("Start and end dates are required"); return }
+        if (computedDays <= 0) { toast.error("End date must be on or after start date"); return }
         setSaving(true)
         try {
             const res = await fetch("/api/hr/time-off", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
+                body: JSON.stringify({ ...form, days_count: computedDays }),
             })
             if (!res.ok) throw new Error((await res.json()).error)
             toast.success("Time-off request submitted")
             setShowForm(false)
-            setForm({ type: "vacation", start_date: "", end_date: "", days_count: 1, reason: "" })
+            setForm({ type: "vacation", start_date: "", end_date: "", reason: "" })
             fetchRequests()
         } catch (e: any) { toast.error(e.message) } finally { setSaving(false) }
     }
@@ -174,7 +184,13 @@ export function TimeOffTab({ isAdmin }: TimeOffTabProps) {
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Days</label>
-                            <Input type="number" min={0.5} step={0.5} value={form.days_count} onChange={e => setForm(f => ({ ...f, days_count: parseFloat(e.target.value) || 1 }))} className="rounded-lg border-slate-200 dark:border-slate-800" />
+                            <div className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+                                {form.start_date && form.end_date
+                                    ? (computedDays > 0
+                                        ? `${computedDays} day${computedDays !== 1 ? "s" : ""}`
+                                        : "End date must be on or after start date")
+                                    : "Select start and end dates"}
+                            </div>
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reason <span className="text-slate-500 dark:text-slate-400 font-normal">(optional)</span></label>

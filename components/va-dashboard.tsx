@@ -17,6 +17,7 @@ import { ClientsView } from "@/components/dashboard-views/clients-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
 import { FilesView } from "@/components/dashboard-views/files-view"
 import { HRView } from "@/components/dashboard-views/hr-view"
+import { TeamPerformanceView } from "@/components/dashboard-views/team-performance-view"
 import { UserProfile } from "@/lib/types"
 import { DashboardShell } from "./dashboard-shell"
 import { Home, CheckSquare, Calendar, FolderKanban } from "lucide-react"
@@ -28,7 +29,7 @@ interface VADashboardProps {
   userRole: string
 }
 
-type View = "overview" | "tasks" | "meetings" | "pipeline" | "projects" | "finance" | "sops" | "clients" | "sales" | "files" | "hr" | "checkins"
+type View = "overview" | "tasks" | "meetings" | "pipeline" | "projects" | "finance" | "sops" | "clients" | "sales" | "files" | "hr" | "checkins" | "performance"
 
 export function VADashboard({ userId, userName, userEmail, userRole }: VADashboardProps) {
   const supabase = createClient()
@@ -112,6 +113,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       {activeView === "checkins" && <DailyCheckInView userId={userId} userName={userName} />}
       {activeView === "files" && <FilesView />}
       {activeView === "hr" && <HRView />}
+      {activeView === "performance" && <TeamPerformanceView />}
     </DashboardShell>
   )
 }

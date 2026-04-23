@@ -297,7 +297,7 @@ export function AdminDashboard({
         )
       )}
       {activeView === "sops" && <VASOPs />}
-      {activeView === "files" && <FilesView />}
+      {activeView === "files" && <FilesView isAdmin={true} />}
       {activeView === "hr" && <HRView />}
       {activeView === "my-day" && <MyDayView userId={userId} userName={userName} />}
       {activeView === "overview" && (

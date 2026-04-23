@@ -1,5 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { hasPermission } from "@/lib/permissions"
+import { UserProfile } from "@/lib/types"
 import { NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -16,8 +18,8 @@ export async function GET() {
         const admin = await createAdminClient()
         const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
 
-        if (profile?.role !== "admin") {
-            return NextResponse.json({ error: "Forbidden (Admin only)" }, { status: 403 })
+        if (!profile || !hasPermission(profile.role as UserProfile["role"], "reports:read")) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
         // Fetch members

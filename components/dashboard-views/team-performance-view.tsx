@@ -2,6 +2,7 @@
 
 import useSWR from "swr"
 import { Clock, Crown, TrendingUp, TrendingDown, AlertCircle, CheckCircle2 } from "lucide-react"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 
 interface EfficiencyData {
   id: string
@@ -27,7 +28,14 @@ interface PerformanceStats {
 
 export function TeamPerformanceView() {
   const fetcher = (url: string) => fetch(url).then(r => r.json())
-  const { data: stats, isLoading: loading } = useSWR<PerformanceStats>('/api/admin/performance', fetcher)
+  const { data: stats, isLoading: loading, mutate } = useSWR<PerformanceStats>(
+    '/api/admin/performance',
+    fetcher,
+    { refreshInterval: 60_000, revalidateOnFocus: true }
+  )
+
+  useRealtimeSubscription("tasks", () => { mutate() })
+  useRealtimeSubscription("time_logs", () => { mutate() })
 
   if (loading) {
     return (

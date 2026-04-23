@@ -20,15 +20,16 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
     const fetcher = (url: string) => fetch(url).then(r => r.json())
-    const { data: tasksRaw = [] } = useSWR<Task[]>(`/api/tasks?assignee_id=${userId}&status=pending`, fetcher)
+    const swrOpts = { refreshInterval: 30_000, revalidateOnFocus: true }
+    const { data: tasksRaw = [] } = useSWR<Task[]>(`/api/tasks?assignee_id=${userId}&status=pending`, fetcher, swrOpts)
     const tasks = Array.isArray(tasksRaw) ? tasksRaw.slice(0, 5) : []
 
-    const { data: overdueInvoices = [] } = useSWR<Invoice[]>('/api/invoices?status=overdue', fetcher)
-    const { data: dealsData = [] } = useSWR<any[]>('/api/admin/deals', fetcher)
+    const { data: overdueInvoices = [] } = useSWR<Invoice[]>('/api/invoices?status=overdue', fetcher, swrOpts)
+    const { data: dealsData = [] } = useSWR<any[]>('/api/admin/deals', fetcher, swrOpts)
 
     const todayStr = new Date().toISOString().split('T')[0]
-    const { data: meetings = [] } = useSWR<Meeting[]>(`/api/meetings?date=${todayStr}`, fetcher)
-    const { data: members = [] } = useSWR<UserProfile[]>('/api/admin/members', fetcher)
+    const { data: meetings = [] } = useSWR<Meeting[]>(`/api/meetings?date=${todayStr}`, fetcher, swrOpts)
+    const { data: members = [] } = useSWR<UserProfile[]>('/api/admin/members', fetcher, swrOpts)
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)

@@ -1,6 +1,10 @@
-import { FileBrowser } from "@/components/ui/file-browser"
+import { FilesTabs } from "@/components/files-tabs"
 
-export function FilesView() {
+interface FilesViewProps {
+    isAdmin?: boolean
+}
+
+export function FilesView({ isAdmin = false }: FilesViewProps) {
     return (
         <div className="space-y-6 animate-fade-in">
             <div>
@@ -10,7 +14,7 @@ export function FilesView() {
                 </p>
             </div>
 
-            <FileBrowser />
+            <FilesTabs isAdmin={isAdmin} />
         </div>
     )
 }
