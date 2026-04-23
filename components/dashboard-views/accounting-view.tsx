@@ -7,20 +7,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { Account, AccountBalance, JournalEntry, JournalLine } from "@/lib/types"
+import { formatZMW } from "@/lib/format"
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-function formatZMW(n: number) {
-    return `ZMW ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-export function AccountingView() {
+export function AccountingView({ hideHeader = false }: { hideHeader?: boolean }) {
     return (
         <div className="space-y-6 animate-fade-in">
-            <div>
-                <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Accounting</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Chart of accounts, journal entries, and trial balance.</p>
-            </div>
+            {!hideHeader && (
+                <div>
+                    <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Accounting</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Chart of accounts, journal entries, and trial balance.</p>
+                </div>
+            )}
 
             <Tabs defaultValue="coa" className="space-y-5">
                 <TabsList className="bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 h-auto inline-flex">

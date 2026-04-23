@@ -1,36 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import { Plus, Search, Edit2 } from "lucide-react"
 import { Expense } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import { CreateExpenseModal } from "@/components/modals/create-expense-modal"
 
+const fetcher = (url: string) => fetch(url).then(res => res.json())
+
 export function ExpensesView() {
-    const [expenses, setExpenses] = useState<Expense[]>([])
-    const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
 
-    useEffect(() => {
-        fetchExpenses()
-    }, [])
-
-    const fetchExpenses = async () => {
-        try {
-            setLoading(true)
-            const res = await fetch("/api/expenses")
-            if (res.ok) {
-                const data = await res.json()
-                setExpenses(Array.isArray(data) ? data : [])
-            }
-        } catch (error) {
-            console.error("Failed to fetch expenses", error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const { data, isLoading: loading, mutate: refetch } = useSWR<Expense[]>("/api/expenses", fetcher)
+    const expenses = Array.isArray(data) ? data : []
 
     const filteredExpenses = expenses.filter(expense => {
         const term = searchTerm.toLowerCase()
@@ -161,7 +146,7 @@ export function ExpensesView() {
                     setShowCreateModal(open)
                     if (!open) setExpenseToEdit(null)
                 }}
-                onSuccess={fetchExpenses}
+                onSuccess={() => refetch()}
                 initialData={expenseToEdit}
             />
         </div>

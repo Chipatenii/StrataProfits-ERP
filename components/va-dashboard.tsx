@@ -119,7 +119,7 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
       {activeView === "sops" && <VASOPs />}
       {activeView === "checkins" && <DailyCheckInView userId={userId} userName={userName} />}
       {activeView === "files" && <FilesView />}
-      {activeView === "hr" && <HRView />}
+      {activeView === "hr" && <HRView userRole={userRole} />}
       {activeView === "performance" && <TeamPerformanceView />}
     </DashboardShell>
   )

@@ -1,13 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import useSWR from "swr"
 import { Calendar, Star, ClipboardList } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { TimeOffTab } from "@/components/hr/time-off-tab"
 import { ReviewsTab } from "@/components/hr/reviews-tab"
 import { OnboardingTab } from "@/components/hr/onboarding-tab"
-import { UserProfile } from "@/lib/types"
 
 type HRTab = "time-off" | "reviews" | "onboarding"
 
@@ -17,30 +15,12 @@ const TABS: { id: HRTab; label: string; icon: React.ElementType }[] = [
     { id: "onboarding", label: "Onboarding", icon: ClipboardList },
 ]
 
-export function HRView() {
-    const supabase = createClient()
-    const [activeTab, setActiveTab] = useState<HRTab>("time-off")
-    const [isAdmin, setIsAdmin] = useState(false)
+export function HRView({ userRole }: { userRole?: string }) {
+    const isAdmin = userRole === "admin"
 
     const fetcher = (url: string) => fetch(url).then(res => res.json())
     const { data: membersRaw = [] } = useSWR(isAdmin ? "/api/admin/members" : null, fetcher)
     const members = Array.isArray(membersRaw) ? membersRaw : []
-
-    useEffect(() => {
-        async function load() {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("role")
-                .eq("id", user.id)
-                .single()
-
-            setIsAdmin(profile?.role === "admin")
-        }
-        load()
-    }, [supabase])
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -54,6 +34,16 @@ export function HRView() {
                 </p>
             </div>
 
+            <HRTabs isAdmin={isAdmin} members={members} />
+        </div>
+    )
+}
+
+function HRTabs({ isAdmin, members }: { isAdmin: boolean; members: any[] }) {
+    const [activeTab, setActiveTab] = useState<HRTab>("time-off")
+
+    return (
+        <>
             <div className="flex gap-0.5 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg w-fit">
                 {TABS.map(tab => {
                     const Icon = tab.icon
@@ -75,10 +65,9 @@ export function HRView() {
                 })}
             </div>
 
-            {/* Tab Content */}
             {activeTab === "time-off" && <TimeOffTab isAdmin={isAdmin} />}
             {activeTab === "reviews" && <ReviewsTab isAdmin={isAdmin} members={members} />}
             {activeTab === "onboarding" && <OnboardingTab isAdmin={isAdmin} />}
-        </div>
+        </>
     )
 }

@@ -1,4 +1,4 @@
-import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, Book, ClipboardCheck, Sun, Cloud, Briefcase, Activity, MessageSquare, BookOpen } from "lucide-react"
+import { LucideIcon, LayoutDashboard, Users, FolderKanban, FileText, DollarSign, Receipt, ClipboardCheck, Sun, Cloud, Briefcase, Activity, MessageSquare, BookOpen } from "lucide-react"
 import { Permission, hasPermission } from "./permissions"
 import { UserProfile } from "./types"
 
@@ -17,13 +17,11 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     { id: "projects", label: "Projects", icon: FolderKanban, requiredPermission: "projects:read" },
     { id: "tasks", label: "Tasks", icon: ClipboardCheck, requiredPermission: "tasks:read" },
     { id: "checkins", label: "Check-ins", icon: MessageSquare, requiredPermission: "tasks:read" },
-    { id: "finance", label: "Finance", icon: DollarSign, requiredPermission: "reports:finance" }, // Includes Expenses
-    { id: "accounting", label: "Accounting", icon: BookOpen, requiredPermission: "accounting:read" },
-    { id: "reports", label: "Reports", icon: LayoutDashboard, requiredPermission: "reports:finance" },
+    { id: "finance", label: "Finance", icon: DollarSign, requiredPermission: "reports:finance" }, // Includes Expenses, Accounting & Reports
     { id: "files", label: "Drive", icon: Cloud, requiredPermission: "files:read" },
     { id: "hr", label: "HR", icon: Briefcase, requiredPermission: "hr:read" },
     { id: "meetings", label: "Meetings", icon: FileText, requiredPermission: "meetings:read" },
-    { id: "sops", label: "SOPs", icon: Book, requiredPermission: "sops:read" },
+    { id: "sops", label: "SOPs", icon: BookOpen, requiredPermission: "sops:read" },
     { id: "team", label: "Team", icon: Users, requiredPermission: "users:read" },
     { id: "performance", label: "Performance", icon: Activity, requiredPermission: "reports:read" },
 ]

@@ -8,6 +8,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { CreateReceiptModal } from "@/components/modals/create-receipt-modal"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExpensesView } from "./expenses-view"
+import { AccountingView } from "./accounting-view"
+import { ReportsView } from "./reports-view"
+import { formatKwacha } from "@/lib/format"
 
 export function FinanceView() {
     return (
@@ -15,12 +18,12 @@ export function FinanceView() {
             {/* Page header */}
             <div>
                 <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Finance</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitor financial health and manage expenses.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitor financial health, manage expenses, accounting ledgers, and reports.</p>
             </div>
 
             {/* Tabs */}
             <Tabs defaultValue="overview" className="space-y-5">
-                <TabsList className="bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 h-auto inline-flex">
+                <TabsList className="bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 h-auto inline-flex flex-wrap gap-0.5">
                     <TabsTrigger
                         value="overview"
                         className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
@@ -33,6 +36,18 @@ export function FinanceView() {
                     >
                         Expenses
                     </TabsTrigger>
+                    <TabsTrigger
+                        value="accounting"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
+                    >
+                        Accounting
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="reports"
+                        className="px-4 py-1.5 rounded-md text-sm font-medium data-[state=active]:bg-emerald-700 data-[state=active]:text-white"
+                    >
+                        Reports
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-5 mt-5">
@@ -40,6 +55,12 @@ export function FinanceView() {
                 </TabsContent>
                 <TabsContent value="expenses" className="space-y-5 mt-5">
                     <ExpensesView />
+                </TabsContent>
+                <TabsContent value="accounting" className="mt-5">
+                    <AccountingView hideHeader />
+                </TabsContent>
+                <TabsContent value="reports" className="mt-5">
+                    <ReportsView hideHeader />
                 </TabsContent>
             </Tabs>
         </div>
@@ -52,10 +73,6 @@ function FinanceOverview() {
 
     const fetcher = (url: string) => fetch(url).then(res => res.json())
     const { data: data, isLoading: loading, mutate: fetchReport } = useSWR("/api/admin/reports/finance", fetcher)
-
-    const formatCurrency = (amount: number) => {
-        return `K${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    }
 
     if (loading) {
         return (
@@ -97,21 +114,21 @@ function FinanceOverview() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <StatCard
                     label="Total revenue"
-                    value={formatCurrency(data.ytd.revenue)}
+                    value={formatKwacha(data.ytd.revenue)}
                     icon={<TrendingUp className="w-5 h-5" />}
                     iconBg="bg-emerald-700"
                     footer={<><TrendingUp size={12} className="text-emerald-600 dark:text-emerald-400" /><span className="text-emerald-600 dark:text-emerald-400 font-medium">+12.5% vs last year</span></>}
                 />
                 <StatCard
                     label="Total expenses"
-                    value={formatCurrency(data.ytd.expenses)}
+                    value={formatKwacha(data.ytd.expenses)}
                     icon={<TrendingDown className="w-5 h-5" />}
                     iconBg="bg-red-600"
                     footer={<><TrendingUp size={12} className="text-red-600 dark:text-red-400" /><span className="text-red-600 dark:text-red-400 font-medium">+5.2% vs last year</span></>}
                 />
                 <StatCard
                     label="Net profit"
-                    value={formatCurrency(data.ytd.net_profit)}
+                    value={formatKwacha(data.ytd.net_profit)}
                     valueClass={data.ytd.net_profit >= 0 ? "text-slate-900 dark:text-white" : "text-red-600"}
                     icon={<Wallet className="w-5 h-5" />}
                     iconBg="bg-blue-600"
@@ -150,7 +167,7 @@ function FinanceOverview() {
                                 tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                             />
                             <Tooltip
-                                formatter={(value: number) => [formatCurrency(value), "Net Cash"]}
+                                formatter={(value: number) => [formatKwacha(value), "Net Cash"]}
                                 contentStyle={{
                                     backgroundColor: "white",
                                     border: "1px solid #e2e8f0",
@@ -192,7 +209,7 @@ function FinanceOverview() {
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">{proj.client_name}</p>
                                             </div>
                                         </div>
-                                        <span className="font-semibold text-sm text-emerald-700 dark:text-emerald-400">+{formatCurrency(Number(proj.net_profit))}</span>
+                                        <span className="font-semibold text-sm text-emerald-700 dark:text-emerald-400">+{formatKwacha(Number(proj.net_profit))}</span>
                                     </div>
                                 ))
                             ) : (

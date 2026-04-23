@@ -259,7 +259,7 @@ export function TeamMemberDashboard({
         <TeamTasksView userId={userId} userName={userName} onDataChange={loadData} />
       )}
       {activeView === "files" && <FilesView />}
-      {activeView === "hr" && <HRView />}
+      {activeView === "hr" && <HRView userRole={role} />}
       {activeView === "sops" && <VASOPs />}
       {activeView === "checkins" && <DailyCheckInView userId={userId} userName={userName} />}
       {activeView === "projects" && (
