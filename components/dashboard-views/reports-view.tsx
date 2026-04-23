@@ -37,13 +37,15 @@ interface TeamMemberReport {
     }>
 }
 
-export function ReportsView() {
+export function ReportsView({ hideHeader = false }: { hideHeader?: boolean }) {
     return (
         <div className="space-y-6 animate-fade-in">
-            <div>
-                <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Reports</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Business intelligence, payroll, and financial statements.</p>
-            </div>
+            {!hideHeader && (
+                <div>
+                    <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Reports</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Business intelligence, payroll, and financial statements.</p>
+                </div>
+            )}
 
             <Tabs defaultValue="workforce" className="space-y-5">
                 <TabsList className="bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 h-auto inline-flex">

@@ -15,10 +15,8 @@ import { MyDayView } from "@/components/dashboard-views/my-day-view"
 import { OverviewView } from "@/components/dashboard-views/overview-view"
 import { ClientsView } from "@/components/dashboard-views/clients-view"
 import { MeetingsView } from "@/components/dashboard-views/meetings-view"
-import { ReportsView } from "@/components/dashboard-views/reports-view"
 import { AdminTasksView } from "@/components/dashboard-views/admin-tasks-view"
 import { FinanceView } from "@/components/dashboard-views/finance-view"
-import { AccountingView } from "@/components/dashboard-views/accounting-view"
 import { SalesView } from "@/components/dashboard-views/sales-view"
 import { FilesView } from "@/components/dashboard-views/files-view"
 import { HRView } from "@/components/dashboard-views/hr-view"
@@ -35,7 +33,7 @@ import { VASOPs } from "@/components/dashboard-views/va-sops"
 import { LayoutDashboard, ListTodo, Users, Wallet } from "lucide-react"
 import { DashboardShell } from "./dashboard-shell"
 
-type AdminView = "my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "reports" | "quotes" | "finance" | "accounting" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales" | "files" | "hr" | "performance" | "checkins"
+type AdminView = "my-day" | "overview" | "tasks" | "team" | "clients" | "deals" | "meetings" | "quotes" | "finance" | "invoices" | "projects" | "sops" | "payments" | "expenses" | "pipeline" | "sales" | "files" | "hr" | "performance" | "checkins"
 
 export function AdminDashboard({
   userId,
@@ -294,10 +292,8 @@ export function AdminDashboard({
     >
       {activeView === "sales" && <SalesView />}
       {activeView === "finance" && (
-        userRole === 'admin' ? <FinanceView /> : <VAFinance userName={userName} userRole={userRole} />
-      )}
-      {activeView === "accounting" && <AccountingView />}
-      {activeView === "projects" && (
+        userRole === 'admin' || userRole === 'book_keeper' ? <FinanceView /> : <VAFinance userName={userName} userRole={userRole} />
+      )}{activeView === "projects" && (
         selectedProjectId ? (
           <ProjectDetailView projectId={selectedProjectId} onBack={() => setSelectedProjectId(null)} />
         ) : (
@@ -306,7 +302,7 @@ export function AdminDashboard({
       )}
       {activeView === "sops" && <VASOPs />}
       {activeView === "files" && <FilesView isAdmin={true} />}
-      {activeView === "hr" && <HRView />}
+      {activeView === "hr" && <HRView userRole={userRole} />}
       {activeView === "my-day" && <MyDayView userId={userId} userName={userName} />}
       {activeView === "overview" && (
         <OverviewView
@@ -318,7 +314,6 @@ export function AdminDashboard({
       )}
       {activeView === "clients" && <ClientsView />}
       {activeView === "meetings" && <MeetingsView />}
-      {activeView === "reports" && <ReportsView />}
       {activeView === "tasks" && (
         <AdminTasksView
           tasks={tasks}

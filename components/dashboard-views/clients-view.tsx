@@ -2,14 +2,17 @@
 
 import { useState } from "react"
 import useSWR from "swr"
+import { toast } from "sonner"
 import { Users, Search, Globe, Facebook, Instagram, Phone, Mail, MapPin, Sparkles, UserPlus, Key, Edit } from "lucide-react"
 import { Client } from "@/lib/types"
 import { AdminCreateClientModal } from "@/components/modals/admin-create-client-modal"
+import { ConfirmModal } from "@/components/modals/confirm-modal"
 
 export function ClientsView() {
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [editingClient, setEditingClient] = useState<Client | null>(null)
+    const [inviteConfirm, setInviteConfirm] = useState<{ open: boolean; clientId: string }>({ open: false, clientId: "" })
 
     const fetcher = (url: string) => fetch(url).then(res => res.json())
     const { data: clients = [], isLoading: loading, mutate: fetchClients } = useSWR<Client[]>("/api/admin/clients", fetcher)
@@ -30,20 +33,21 @@ export function ClientsView() {
     }
 
     const handleInvite = async (clientId: string) => {
-        if (!confirm("Are you sure you want to invite this client to the portal? They will receive an email to set their password.")) return
+        setInviteConfirm({ open: true, clientId })
+    }
 
+    const doInvite = async () => {
         try {
-            const response = await fetch(`/api/admin/clients/${clientId}/invite`, { method: "POST" })
+            const response = await fetch(`/api/admin/clients/${inviteConfirm.clientId}/invite`, { method: "POST" })
             const data = await response.json()
-
             if (!response.ok) {
-                alert(`Error: ${data.error}`)
+                toast.error(data.error || "Failed to send invitation")
             } else {
-                alert("Invitation sent successfully!")
+                toast.success("Invitation sent successfully!")
             }
         } catch (error) {
             console.error("Error inviting client:", error)
-            alert("An unexpected error occurred.")
+            toast.error("An unexpected error occurred.")
         }
     }
 
@@ -203,6 +207,15 @@ export function ClientsView() {
                 onOpenChange={handleModalClose}
                 onSuccess={fetchClients}
                 client={editingClient}
+            />
+
+            <ConfirmModal
+                open={inviteConfirm.open}
+                onOpenChange={(open) => setInviteConfirm(prev => ({ ...prev, open }))}
+                title="Invite client to portal"
+                description="Are you sure you want to invite this client? They will receive an email to set their password."
+                confirmText="Send invitation"
+                onConfirm={doInvite}
             />
         </div>
     )
