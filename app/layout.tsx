@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { APP_NAME } from "@/lib/config"
 import { Toaster } from "sonner"
 import { ThemeProvider } from "@/components/theme-provider"
+import { SWRProvider } from "@/components/swr-provider"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
@@ -49,8 +50,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster richColors position="top-right" />
+          <SWRProvider>
+            {children}
+            <Toaster richColors position="top-right" />
+          </SWRProvider>
         </ThemeProvider>
       </body>
     </html>

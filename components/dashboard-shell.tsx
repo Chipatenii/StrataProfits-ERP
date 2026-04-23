@@ -100,14 +100,16 @@ export function DashboardShell({
             {/* Mobile Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-900/40 z-40 md:hidden"
+                    className="fixed inset-0 bg-slate-900/40 z-[55] md:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
             {/* ═══ Sidebar (QuickBooks-style: clean white with emerald accents) ═══ */}
+            {/* On mobile, sidebar uses z-[60] to stack above the mobile bottom nav (z-50),
+                otherwise the Sign Out button at the bottom is covered and untappable. */}
             <div className={`
-                fixed md:relative z-50 h-full
+                fixed md:relative z-[60] md:z-auto h-full
                 transition-[width,transform] duration-200 ease-out
                 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col
                 ${isSidebarOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0 md:w-20 lg:w-72"}
@@ -178,7 +180,7 @@ export function DashboardShell({
                     })}
                 </nav>
 
-                <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-0.5">
+                <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-200 dark:border-slate-800 space-y-0.5">
                     <button
                         onClick={() => setShowProfileSettings(true)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors min-h-[40px] text-sm"
@@ -241,8 +243,11 @@ export function DashboardShell({
                     </div>
                 </header>
 
-                {/* Content Area */}
-                <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 w-full relative pb-24 md:pb-8">
+                {/* Content Area.
+                    pb-[calc(5rem+env(safe-area-inset-bottom))] reserves space for the
+                    mobile bottom nav (~60px) plus iOS home-indicator safe area,
+                    so content never tucks under the nav. */}
+                <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 w-full relative pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
                     <div className="md:hidden mb-4">
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {getTimeBasedGreeting(userName)}

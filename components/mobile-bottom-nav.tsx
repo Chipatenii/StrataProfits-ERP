@@ -24,8 +24,8 @@ export function MobileBottomNav({ activeView, onViewChange, items = defaultItems
     const hasMore = items.length > 4
 
     return (
-        <nav className="mobile-nav">
-            <div className="flex items-center justify-around px-2">
+        <nav className="mobile-nav" aria-label="Mobile navigation">
+            <div className="flex items-stretch justify-around px-1">
                 {displayItems.map((item) => {
                     const Icon = item.icon
                     const isActive = activeView === item.id
@@ -35,13 +35,14 @@ export function MobileBottomNav({ activeView, onViewChange, items = defaultItems
                             onClick={() => onViewChange(item.id)}
                             className={`mobile-nav-item relative ${isActive ? "active" : ""}`}
                             aria-label={item.label}
+                            aria-current={isActive ? "page" : undefined}
                         >
                             <Icon
                                 size={22}
                                 strokeWidth={isActive ? 2.5 : 2}
                                 className={`transition-all duration-200 ${isActive ? "text-emerald-700 dark:text-emerald-400 scale-110" : ""}`}
                             />
-                            <span className={`text-[10px] font-medium ${isActive ? "text-emerald-700 dark:text-emerald-400" : ""}`}>
+                            <span className={`text-[10px] font-medium truncate max-w-full ${isActive ? "text-emerald-700 dark:text-emerald-400" : ""}`}>
                                 {item.label}
                             </span>
                             {isActive && (

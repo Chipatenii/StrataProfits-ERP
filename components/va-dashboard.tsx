@@ -60,6 +60,13 @@ export function VADashboard({ userId, userName, userEmail, userRole }: VADashboa
   useRealtimeSubscription("tasks", loadData)
   useRealtimeSubscription("time_logs", loadData)
 
+  // Polling safety net (see admin-dashboard) — catches drops in the
+  // realtime channel so the dashboard doesn't show stale data.
+  useEffect(() => {
+    const id = setInterval(() => { loadData() }, 90_000)
+    return () => clearInterval(id)
+  }, [loadData])
+
   const menuItems = useMemo(
     () => getNavItemsForRole(userRole as UserProfile["role"]),
     [userRole]

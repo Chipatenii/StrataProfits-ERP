@@ -98,8 +98,9 @@ export function TeamView({ userId }: TeamViewProps) {
     })
 
     const fetcher = (url: string) => fetch(url).then(r => { if (!r.ok) throw new Error(); return r.json() })
-    const { data: membersRaw = [], isLoading: isLoadingMembers, error: membersError, mutate: mutateMembers } = useSWR("/api/admin/members", fetcher)
-    const { data: tasksRaw = [], isLoading: isLoadingTasks, error: tasksError, mutate: mutateTasks } = useSWR("/api/admin/tasks", fetcher)
+    const swrOpts = { refreshInterval: 60_000, revalidateOnFocus: true }
+    const { data: membersRaw = [], isLoading: isLoadingMembers, error: membersError, mutate: mutateMembers } = useSWR("/api/admin/members", fetcher, swrOpts)
+    const { data: tasksRaw = [], isLoading: isLoadingTasks, error: tasksError, mutate: mutateTasks } = useSWR("/api/admin/tasks", fetcher, swrOpts)
 
     const members = Array.isArray(membersRaw) ? membersRaw : []
     const tasks = Array.isArray(tasksRaw) ? tasksRaw : []

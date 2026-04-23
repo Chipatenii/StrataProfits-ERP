@@ -116,6 +116,14 @@ export function AdminDashboard({
   useRealtimeSubscription("profiles", loadData)
   useRealtimeSubscription("time_logs", loadData)
 
+  // Polling safety net — catches updates if the realtime channel drops
+  // (network blip, backgrounded tab, etc.). 90s keeps load low but
+  // prevents the "data is stale" class of bugs.
+  useEffect(() => {
+    const id = setInterval(() => { loadData() }, 90_000)
+    return () => clearInterval(id)
+  }, [loadData])
+
   const handleDeleteTask = async (taskId: string) => {
     setConfirmConfig({
       isOpen: true,

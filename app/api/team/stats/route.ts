@@ -12,11 +12,11 @@ export async function GET() {
 
     if (membersError) throw membersError
 
-    // Fetch all completed tasks
+    // Fetch all "done" tasks (completed + verified — both count as finished work)
     const { data: tasks, error: tasksError } = await admin
       .from("tasks")
       .select("assigned_to, status")
-      .eq("status", "completed")
+      .in("status", ["completed", "verified"])
 
     if (tasksError) throw tasksError
 

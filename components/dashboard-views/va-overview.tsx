@@ -47,7 +47,7 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
             const now = new Date()
             const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
             const newLeads = dealsData.filter((d: { created_at: string, stage: string }) => new Date(d.created_at) > oneWeekAgo).length
-            const proposals = dealsData.filter((d: { created_at: string, stage: string }) => d.stage === 'Proposal').length
+            const proposals = dealsData.filter((d: { created_at: string, stage: string }) => d.stage === 'ProposalSent').length
             setStats({ leads: newLeads, proposals })
         }
     }, [dealsData])

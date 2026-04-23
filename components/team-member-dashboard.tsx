@@ -118,6 +118,13 @@ export function TeamMemberDashboard({
   useRealtimeSubscription("tasks", loadData)
   useRealtimeSubscription("time_logs", loadData)
 
+  // Polling safety net — recovers from realtime channel drops so personal
+  // stats (hours, tasks completed) don't go stale during the workday.
+  useEffect(() => {
+    const id = setInterval(() => { loadData() }, 90_000)
+    return () => clearInterval(id)
+  }, [loadData])
+
   // --- Dynamic nav based on role permissions ---
   const role = (profile?.role || "team_member") as UserProfile["role"]
 
