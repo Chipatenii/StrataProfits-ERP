@@ -1,9 +1,20 @@
 import { z } from "zod"
 
+// Canonical set of task statuses — shared by schema validation and TypeScript types.
+export const TASK_STATUSES = [
+  "todo",
+  "pending",
+  "pending_approval",
+  "in_progress",
+  "completed",
+  "verified",
+] as const
+export type TaskStatus = (typeof TASK_STATUSES)[number]
+
 export const createTaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  status: z.string().optional(),
+  status: z.enum(TASK_STATUSES).optional(),
   priority: z.enum(["low", "medium", "high"]),
   assigned_to: z.string().nullable().optional(),
   due_date: z.string().nullable().optional(),
@@ -91,10 +102,16 @@ export const createMeetingSchema = z.object({
   location: z.string().optional(),
   agenda: z.string().optional(),
   assigned_to_user_id: z.string().uuid().optional().nullable(),
-})
+}).refine(
+  (m) => {
+    if (!m.date_time_end) return true
+    return new Date(m.date_time_end) > new Date(m.date_time_start)
+  },
+  { message: "Meeting end time must be after start time", path: ["date_time_end"] }
+)
 
 export const createExpenseSchema = z.object({
-  amount: z.number().min(0),
+  amount: z.number().positive("Amount must be greater than 0"),
   category: z.enum(["Transport", "Data", "OfficeSpace", "Meal", "Other"]),
   currency: z.string().default("ZMW"),
   description: z.string().min(1, "Description is required"),

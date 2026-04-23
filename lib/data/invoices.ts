@@ -43,15 +43,31 @@ export async function getInvoiceById(id: string) {
     return data as Invoice
 }
 
+/**
+ * Compute the outstanding balance for an invoice.
+ *
+ * The canonical total is the sum of `invoice_items.total` columns.  If an
+ * invoice was created before line items existed (legacy) we fall back to the
+ * `invoices.amount` header column.  This mirrors the logic used by
+ * `reevaluateInvoiceStatus` in /api/payments so both always agree.
+ */
 export async function getOutstandingBalance(invoiceId: string) {
     const invoice = await getInvoiceById(invoiceId)
     if (!invoice) return 0
 
-    // In new ERP, invoice amount is sum of items, or fallback to header amount if items missing (legacy)
-    const itemsTotal = invoice.items?.reduce((sum, item) => sum + (item.total || 0), 0) || 0
-    const total = itemsTotal > 0 ? itemsTotal : invoice.amount
-
-    const paid = invoice.payments?.reduce((sum, p) => sum + p.amount, 0) || 0
+    const total = computeInvoiceTotal(invoice)
+    const paid = invoice.payments?.reduce((sum, p) => sum + p.amount, 0) ?? 0
 
     return total - paid
+}
+
+/**
+ * Shared helper: derive the canonical invoice total from line items when
+ * available, otherwise fall back to the header `amount` field.
+ *
+ * Exported so that /api/payments can import and reuse the same logic.
+ */
+export function computeInvoiceTotal(invoice: Invoice): number {
+    const itemsTotal = invoice.items?.reduce((sum, item) => sum + (item.total || 0), 0) ?? 0
+    return itemsTotal > 0 ? itemsTotal : (invoice.amount ?? 0)
 }

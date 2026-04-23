@@ -82,6 +82,22 @@ export async function POST(request: NextRequest) {
             quoteData.quote_number = await generateDocumentNumber(admin, 'quotes', 'QUO')
         }
 
+        // Server-side: compute and persist the canonical quote total so it is
+        // always consistent with line items regardless of what the client sends.
+        if (items && items.length > 0) {
+            const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0)
+            const taxTotal = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0)
+            const discount = quoteData.discount_amount || 0
+            const adjust = quoteData.adjustment || 0
+            quoteData.amount = subtotal - discount + taxTotal + adjust
+            if (quoteData.amount < 0) {
+                return NextResponse.json(
+                    { error: "Validation failed", details: "Calculated quote total cannot be negative" },
+                    { status: 400 }
+                )
+            }
+        }
+
         // 1. Create Quote
         const { data: quote, error } = await admin
             .from("quotes")
@@ -94,19 +110,25 @@ export async function POST(request: NextRequest) {
 
         if (error) throw error
 
-        // 2. Create Items
+        // 2. Create Items — include computed `total` per line
         if (items && items.length > 0) {
             const itemsWithId = items.map(item => ({
                 quote_id: quote.id,
                 description: item.description,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
+                total: item.quantity * item.unit_price,
                 tax_rate: item.tax_rate,
-                tax_amount: item.tax_amount
+                tax_amount: item.tax_amount,
             }))
 
             const { error: itemsError } = await admin.from("quote_items").insert(itemsWithId)
-            if (itemsError) throw itemsError
+            if (itemsError) {
+                // Compensating rollback: remove the orphaned quote header
+                await admin.from("quotes").delete().eq("id", quote.id)
+                console.error("Failed to insert items for quote " + quote.id + " — quote rolled back", itemsError)
+                throw itemsError
+            }
         }
 
         return NextResponse.json(quote)
@@ -136,6 +158,17 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: "Quote ID is required" }, { status: 400 })
         }
 
+        // Verify quote exists before attempting an update to avoid silent no-op
+        const { data: existingQuote, error: existsError } = await admin
+            .from("quotes")
+            .select("id")
+            .eq("id", id)
+            .single()
+
+        if (existsError || !existingQuote) {
+            return NextResponse.json({ error: "Quote not found" }, { status: 404 })
+        }
+
         const validation = createQuoteSchema.partial().safeParse(updateData)
 
         if (!validation.success) {
@@ -144,6 +177,21 @@ export async function PATCH(request: NextRequest) {
         }
 
         const { items, ...quotePayload } = validation.data
+
+        // Server-side: recompute total if items are being replaced
+        if (items && items.length > 0) {
+            const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0)
+            const taxTotal = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0)
+            const discount = quotePayload.discount_amount || 0
+            const adjust = quotePayload.adjustment || 0
+            quotePayload.amount = subtotal - discount + taxTotal + adjust
+            if (quotePayload.amount < 0) {
+                return NextResponse.json(
+                    { error: "Validation failed", details: "Calculated quote total cannot be negative" },
+                    { status: 400 }
+                )
+            }
+        }
 
         // 1. Update Quote
         const { data: quote, error } = await admin
@@ -157,7 +205,7 @@ export async function PATCH(request: NextRequest) {
 
         // 2. Update Items (Safe Replace strategy)
         if (items !== undefined) {
-            // FIX: delete old items first so a failed insert leaves zero items (not doubled); tradeoff documented in commit
+            // Delete old items first so a failed insert leaves zero items (not doubled)
             const { error: deleteError } = await admin
                 .from("quote_items")
                 .delete()
@@ -170,8 +218,9 @@ export async function PATCH(request: NextRequest) {
                     description: item.description,
                     quantity: item.quantity,
                     unit_price: item.unit_price,
+                    total: item.quantity * item.unit_price,
                     tax_rate: item.tax_rate || 0,
-                    tax_amount: item.tax_amount || 0
+                    tax_amount: item.tax_amount || 0,
                 }))
                 const { error: itemsError } = await admin.from("quote_items").insert(itemsWithId)
                 if (itemsError) throw itemsError

@@ -405,6 +405,7 @@ export async function PATCH(request: NextRequest) {
       .update(body)
       .eq("id", id)
       .select()
+      .single()
 
     if (error) throw error
 

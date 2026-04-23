@@ -28,8 +28,9 @@ export async function POST(request: NextRequest) {
 
     if (membersError) throw membersError
 
-    // Get time logs for the date range
-    const { data: timeLogs, error: logsError } = await supabase
+    // Get time logs for the date range — use admin client so RLS does not
+    // restrict results to only the currently logged-in user's records.
+    const { data: timeLogs, error: logsError } = await admin
       .from("time_logs")
       .select("user_id, duration_minutes, clock_in, task_id")
       .gte("clock_in", `${startDate}T00:00:00.000Z`)
@@ -37,16 +38,20 @@ export async function POST(request: NextRequest) {
 
     if (logsError) throw logsError
 
-    // Get all tasks referenced in time logs
-    const taskIds = Array.from(new Set(timeLogs?.map((log: any) => log.task_id).filter(Boolean) || []))
-    const { data: tasks, error: tasksError } = await supabase
-      .from("tasks")
-      .select("id, title, estimated_hours, status")
-      .in("id", taskIds)
+    // Get all tasks referenced in time logs — guard against empty id list.
+    const taskIds = Array.from(
+      new Set((timeLogs ?? []).map((log: any) => log.task_id).filter(Boolean))
+    )
+    let taskMap = new Map<string, any>()
+    if (taskIds.length > 0) {
+      const { data: tasks, error: tasksError } = await admin
+        .from("tasks")
+        .select("id, title, estimated_hours, status")
+        .in("id", taskIds)
 
-    if (tasksError) throw tasksError
-
-    const taskMap = new Map<string, any>(tasks?.map((t: any) => [t.id, t]) || [])
+      if (tasksError) throw tasksError
+      taskMap = new Map<string, any>((tasks ?? []).map((t: any) => [t.id, t]))
+    }
 
     // Calculate reports for each team member
     const reportMap = new Map<string, any>()
@@ -125,8 +130,13 @@ export async function POST(request: NextRequest) {
       const estimatedPayroll = Math.round((totalHours * hourlyRate) * 100) / 100
 
       // Get payments for this user
-      const userPayments = teamPayments?.filter((p: any) => p.user_id === report.user_id).sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()) || []
+      const userPayments = (teamPayments ?? [])
+        .filter((p: any) => p.user_id === report.user_id)
+        .sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
       const totalPaid = userPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+
+      // Expose the true balance: negative means overpaid, positive means outstanding.
+      const remainingBalance = Math.round((estimatedPayroll - totalPaid) * 100) / 100
 
       finalReports.push({
         user_id: report.user_id,
@@ -139,7 +149,7 @@ export async function POST(request: NextRequest) {
         average_hours_per_day: averagePerDay,
         estimated_payroll: estimatedPayroll,
         total_paid: totalPaid,
-        remaining_balance: Math.max(0, estimatedPayroll - totalPaid),
+        remaining_balance: remainingBalance,
         payments: userPayments,
         tasks: tasksArray,
       })

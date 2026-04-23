@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { generateDocumentNumber } from "@/lib/utils/document-numbers"
 
 export async function POST(request: NextRequest) {
     try {
@@ -51,10 +52,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Project has no associated client" }, { status: 400 })
         }
 
-        // 2. Create Invoice
-        // We'll generate a basic invoice number if needed, or let the DB handle it if it has defaults
-        const invoiceNumber = `INV-PM-${Date.now().toString().slice(-6)}`
+        // 2. Generate a sequential invoice number (same format as all other invoices)
+        const invoiceNumber = await generateDocumentNumber(admin, 'invoices', 'INV')
 
+        // 3. Create Invoice
         const { data: invoice, error: invError } = await admin
             .from("invoices")
             .insert({
@@ -64,8 +65,9 @@ export async function POST(request: NextRequest) {
                 currency: "ZMW",
                 status: "draft",
                 invoice_number: invoiceNumber,
+                created_by_user_id: user.id,
                 due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-                customer_notes: `Billing for deliverable: ${deliverable.name}`
+                customer_notes: `Billing for deliverable: ${deliverable.name}`,
             })
             .select()
             .single()
@@ -75,22 +77,25 @@ export async function POST(request: NextRequest) {
             throw invError
         }
 
-        // 3. Create Invoice Item
+        // 4. Create Invoice Item (with computed total)
         const { error: itemError } = await admin
             .from("invoice_items")
             .insert({
                 invoice_id: invoice.id,
                 description: `Deliverable: ${deliverable.name}`,
                 quantity: 1,
-                unit_price: deliverable.total_price
+                unit_price: deliverable.total_price,
+                total: deliverable.total_price,
             })
 
         if (itemError) {
             console.error("Error creating invoice item:", itemError)
+            // Compensating rollback: remove the orphaned invoice header
+            await admin.from("invoices").delete().eq("id", invoice.id)
             throw itemError
         }
 
-        // 4. Link Invoice back to Deliverable
+        // 5. Link Invoice back to Deliverable
         const { error: syncError } = await admin
             .from("deliverables")
             .update({ invoice_id: invoice.id })
@@ -101,7 +106,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             invoiceId: invoice.id,
-            invoiceNumber: invoice.invoice_number
+            invoiceNumber: invoice.invoice_number,
         })
 
     } catch (error) {

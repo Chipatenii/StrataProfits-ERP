@@ -1,6 +1,21 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+
+// Allowlist of fields that can be updated on a deliverable.
+// Excludes server-managed fields like id, invoice_id, created_at, project_id.
+const updateDeliverableSchema = z.object({
+    name: z.string().min(1).optional(),
+    description: z.string().optional(),
+    status: z.enum(["pending", "in_progress", "completed", "approved"]).optional(),
+    approval_status: z.enum(["pending", "approved", "rejected"]).optional(),
+    due_date: z.string().optional().nullable(),
+    total_price: z.number().min(0).optional(),
+    sort_order: z.number().int().optional(),
+    is_default: z.boolean().optional(),
+    template_id: z.string().uuid().optional().nullable(),
+})
 
 // Admins/VAs only for modifications, others for GET
 export async function GET(request: NextRequest) {
@@ -125,9 +140,18 @@ export async function PATCH(request: NextRequest) {
         if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 })
 
         const body = await request.json()
+
+        const validation = updateDeliverableSchema.safeParse(body)
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: "Validation failed", details: validation.error.format() },
+                { status: 400 }
+            )
+        }
+
         const { data, error } = await admin
             .from("deliverables")
-            .update(body)
+            .update(validation.data)
             .eq("id", id)
             .select()
             .single()

@@ -49,20 +49,39 @@ export async function POST(request: NextRequest) {
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
         const body = await request.json()
-        const { type, start_date, end_date, days_count, reason } = body
+        const { type, start_date, end_date, reason } = body
 
         if (!start_date || !end_date) {
             return NextResponse.json({ error: "Start and end dates are required" }, { status: 400 })
         }
 
+        const validTypes = ["vacation", "sick", "personal", "unpaid", "other"] as const
+        const resolvedType: string = validTypes.includes(type) ? type : "vacation"
+
+        const start = new Date(start_date)
+        const end = new Date(end_date)
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return NextResponse.json({ error: "Invalid date format" }, { status: 400 })
+        }
+
+        if (end < start) {
+            return NextResponse.json({ error: "End date must be on or after start date" }, { status: 400 })
+        }
+
+        // Server-side computation of days_count to prevent client manipulation.
+        // +1 because both boundary days are inclusive (Mon–Fri = 5 days).
+        const diffMs = end.getTime() - start.getTime()
+        const days_count = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1
+
         const { data, error } = await supabase
             .from("time_off_requests")
             .insert({
                 user_id: user.id,
-                type: type || "vacation",
+                type: resolvedType,
                 start_date,
                 end_date,
-                days_count: days_count || 1,
+                days_count,
                 reason: reason || null,
                 status: "pending",
             })

@@ -46,8 +46,13 @@ export async function GET() {
         const { data: revenueData } = await admin.from("payments").select("amount").gte("paid_at", startOfYear)
         const totalRevenue = revenueData?.reduce((sum, p) => sum + p.amount, 0) || 0
 
-        // 2. Expenses (Regular)
-        const { data: expenseData } = await admin.from("expenses").select("amount").eq("status", "Paid").gte("updated_at", startOfYear) // Assuming updated_at as paid date approx
+        // 2. Expenses (Regular) — filter on paid_at, not updated_at,
+        //    to avoid double-counting records touched after their payment date.
+        const { data: expenseData } = await admin
+            .from("expenses")
+            .select("amount")
+            .eq("status", "Paid")
+            .gte("paid_at", startOfYear)
         let totalExpenses = expenseData?.reduce((sum, e) => sum + e.amount, 0) || 0
 
         // 3. Payroll (Team Payments)

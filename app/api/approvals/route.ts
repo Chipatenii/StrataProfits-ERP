@@ -4,9 +4,13 @@ import { logActivity } from "@/lib/audit"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 
+// Canonical entity types that support the approval workflow.
+// Must match getTableForEntity below AND the ApprovalRequest type in lib/types.ts.
+const APPROVAL_ENTITY_TYPES = ['task', 'time_log', 'expense', 'meeting', 'deliverable'] as const
+type ApprovalEntityType = (typeof APPROVAL_ENTITY_TYPES)[number]
+
 const createApprovalSchema = z.object({
-    // FIX: remove 'invoice' and 'quote' — no approval_status column exists on those tables; keep meeting now that it's handled below
-    entity_type: z.enum(['task', 'time_log', 'expense', 'meeting', 'deliverable']),
+    entity_type: z.enum(APPROVAL_ENTITY_TYPES),
     entity_id: z.string().uuid(),
     assigned_to_user_id: z.string().uuid().optional(),
     assigned_role: z.string().optional() // e.g. 'admin'
@@ -103,6 +107,11 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Forbidden: Not assigned to you" }, { status: 403 })
     }
 
+    // Prevent the requester from approving their own request.
+    if (requestRecord.requested_by_user_id === user.id) {
+        return NextResponse.json({ error: "Forbidden: You cannot approve your own request" }, { status: 403 })
+    }
+
     const { data, error } = await admin
         .from("approval_requests")
         .update({
@@ -119,21 +128,28 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Failed to update approval" }, { status: 500 })
     }
 
-    // SYNC Logic: Update the original entity status if needed (ERP requirement: "keep tasks.approval_status in sync")
+    // SYNC Logic: Update the original entity status when the decision is made.
     if (status === 'approved' || status === 'rejected') {
-        const entityTable = getTableForEntity(requestRecord.entity_type)
+        const entityTable = getTableForEntity(requestRecord.entity_type as ApprovalEntityType)
         if (entityTable) {
-            // Mapping for compatibility
-            let updatePayload: any = {}
+            const updatePayload: Record<string, unknown> = {}
+
             if (requestRecord.entity_type === 'task') {
                 updatePayload.approval_status = status
+                // Move task out of pending_approval once a decision is made.
+                // Approved → 'todo' so the assignee can pick it up; rejected → back to 'todo'.
+                if (status === 'approved') {
+                    updatePayload.status = 'todo'
+                } else {
+                    // Rejected: revert to todo so the task isn't permanently stuck
+                    updatePayload.status = 'todo'
+                }
             } else if (requestRecord.entity_type === 'expense') {
                 updatePayload.status = status === 'approved' ? 'Approved' : 'Rejected'
             } else if (requestRecord.entity_type === 'time_log') {
                 updatePayload.is_approved = status === 'approved'
             } else if (requestRecord.entity_type === 'deliverable') {
                 updatePayload.approval_status = status
-            // FIX: sync meetings.status on approval/rejection — was previously silently skipped
             } else if (requestRecord.entity_type === 'meeting') {
                 updatePayload.status = status === 'approved' ? 'Approved' : 'Rejected'
             }
@@ -149,13 +165,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(data)
 }
 
-function getTableForEntity(type: string) {
+function getTableForEntity(type: ApprovalEntityType): string | null {
     switch (type) {
         case 'task': return 'tasks'
         case 'time_log': return 'time_logs'
         case 'expense': return 'expenses'
         case 'deliverable': return 'deliverables'
-        // FIX: add meeting so its status column gets synced
         case 'meeting': return 'meetings'
         default: return null
     }
