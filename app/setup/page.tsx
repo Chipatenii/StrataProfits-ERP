@@ -65,34 +65,37 @@ export default function SetupPage() {
 
   if (checkingAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-slate-600">Checking setup status...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-emerald-700 border-t-transparent mb-4"></div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Checking setup status...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm border border-slate-200">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Setup</h1>
-            <p className="text-slate-600">
-              {adminExists ? "Your system is ready" : `Initialize your admin account for ${APP_NAME}`}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8">
+          <div className="text-center mb-6">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 mb-1">
+              {APP_NAME}
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">Setup</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {adminExists ? "Your system is ready." : `Initialize your admin account for ${APP_NAME}.`}
             </p>
           </div>
 
           {!adminExists && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-blue-900">
-                <strong>Default Credentials:</strong>
+            <div className="rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/20 p-4 mb-6">
+              <p className="text-sm text-emerald-900 dark:text-emerald-300">
+                <strong className="font-semibold">Default Credentials:</strong>
                 <br />
-                Email: admin@ostento.com
+                Email: <span className="font-mono">admin@ostento.com</span>
                 <br />
-                Password: 1234
+                Password: <span className="font-mono">1234</span>
               </p>
             </div>
           )}
@@ -101,33 +104,35 @@ export default function SetupPage() {
             <button
               onClick={handleCreateAdmin}
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
+              className="w-full inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-semibold py-3 rounded-lg"
             >
+              {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
               {loading ? "Creating Admin User..." : "Create Admin User"}
             </button>
           )}
 
           {message && (
             <div
-              className={`mt-6 p-4 rounded-lg ${message.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-900"
-                  : "bg-red-50 border border-red-200 text-red-900"
-                }`}
+              className={`mt-5 p-3 rounded-lg text-sm ${
+                message.type === "success"
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 text-emerald-900 dark:text-emerald-300"
+                  : "bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-400"
+              }`}
             >
-              <p className="text-sm">{message.text}</p>
+              <p>{message.text}</p>
             </div>
           )}
 
           {adminExists && (
             <button
               onClick={() => (window.location.href = "/dashboard")}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg"
+              className="w-full inline-flex items-center justify-center bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold py-3 rounded-lg mt-2"
             >
               Go to Dashboard
             </button>
           )}
 
-          <p className="text-center text-xs text-slate-500 mt-6">
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-6">
             You can only create one admin user. If you need to change credentials, update them directly in Supabase.
           </p>
         </div>

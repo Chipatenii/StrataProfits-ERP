@@ -5,7 +5,7 @@ import { APP_NAME } from "@/lib/config"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Loader2, CheckCircle2, ChevronDown } from "lucide-react"
+import { CheckCircle2, ChevronDown } from "lucide-react"
 
 export default function SignUpPage() {
   const [fullName, setFullName] = useState("")
@@ -210,8 +210,8 @@ export default function SignUpPage() {
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200">
+                <p className="text-sm text-rose-700">{error}</p>
               </div>
             )}
 
@@ -222,7 +222,7 @@ export default function SignUpPage() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
                   Creating account...
                 </>
               ) : (

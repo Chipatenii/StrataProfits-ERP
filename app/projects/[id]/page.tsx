@@ -17,11 +17,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
 
-    // Allow admin, virtual_assistant, and book_keeper roles full access
     const isPrivilegedRole = profile?.role === "admin" || profile?.role === "virtual_assistant" || profile?.role === "book_keeper"
 
     if (!isPrivilegedRole) {
-        // Check if user is a member of this specific project
         const { data: projectMember } = await supabase
             .from("project_members")
             .select("id")
@@ -35,14 +33,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white border-b border-gray-200">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <h1 className="text-xl font-bold">{APP_NAME}</h1>
-                    <div className="flex items-center gap-4">
-                        <a href="/dashboard" className="text-sm font-medium text-gray-600 hover:text-gray-900">Dashboard</a>
-                        <span className="text-gray-300">/</span>
-                        <a href="/projects" className="text-sm font-medium text-gray-600 hover:text-gray-900">Projects</a>
+                    <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{APP_NAME}</h1>
+                    <div className="flex items-center gap-3 text-sm">
+                        <a href="/dashboard" className="font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700">Dashboard</a>
+                        <span className="text-slate-300 dark:text-slate-700">/</span>
+                        <a href="/projects" className="font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700">Projects</a>
                     </div>
                 </div>
             </header>
