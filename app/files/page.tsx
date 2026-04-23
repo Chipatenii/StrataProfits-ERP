@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Header } from "@/components/header"
-import { FileBrowser } from "@/components/ui/file-browser"
 import { Cloud } from "lucide-react"
+import { FilesTabs } from "@/components/files-tabs"
 
 export default async function FilesPage() {
     const supabase = await createClient()
@@ -15,7 +15,6 @@ export default async function FilesPage() {
         redirect("/auth/login")
     }
 
-    // Role check prevents clients from accessing this via UI directly if they somehow bypass routing
     const { data: profile } = await supabase
         .from("profiles")
         .select("role, full_name")
@@ -26,11 +25,12 @@ export default async function FilesPage() {
         redirect("/client-portal")
     }
 
+    const isAdmin = profile?.role === "admin"
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 md:pb-0 font-sans text-slate-900 dark:text-slate-100 selection:bg-emerald-500/30">
             <Header />
             <main className="container mx-auto px-4 py-8 max-w-7xl">
-
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
                     <div>
                         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
@@ -46,7 +46,7 @@ export default async function FilesPage() {
                     </div>
                 </div>
 
-                <FileBrowser />
+                <FilesTabs isAdmin={isAdmin} />
             </main>
         </div>
     )
