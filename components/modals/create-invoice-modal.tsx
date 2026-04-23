@@ -18,6 +18,7 @@ import { LineItem, LineItemsTable } from "./shared-line-items"
 import { formatCurrency } from "@/lib/format"
 import { SectionHeading } from "@/components/ui/section-heading"
 import { TotalsRow } from "@/components/ui/totals-row"
+import { ConfirmModal } from "@/components/modals/confirm-modal"
 
 interface CreateInvoiceModalProps {
     open: boolean
@@ -33,6 +34,7 @@ const Spinner = () => <div className="animate-spin rounded-full h-4 w-4 border-2
 
 export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdit }: CreateInvoiceModalProps) {
     const [loading, setLoading] = useState(false)
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
     const { data: clientsData, isLoading: loadingClients } = useSWR(open ? "/api/admin/clients" : null)
     const clients: Client[] = clientsData || []
     const [previewNumber, setPreviewNumber] = useState("")
@@ -175,7 +177,11 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, invoiceToEdi
 
     const handleDelete = async () => {
         if (!invoiceToEdit) return
-        if (!confirm("Are you sure you want to delete this invoice? This cannot be undone.")) return
+        setConfirmDeleteOpen(true)
+    }
+
+    const performDelete = async () => {
+        if (!invoiceToEdit) return
         setLoading(true)
         try {
             const res = await fetch(`/api/invoices?id=${invoiceToEdit.id}`, { method: "DELETE" })
