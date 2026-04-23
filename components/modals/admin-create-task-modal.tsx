@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Task } from "@/lib/types"
+import { TaskStatus } from "@/lib/schemas"
 import { EstimatedTimeInput } from "@/components/ui/estimated-time-input"
 
 interface Member {
@@ -173,13 +174,13 @@ export function AdminCreateTaskModal({ open, members, userId, userRole, taskToEd
                             <select
                                 id="status"
                                 value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
                                 className={SELECT_CLS}
                                 disabled={userRole === "team_member" || userRole === "virtual_assistant"}
                             >
                                 <option value="pending_approval">Pending Approval</option>
                                 <option value="pending">Todo / Pending</option>
-                                <option value="in-progress">In Progress</option>
+                                <option value="in_progress">In Progress</option>
                                 <option value="completed">Completed</option>
                             </select>
                         </div>
