@@ -13,11 +13,13 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Check role
+        // Check role — clients are excluded entirely; all internal staff see the full schedule.
         const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
-        const isAdminOrVA = profile?.role === 'admin' || profile?.role === 'virtual_assistant'
+        if (profile?.role === 'client') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
 
-        let query = admin
+        const { data: meetings, error } = await admin
             .from("meetings")
             .select(`
         *,
@@ -27,13 +29,6 @@ export async function GET() {
         assigned_to:profiles!meetings_assigned_to_profile_fkey(full_name)
       `)
             .order("date_time_start", { ascending: true })
-
-        // Non-admins only see meetings they requested or are assigned to
-        if (!isAdminOrVA) {
-            query = query.or(`requested_by_user_id.eq.${user.id},assigned_to_user_id.eq.${user.id}`)
-        }
-
-        const { data: meetings, error } = await query
 
         if (error) throw error
 

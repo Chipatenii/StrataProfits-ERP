@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import useSWR from "swr"
 import { AlertCircle, Clock } from "lucide-react"
 import { Task, Invoice, Meeting, UserProfile } from "@/lib/types"
@@ -27,9 +27,16 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
     const { data: overdueInvoices = [] } = useSWR<Invoice[]>('/api/invoices?status=overdue', fetcher, swrOpts)
     const { data: dealsData = [] } = useSWR<any[]>('/api/admin/deals', fetcher, swrOpts)
 
-    const todayStr = new Date().toISOString().split('T')[0]
-    const { data: meetings = [] } = useSWR<Meeting[]>(`/api/meetings?date=${todayStr}`, fetcher, swrOpts)
+    const { data: allMeetings = [] } = useSWR<Meeting[]>(`/api/meetings`, fetcher, swrOpts)
     const { data: members = [] } = useSWR<UserProfile[]>('/api/admin/members', fetcher, swrOpts)
+
+    const upcomingMeetings = useMemo(() => {
+        const now = Date.now()
+        return (Array.isArray(allMeetings) ? allMeetings : [])
+            .filter(m => m.status !== 'Completed' && m.status !== 'Cancelled')
+            .filter(m => new Date(m.date_time_start).getTime() >= now)
+            .slice(0, 5)
+    }, [allMeetings])
 
     const handleCardClick = (task: Task) => {
         setSelectedTaskDetail(task)
@@ -137,10 +144,10 @@ export function VAOverview({ userName, userId, onViewChange }: VAOverviewProps) 
                         <button onClick={() => onViewChange?.('meetings')} className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-medium">Full schedule</button>
                     </div>
                     <div className="p-3 space-y-2">
-                        {meetings.length === 0 ? (
-                            <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">No meetings scheduled today.</p>
+                        {upcomingMeetings.length === 0 ? (
+                            <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">No upcoming meetings.</p>
                         ) : (
-                            meetings.map(meeting => (
+                            upcomingMeetings.map(meeting => (
                                 <div
                                     key={meeting.id}
                                     className="flex items-center justify-between p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-lg border border-emerald-100 dark:border-emerald-900/40"
