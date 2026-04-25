@@ -1,5 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { hasPermission } from "@/lib/permissions"
+import { UserProfile } from "@/lib/types"
 import { NextResponse } from "next/server"
 
 export async function GET() {
@@ -14,14 +16,23 @@ export async function GET() {
     const admin = await createAdminClient()
     const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
 
-    if (!["admin", "virtual_assistant", "book_keeper"].includes(profile?.role)) {
+    // Any authenticated team user can see the team roster (needed for task
+    // assignment, meeting attendees, project members, etc.). Clients and
+    // anonymous users are blocked. Sensitive fields (hourly_rate) are
+    // redacted for callers without the privileged users:read permission.
+    if (!profile || profile.role === "client") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // Fetch all team members (excluding admins for clarity, or include all with their roles)
+    const canSeePay = hasPermission(profile.role as UserProfile["role"], "users:read")
+    const selectColumns = canSeePay
+      ? "id, full_name, email, role, hourly_rate, created_at, avatar_url"
+      : "id, full_name, email, role, created_at, avatar_url"
+
     const { data: members, error } = await admin
       .from("profiles")
-      .select("id, full_name, email, role, hourly_rate, created_at")
+      .select(selectColumns)
+      .neq("role", "client")
       .order("created_at", { ascending: false })
 
     if (error) throw error

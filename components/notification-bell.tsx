@@ -16,6 +16,14 @@ export function NotificationBell({ userId, isAdmin }: NotificationBellProps) {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        // Notifications endpoint is admin-only — skip the fetch for other
+        // roles to avoid noisy 403s. Realtime subscription is still set up
+        // in case future notification types target non-admins.
+        if (!isAdmin) {
+            setLoading(false)
+            return
+        }
+
         loadNotifications()
 
         const unsubscribe = subscribeToNotifications(userId, (notification) => {
