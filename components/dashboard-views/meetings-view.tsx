@@ -191,7 +191,8 @@ export function MeetingsView() {
                     </div>
                 ) : (
                     filteredMeetings.map(meeting => {
-                        const relativeBadge = getRelativeDateLabel(meeting.date_time_start)
+                        const isTerminal = meeting.status === "Completed" || meeting.status === "Cancelled"
+                        const relativeBadge = isTerminal ? null : getRelativeDateLabel(meeting.date_time_start)
                         const duration = computeDuration(meeting.date_time_start, meeting.date_time_end)
                         const agendaSnippet = meeting.agenda
                             ? (meeting.agenda.length > 90 ? meeting.agenda.slice(0, 90) + "…" : meeting.agenda)
