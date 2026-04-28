@@ -24,20 +24,40 @@ export async function GET(request: NextRequest) {
             .select("*")
             .order("created_at", { ascending: false })
 
+        // For "give me tasks for user X", include both primary and secondary assignments.
+        const taskIdsForUser = async (uid: string): Promise<string[]> => {
+            const { data } = await admin
+                .from("task_assignees")
+                .select("task_id")
+                .eq("user_id", uid)
+            return (data || []).map((r) => r.task_id)
+        }
+
         // Security Check: Only Admin and VA can query other users' tasks
         if (assigneeId && assigneeId !== user.id) {
             if (userRole !== 'admin' && userRole !== 'virtual_assistant') {
-                // For security, regular users checking others just get their own or nothing
-                // But let's return 403 to be explicit
                 return NextResponse.json({ error: "Forbidden: You can only view your own tasks" }, { status: 403 })
             }
-            query = query.eq("assigned_to", assigneeId)
+            const extra = await taskIdsForUser(assigneeId)
+            const orFilter = [
+                `assigned_to.eq.${assigneeId}`,
+                ...(extra.length > 0 ? [`id.in.(${extra.join(",")})`] : []),
+            ].join(",")
+            query = query.or(orFilter)
         } else if (!assigneeId && userRole !== 'admin' && userRole !== 'virtual_assistant') {
-            // If no assignee specified, non-admins see ONLY their own tasks
-            query = query.eq("assigned_to", user.id)
+            const extra = await taskIdsForUser(user.id)
+            const orFilter = [
+                `assigned_to.eq.${user.id}`,
+                ...(extra.length > 0 ? [`id.in.(${extra.join(",")})`] : []),
+            ].join(",")
+            query = query.or(orFilter)
         } else if (assigneeId === user.id) {
-            // User works looking up their own tasks
-            query = query.eq("assigned_to", user.id)
+            const extra = await taskIdsForUser(user.id)
+            const orFilter = [
+                `assigned_to.eq.${user.id}`,
+                ...(extra.length > 0 ? [`id.in.(${extra.join(",")})`] : []),
+            ].join(",")
+            query = query.or(orFilter)
         }
         // If Admin/VA and no assigneeId, they get all tasks (or we could enforce filtering, but "all" is useful for admin view)
 
@@ -49,7 +69,24 @@ export async function GET(request: NextRequest) {
 
         if (error) throw error
 
-        return NextResponse.json(tasks || [])
+        // Attach assignee_ids[] from the junction table.
+        if (!tasks || tasks.length === 0) {
+            return NextResponse.json([])
+        }
+        const ids = tasks.map((t) => t.id)
+        const { data: links } = await admin
+            .from("task_assignees")
+            .select("task_id, user_id")
+            .in("task_id", ids)
+        const grouped = new Map<string, string[]>()
+        ;(links || []).forEach((l) => {
+            const arr = grouped.get(l.task_id) || []
+            arr.push(l.user_id)
+            grouped.set(l.task_id, arr)
+        })
+        return NextResponse.json(
+            tasks.map((t) => ({ ...t, assignee_ids: grouped.get(t.id) || [] }))
+        )
     } catch (error) {
         console.error("Error fetching tasks:", error)
         return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 })

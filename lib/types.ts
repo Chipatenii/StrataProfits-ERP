@@ -61,6 +61,8 @@ export interface Task {
     deliverable_id?: string | null // Stage 1
     assigned_by?: string | null
     time_allocated?: number | null
+    /** Full assignee list (primary + extras). Populated from the task_assignees junction. */
+    assignee_ids?: string[]
 }
 
 export interface TimeLog {
@@ -289,6 +291,8 @@ export interface Meeting {
     updated_at: string
     client?: Client
     project?: Project
+    /** Full attendee list (primary + extras). Populated from the meeting_attendees junction. */
+    attendee_ids?: string[]
 }
 
 export interface Expense {

@@ -17,6 +17,7 @@ export const createTaskSchema = z.object({
   status: z.enum(TASK_STATUSES).optional(),
   priority: z.enum(["low", "medium", "high"]),
   assigned_to: z.string().nullable().optional(),
+  assignee_ids: z.array(z.string().uuid()).optional(),
   due_date: z.string().nullable().optional(),
   estimated_hours: z.number().min(0).nullable().optional(),
   project_id: z.string().uuid("Invalid project ID").nullable().optional(),
@@ -102,6 +103,7 @@ export const createMeetingSchema = z.object({
   location: z.string().optional(),
   agenda: z.string().optional(),
   assigned_to_user_id: z.string().uuid().optional().nullable(),
+  attendee_ids: z.array(z.string().uuid()).optional(),
 }).refine(
   (m) => {
     if (!m.date_time_end) return true

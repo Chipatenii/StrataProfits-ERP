@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Meeting, Client, Project, UserProfile } from "@/lib/types"
 import { toast } from "sonner"
 import { Clock, Link2 } from "lucide-react"
+import { MultiUserSelect } from "@/components/ui/multi-user-select"
 
 interface CreateMeetingModalProps {
     open: boolean
@@ -35,7 +36,20 @@ function computeDuration(start: string, end: string): string | null {
 }
 
 export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdit }: CreateMeetingModalProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        title: string
+        date_time_start: string
+        date_time_end: string
+        type: string
+        mode: string
+        client_id: string
+        project_id: string
+        location: string
+        agenda: string
+        meeting_notes: string
+        meeting_link: string
+        attendee_ids: string[]
+    }>({
         title: "",
         date_time_start: "",
         date_time_end: "",
@@ -47,7 +61,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
         agenda: "",
         meeting_notes: "",
         meeting_link: "",
-        assigned_to_user_id: "",
+        attendee_ids: [],
     })
     const { data: clientsData } = useSWR(open ? "/api/admin/clients" : null)
     const { data: projectsData } = useSWR(open ? "/api/admin/projects" : null)
@@ -74,6 +88,10 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
         if (!open) return
 
         if (meetingToEdit) {
+            const editAttendees = (meetingToEdit as Meeting & { attendee_ids?: string[] }).attendee_ids
+            const initialAttendees = Array.isArray(editAttendees) && editAttendees.length > 0
+                ? editAttendees
+                : (meetingToEdit.assigned_to_user_id ? [meetingToEdit.assigned_to_user_id] : [])
             setFormData({
                 title: meetingToEdit.title,
                 date_time_start: meetingToEdit.date_time_start,
@@ -86,14 +104,14 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                 agenda: meetingToEdit.agenda || "",
                 meeting_notes: meetingToEdit.meeting_notes || "",
                 meeting_link: meetingToEdit.meeting_link || "",
-                assigned_to_user_id: meetingToEdit.assigned_to_user_id || "",
+                attendee_ids: initialAttendees,
             })
         } else {
             setFormData({
                 title: "", date_time_start: "", date_time_end: "",
                 type: "General", mode: "Zoom", client_id: "", project_id: "",
                 location: "", agenda: "", meeting_notes: "", meeting_link: "",
-                assigned_to_user_id: "",
+                attendee_ids: [],
             })
         }
     }, [open, meetingToEdit])
@@ -121,7 +139,8 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                 client_id: formData.client_id || null,
                 project_id: formData.project_id || null,
                 date_time_end: formData.date_time_end || null,
-                assigned_to_user_id: formData.assigned_to_user_id || null,
+                assigned_to_user_id: formData.attendee_ids[0] ?? null,
+                attendee_ids: formData.attendee_ids,
                 meeting_link: formData.meeting_link || null,
                 meeting_notes: formData.meeting_notes || null,
             }
@@ -140,7 +159,7 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
             setFormData({
                 title: "", date_time_start: "", date_time_end: "", type: "General",
                 mode: "Zoom", client_id: "", project_id: "", location: "",
-                agenda: "", meeting_notes: "", meeting_link: "", assigned_to_user_id: "",
+                agenda: "", meeting_notes: "", meeting_link: "", attendee_ids: [],
             })
             onSuccess()
             onOpenChange(false)
@@ -308,18 +327,13 @@ export function CreateMeetingModal({ open, onOpenChange, onSuccess, meetingToEdi
                     </div>
 
                     <div>
-                        <Label htmlFor="assigned_to">Assign To (Team Member)</Label>
-                        <select
-                            id="assigned_to"
-                            value={formData.assigned_to_user_id}
-                            onChange={(e) => setFormData({ ...formData, assigned_to_user_id: e.target.value })}
-                            className={SELECT_CLS}
-                        >
-                            <option value="">Unassigned</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>{m.full_name}</option>
-                            ))}
-                        </select>
+                        <Label htmlFor="attendees">Attendees (Team Members)</Label>
+                        <MultiUserSelect
+                            users={members.map(m => ({ id: m.id, full_name: m.full_name, email: m.email, role: m.role }))}
+                            selectedIds={formData.attendee_ids}
+                            onChange={(ids) => setFormData({ ...formData, attendee_ids: ids })}
+                            placeholder="No attendees"
+                        />
                     </div>
 
                     <div>

@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react"
 import useSWR from "swr"
-import { Users, Mail, Phone, Clock, Edit, Trash2, Search, Briefcase, AlertCircle } from "lucide-react"
+import { Users, Mail, Phone, Clock, Edit, Trash2, Search, Briefcase, AlertCircle, KeyRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UserProfile } from "@/lib/types"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { ProfileSettingsModal } from "@/components/profile-settings-modal"
 import { ConfirmModal } from "@/components/modals/confirm-modal"
+import { AdminResetPasswordModal } from "@/components/modals/admin-reset-password-modal"
 import { toast } from "sonner"
 
 interface TeamViewProps {
@@ -83,6 +84,7 @@ export function TeamView({ userId }: TeamViewProps) {
     const [search, setSearch] = useState("")
     const [roleFilter, setRoleFilter] = useState("all")
     const [editingMember, setEditingMember] = useState<UserProfile | null>(null)
+    const [resetPasswordMember, setResetPasswordMember] = useState<UserProfile | null>(null)
     const [confirmConfig, setConfirmConfig] = useState<{
         isOpen: boolean
         title: string
@@ -310,6 +312,18 @@ export function TeamView({ userId }: TeamViewProps) {
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
+                                        {!isCurrentUser && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setResetPasswordMember(member)
+                                                }}
+                                                className="p-1.5 rounded-md text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+                                                title="Reset password"
+                                            >
+                                                <KeyRound className="w-4 h-4" />
+                                            </button>
+                                        )}
                                         {!isCurrentUser && member.role !== "admin" && (
                                             <button
                                                 onClick={(e) => {
@@ -403,6 +417,16 @@ export function TeamView({ userId }: TeamViewProps) {
                 confirmText={confirmConfig.confirmText}
                 variant={confirmConfig.variant}
             />
+
+            {resetPasswordMember && (
+                <AdminResetPasswordModal
+                    open={true}
+                    memberId={resetPasswordMember.id}
+                    memberName={resetPasswordMember.full_name || "Team member"}
+                    memberEmail={resetPasswordMember.email || null}
+                    onOpenChange={(open) => { if (!open) setResetPasswordMember(null) }}
+                />
+            )}
         </div>
     )
 }

@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react"
 import useSWR from "swr"
-import { Plus, Video, MapPin, User, Clock, Phone, CalendarDays, Edit2, Trash2, Search, Link2 } from "lucide-react"
-import { Meeting } from "@/lib/types"
+import { Plus, Video, MapPin, User, Clock, Phone, CalendarDays, Edit2, Trash2, Search, Link2, Users } from "lucide-react"
+import { Meeting, UserProfile } from "@/lib/types"
 import { CreateMeetingModal } from "@/components/modals/create-meeting-modal"
 import { AttachmentList } from "@/components/attachment-list"
 import { toast } from "sonner"
@@ -45,6 +45,12 @@ export function MeetingsView() {
 
     const fetcher = (url: string) => fetch(url).then(r => r.json())
     const { data: meetings = [], isLoading: loading, mutate: fetchMeetings } = useSWR<Meeting[]>("/api/meetings", fetcher)
+    const { data: membersData } = useSWR<UserProfile[]>("/api/admin/members", fetcher)
+    const memberById = useMemo(() => {
+        const m = new Map<string, UserProfile>()
+        ;(membersData || []).forEach((u) => m.set(u.id, u))
+        return m
+    }, [membersData])
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
         fetchMeetings(meetings.map(m => m.id === id ? { ...m, status: newStatus as Meeting["status"] } : m), false)
@@ -198,6 +204,10 @@ export function MeetingsView() {
                             ? (meeting.agenda.length > 90 ? meeting.agenda.slice(0, 90) + "…" : meeting.agenda)
                             : null
                         const assignedName = (meeting as any).assigned_to?.full_name as string | undefined
+                        const attendeeIds = ((meeting as any).attendee_ids as string[] | undefined) ?? []
+                        const attendeeNames = attendeeIds
+                            .map((id) => memberById.get(id)?.full_name)
+                            .filter((n): n is string => Boolean(n))
 
                         return (
                             <div
@@ -271,12 +281,20 @@ export function MeetingsView() {
                                                     </span>
                                                 )}
 
-                                                {assignedName && (
+                                                {attendeeNames.length > 1 ? (
+                                                    <span
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 rounded-md"
+                                                        title={attendeeNames.join(", ")}
+                                                    >
+                                                        <Users className="w-3.5 h-3.5" />
+                                                        {attendeeNames[0]} + {attendeeNames.length - 1} more
+                                                    </span>
+                                                ) : assignedName ? (
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 rounded-md">
                                                         <User className="w-3.5 h-3.5" />
                                                         {assignedName}
                                                     </span>
-                                                )}
+                                                ) : null}
                                             </div>
 
                                             {agendaSnippet && (

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Task, UserProfile } from "@/lib/types"
 import { toast } from "sonner"
+import { MultiUserSelect } from "@/components/ui/multi-user-select"
 
 function formatDateForInput(dateString: string | null | undefined): string {
     if (!dateString) return ""
@@ -30,12 +31,22 @@ const INPUT_CLS = "mt-1 rounded-lg border-slate-200 dark:border-slate-800 bg-whi
 const SELECT_CLS = "mt-1 w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
 
 export function AdminEditTaskModal({ open, task, members, onOpenChange, onSuccess }: AdminEditTaskModalProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        title: string
+        description: string
+        status: string
+        priority: string
+        assignee_ids: string[]
+        due_date: string
+        estimated_hours: string
+        estimated_minutes: string
+        project_id: string
+    }>({
         title: "",
         description: "",
         status: "pending",
         priority: "medium",
-        assigned_to: "",
+        assignee_ids: [],
         due_date: "",
         estimated_hours: "",
         estimated_minutes: "",
@@ -48,12 +59,16 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
     useEffect(() => {
         if (open && task) {
             const eh = task.estimated_hours
+            const stored = (task as Task & { assignee_ids?: string[] }).assignee_ids
+            const initialIds = Array.isArray(stored) && stored.length > 0
+                ? stored
+                : (task.assigned_to ? [task.assigned_to] : [])
             setFormData({
                 title: task.title,
                 description: task.description || "",
                 status: task.status,
                 priority: task.priority,
-                assigned_to: task.assigned_to || "",
+                assignee_ids: initialIds,
                 due_date: formatDateForInput(task.due_date),
                 estimated_hours: eh != null ? String(Math.floor(eh)) : "",
                 estimated_minutes: eh != null ? String(Math.round((eh % 1) * 60)) : "",
@@ -69,12 +84,13 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
         setIsLoading(true)
 
         try {
-            const updateData: any = {
+            const updateData: Record<string, unknown> = {
                 title: formData.title,
                 description: formData.description,
                 status: formData.status,
                 priority: formData.priority,
-                assigned_to: formData.assigned_to || null,
+                assigned_to: formData.assignee_ids[0] ?? null,
+                assignee_ids: formData.assignee_ids,
                 due_date: formData.due_date || null,
                 estimated_hours: (formData.estimated_hours || formData.estimated_minutes)
                     ? (parseFloat(formData.estimated_hours || "0") + (parseInt(formData.estimated_minutes || "0") / 60))
@@ -185,19 +201,14 @@ export function AdminEditTaskModal({ open, task, members, onOpenChange, onSucces
 
                         <div>
                             <Label htmlFor="assignedTo">Assign To</Label>
-                            <select
-                                id="assignedTo"
-                                value={formData.assigned_to}
-                                onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
-                                className={SELECT_CLS}
-                            >
-                                <option value="">Unassigned</option>
-                                {members.map((member) => (
-                                    <option key={member.id} value={member.id}>
-                                        {member.full_name}
-                                    </option>
-                                ))}
-                            </select>
+                            <MultiUserSelect
+                                users={members
+                                    .filter((m) => m.role !== "admin")
+                                    .map((m) => ({ id: m.id, full_name: m.full_name, email: m.email, role: m.role }))}
+                                selectedIds={formData.assignee_ids}
+                                onChange={(ids) => setFormData({ ...formData, assignee_ids: ids })}
+                                placeholder="Unassigned"
+                            />
                         </div>
                     </div>
 
