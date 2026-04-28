@@ -1,31 +1,14 @@
 "use client"
 
 import type React from "react"
-import { Suspense, useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { APP_NAME } from "@/lib/config"
 import { CheckCircle2, KeyRound } from "lucide-react"
 
 export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={<ResetPasswordFallback />}>
-      <ResetPasswordInner />
-    </Suspense>
-  )
-}
-
-function ResetPasswordFallback() {
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-600 border-t-transparent" />
-    </div>
-  )
-}
-
-function ResetPasswordInner() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const [password, setPassword] = useState("")
@@ -37,30 +20,14 @@ function ResetPasswordInner() {
 
   useEffect(() => {
     let active = true
-
+    // The /auth/callback route handler has already exchanged the code/token
+    // and set the session cookies. We just confirm the session is live.
     const init = async () => {
-      // Supabase redirects with either ?code=... (PKCE) or a hash fragment that the SDK auto-consumes.
-      const code = searchParams.get("code")
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!active) return
-        if (error) {
-          setSessionReady("missing")
-          setError(
-            error.message ||
-              "This reset link is invalid or has expired. Request a new one from your admin or the forgot-password page."
-          )
-          return
-        }
-      }
-
       const { data } = await supabase.auth.getSession()
       if (!active) return
       setSessionReady(data.session ? "ready" : "missing")
       if (!data.session) {
-        setError(
-          "No active session found. Open this page from the password reset email link."
-        )
+        setError("No active session found. Open this page from the password reset email link.")
       }
     }
 

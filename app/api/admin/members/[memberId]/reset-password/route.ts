@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       request.headers.get("origin") ||
       request.nextUrl.origin ||
       ""
-    const redirectTo = `${origin}/auth/reset-password`
+    const redirectTo = `${origin}/auth/callback?next=/auth/reset-password`
 
     const { data, error } = await admin.auth.admin.generateLink({
       type: "recovery",
