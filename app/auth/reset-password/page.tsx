@@ -1,13 +1,29 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { APP_NAME } from "@/lib/config"
 import { CheckCircle2, KeyRound } from "lucide-react"
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordFallback />}>
+      <ResetPasswordInner />
+    </Suspense>
+  )
+}
+
+function ResetPasswordFallback() {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-600 border-t-transparent" />
+    </div>
+  )
+}
+
+function ResetPasswordInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
