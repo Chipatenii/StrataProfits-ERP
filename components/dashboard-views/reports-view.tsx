@@ -15,12 +15,16 @@ interface TeamMemberReport {
     email: string
     hourly_rate: number
     total_hours: number
+    verified_hours?: number
+    pending_hours?: number
     total_minutes: number
     days_worked: number
     average_hours_per_day: number
     estimated_payroll: number
+    pending_payroll?: number
     total_paid?: number
     remaining_balance?: number
+    overworked_days?: Array<{ date: string; hours: number }>
     payments?: Array<{
         id: string
         payment_date: string
@@ -260,7 +264,11 @@ function WorkforceReports() {
 
     const reports = reportData?.reports || []
     const totalCompanyHours = reportData?.totalCompanyHours || 0
+    const totalVerifiedHours = reportData?.totalVerifiedHours ?? totalCompanyHours
+    const totalPendingHours = reportData?.totalPendingHours || 0
     const totalEstimatedPayroll = reportData?.totalEstimatedPayroll || 0
+    const totalPendingPayroll = reportData?.totalPendingPayroll || 0
+    const dailyHourCeiling = reportData?.dailyHourCeiling || 12
 
     const [topPerformer, setTopPerformer] = useState<TeamMemberReport | null>(null)
     const [leastProductive, setLeastProductive] = useState<TeamMemberReport | null>(null)
@@ -337,8 +345,13 @@ function WorkforceReports() {
                 <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">Summary</h3>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="p-4 bg-background/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-1">Total Hours</p>
-                        <p className="text-2xl font-bold text-accent">{totalCompanyHours.toFixed(1)}</p>
+                        <p className="text-xs text-muted-foreground mb-1">Verified Hours</p>
+                        <p className="text-2xl font-bold text-accent">{totalVerifiedHours.toFixed(1)}</p>
+                        {totalPendingHours > 0 && (
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
+                                +{totalPendingHours.toFixed(1)}h pending verification
+                            </p>
+                        )}
                     </div>
                     <div className="p-4 bg-background/50 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">Team Count</p>
@@ -353,8 +366,13 @@ function WorkforceReports() {
                         </p>
                     </div>
                     <div className="p-4 bg-background/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-1">Est. Payroll</p>
+                        <p className="text-xs text-muted-foreground mb-1">Payable (Verified)</p>
                         <p className="text-2xl font-bold text-green-600 truncate">ZMW {totalEstimatedPayroll.toLocaleString()}</p>
+                        {totalPendingPayroll > 0 && (
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
+                                ZMW {totalPendingPayroll.toLocaleString()} held pending
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -418,17 +436,38 @@ function WorkforceReports() {
                                     </td>
                                 </tr>
                             ) : (
-                                reports.map((report: any) => (
+                                reports.map((report: any) => {
+                                    const overworked = (report.overworked_days || []) as Array<{ date: string; hours: number }>
+                                    const pendingHours = report.pending_hours || 0
+                                    return (
                                     <Fragment key={report.user_id}>
                                         <tr
                                             className="hover:bg-muted/20 transition-colors cursor-pointer"
                                             onClick={() => setExpandedUser(expandedUser === report.user_id ? null : report.user_id)}
                                         >
                                             <td className="px-4 py-4">
-                                                <div className="font-medium">{report.full_name}</div>
+                                                <div className="font-medium flex items-center gap-2">
+                                                    {report.full_name}
+                                                    {overworked.length > 0 && (
+                                                        <span
+                                                            title={`Days over ${dailyHourCeiling}h: ${overworked.map(d => `${d.date} (${d.hours.toFixed(1)}h)`).join(", ")}`}
+                                                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50"
+                                                        >
+                                                            <AlertCircle className="w-3 h-3" />
+                                                            {overworked.length}d &gt;{dailyHourCeiling}h
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="text-xs text-muted-foreground sm:hidden">{report.email}</div>
                                             </td>
-                                            <td className="px-4 py-4 font-semibold text-accent">{report.total_hours.toFixed(1)}</td>
+                                            <td className="px-4 py-4">
+                                                <div className="font-semibold text-accent">{(report.verified_hours ?? report.total_hours).toFixed(1)}</div>
+                                                {pendingHours > 0 && (
+                                                    <div className="text-[11px] text-amber-600 dark:text-amber-400">
+                                                        +{pendingHours.toFixed(1)} pending
+                                                    </div>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-4 hidden sm:table-cell">{report.days_worked}</td>
                                             <td className="px-4 py-4 hidden sm:table-cell">{report.average_hours_per_day.toFixed(1)}</td>
                                             <td className="px-4 py-4 font-medium text-muted-foreground">ZMW {report.estimated_payroll.toFixed(0)}</td>
@@ -507,7 +546,7 @@ function WorkforceReports() {
                                             </tr>
                                         )}
                                     </Fragment>
-                                ))
+                                )})
                             )}
                         </tbody>
                     </table>

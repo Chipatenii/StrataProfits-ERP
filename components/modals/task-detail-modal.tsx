@@ -29,7 +29,12 @@ const STATUS_PILL: Record<string, string> = {
 export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetailModalProps) {
     if (!task) return null
 
-    const assignedMember = members.find(m => m.id === task.assigned_to)
+    const assigneeIds = (task.assignee_ids && task.assignee_ids.length > 0)
+        ? task.assignee_ids
+        : (task.assigned_to ? [task.assigned_to] : [])
+    const assignees = assigneeIds
+        .map((id) => members.find(m => m.id === id))
+        .filter((m): m is UserProfile => Boolean(m))
 
     const pill = (map: Record<string, string>, key: string) =>
         map[key?.toLowerCase()] || "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700"
@@ -68,14 +73,37 @@ export function TaskDetailModal({ open, task, members, onOpenChange }: TaskDetai
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-2">
                                 <User className="w-3.5 h-3.5" /> Assigned To
                             </h4>
-                            <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase">
-                                    {assignedMember?.full_name?.charAt(0) || "?"}
+                            {assignees.length === 0 ? (
+                                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-xs uppercase">
+                                        ?
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                        Unassigned
+                                    </span>
                                 </div>
-                                <span className="text-sm font-medium text-slate-900 dark:text-white">
-                                    {assignedMember?.full_name || "Unassigned"}
-                                </span>
-                            </div>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    {assignees.map((member, idx) => (
+                                        <div
+                                            key={member.id}
+                                            className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase">
+                                                {member.full_name?.charAt(0) || "?"}
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                                {member.full_name}
+                                            </span>
+                                            {idx === 0 && assignees.length > 1 && (
+                                                <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/40 px-1.5 py-0.5 rounded">
+                                                    Primary
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-2">

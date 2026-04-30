@@ -54,6 +54,13 @@ export function AdminTasksView({
         return member ? member.full_name : "Unknown"
     }
 
+    const getAssigneeNames = (task: Task): string[] => {
+        const ids = (task.assignee_ids && task.assignee_ids.length > 0)
+            ? task.assignee_ids
+            : (task.assigned_to ? [task.assigned_to] : [])
+        return ids.map((id) => getMemberName(id))
+    }
+
     const activeCount = tasks.filter(t => {
         const s = normalize(t.status)
         return s !== "completed" && s !== "verified" && s !== "pending_approval"
@@ -215,9 +222,24 @@ export function AdminTasksView({
                                             }`}>
                                             {task.priority}
                                         </span>
-                                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[11px]">
-                                            {getMemberName(task.assigned_to)}
-                                        </span>
+                                        {(() => {
+                                            const names = getAssigneeNames(task)
+                                            if (names.length === 0) {
+                                                return (
+                                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[11px]">
+                                                        Unassigned
+                                                    </span>
+                                                )
+                                            }
+                                            return names.map((name, idx) => (
+                                                <span
+                                                    key={`${task.id}-assignee-${idx}`}
+                                                    className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[11px]"
+                                                >
+                                                    {name}
+                                                </span>
+                                            ))
+                                        })()}
                                         {task.due_date && (
                                             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[11px]">
                                                 <Clock className="w-3 h-3" />

@@ -49,11 +49,8 @@ export function TeamTasksView({
             const res = await fetch('/api/admin/tasks')
             if (res.ok) tasksData = await res.json()
         } else {
-            const { data } = await supabase.from("tasks")
-                .select("*")
-                .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
-                .order("created_at", { ascending: false })
-            tasksData = data || []
+            const res = await fetch(`/api/tasks?assignee_id=${userId}`)
+            if (res.ok) tasksData = await res.json()
         }
 
         const today = new Date().toISOString().split("T")[0]

@@ -170,11 +170,6 @@ export function MultiUserSelect({
                         </p>
                       )}
                     </div>
-                    {u.role && (
-                      <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 shrink-0">
-                        {u.role.replace(/_/g, " ")}
-                      </span>
-                    )}
                   </button>
                 )
               })

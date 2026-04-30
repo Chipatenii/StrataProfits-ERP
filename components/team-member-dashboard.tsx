@@ -56,13 +56,14 @@ export function TeamMemberDashboard({
         setProfile(profileData)
       }
 
-      const { data: tasksData } = await supabase
-        .from("tasks")
-        .select("*")
-        .or(`assigned_to.eq.${userId},created_by.eq.${userId}`)
-        .order("created_at", { ascending: false })
+      let tasksData: Task[] = []
+      const tasksRes = await fetch(`/api/tasks?assignee_id=${userId}`)
+      if (tasksRes.ok) {
+        const json = await tasksRes.json()
+        tasksData = Array.isArray(json) ? json : []
+      }
 
-      setTasks(tasksData || [])
+      setTasks(tasksData)
 
       // Today's time logs
       const today = new Date().toISOString().split("T")[0]

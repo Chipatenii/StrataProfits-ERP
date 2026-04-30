@@ -480,6 +480,25 @@ export async function PATCH(request: NextRequest) {
               return NextResponse.json({ error: "Time allocated is required when completing a task." }, { status: 400 })
           }
        }
+
+       // Hardening: cap claimed time. Anyone other than admin/VA must stay under
+       // max(estimate * 3, 8h). Admins/VAs can go over (treated as override).
+       const claimed = typeof body.time_allocated === 'number'
+         ? body.time_allocated
+         : (typeof existingTask.time_allocated === 'number' ? existingTask.time_allocated : 0)
+       const estimate = typeof existingTask.estimated_hours === 'number'
+         ? existingTask.estimated_hours
+         : 0
+       const cap = Math.max(estimate * 3, 8)
+       const isPrivileged = userRole === 'admin' || userRole === 'virtual_assistant'
+       if (!isPrivileged && claimed > cap) {
+         return NextResponse.json(
+           {
+             error: `Claimed time (${claimed.toFixed(2)}h) exceeds the cap of ${cap.toFixed(1)}h for this task. Ask an admin to log time above the cap.`,
+           },
+           { status: 400 }
+         )
+       }
     }
 
     // Strip the API-only `assignee_ids` field from the row update; persist
@@ -511,6 +530,64 @@ export async function PATCH(request: NextRequest) {
     // when `assigned_to` was the only field changed.
     if (callerCanReassign && (assigneeIdsField || typeof body.assigned_to === "string")) {
       await syncTaskAssignees(admin, id, requestedAssigneeIds)
+    }
+
+    // Back-fill a time_logs entry on completion if the assignee never ran
+    // a timer. Without this, tasks completed manually never contribute to
+    // the workforce/payroll reports (which aggregate from time_logs).
+    if (body.status === 'completed') {
+      const allocatedHours = typeof body.time_allocated === 'number'
+        ? body.time_allocated
+        : (typeof existingTask.time_allocated === 'number' ? existingTask.time_allocated : null)
+
+      if (allocatedHours && allocatedHours > 0) {
+        // The "owner" of the work: prefer the user calling PATCH if they are
+        // an assignee (covers self-completion). Otherwise fall back to the
+        // task's primary assignee (admin/VA completing on behalf).
+        const taskAssigneeIds = new Set<string>()
+        if (task?.assigned_to) taskAssigneeIds.add(task.assigned_to)
+        const { data: assigneeLinks } = await admin
+          .from("task_assignees")
+          .select("user_id")
+          .eq("task_id", id)
+        ;(assigneeLinks || []).forEach((l) => taskAssigneeIds.add(l.user_id))
+
+        const ownerId = taskAssigneeIds.has(user.id) ? user.id : (task?.assigned_to ?? null)
+
+        if (ownerId) {
+          const allocatedMinutes = Math.round(allocatedHours * 60)
+          const { data: existingLogs } = await admin
+            .from("time_logs")
+            .select("duration_minutes")
+            .eq("task_id", id)
+            .eq("user_id", ownerId)
+
+          const loggedMinutes = (existingLogs || []).reduce(
+            (sum, l: any) => sum + (l.duration_minutes || 0),
+            0
+          )
+          const gap = allocatedMinutes - loggedMinutes
+
+          if (gap > 0) {
+            const completedAt = body.completed_at
+              ? new Date(body.completed_at)
+              : new Date()
+            const clockOut = completedAt.toISOString()
+            const clockIn = new Date(completedAt.getTime() - gap * 60_000).toISOString()
+            // Back-filled rows are NOT approved/billable until an admin
+            // verifies the task. `verifyTask` flips both flags to true.
+            await admin.from("time_logs").insert({
+              user_id: ownerId,
+              task_id: id,
+              clock_in: clockIn,
+              clock_out: clockOut,
+              duration_minutes: gap,
+              is_approved: false,
+              billable: false,
+            })
+          }
+        }
+      }
     }
 
     return NextResponse.json(task)
